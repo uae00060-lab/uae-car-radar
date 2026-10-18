@@ -550,7 +550,7 @@ section.tab { display: grid; gap: 14px; }
   }
   document.querySelectorAll("nav.tabs button").forEach((b) => b.addEventListener("click", () => showTab(b.dataset.tab)));
   const DEFAULT_OFF = ["mourjan"]; // no UAE car section at the moment
-  $("rPlats").innerHTML = Object.entries(PLATFORMS).map(([k, v]) => `<label title="${k === "mourjan" ? "لا يوجد في مرجان قسم سيارات للإمارات حاليًا" : ""}"><input type="checkbox" id="p_${k}" value="${k}"${DEFAULT_OFF.includes(k) ? "" : " checked"}> ${v}</label>`).join("");
+  $("rPlats").innerHTML = Object.entries(PLATFORMS).map(([k, v]) => `<label title="${k === "mourjan" ? "روابط قسم مرجان المستخدمة غير متاحة في الفحص الأخير" : ""}"><input type="checkbox" id="p_${k}" value="${k}"${DEFAULT_OFF.includes(k) ? "" : " checked"}> ${v}</label>`).join("");
 
   // ---------------------------------------------------------------- pieces
   function photo(l) {
@@ -881,7 +881,7 @@ section.tab { display: grid; gap: 14px; }
   });
 
   // ---------------------------------------------------------------- search now, live progress
-  const STEP_AR = { "Set up job": "تجهيز الخادم", "Get the code": "تحميل الرادار", "Pick the task": "تحديد المهمة", "Run actions/setup-python@v5": "تجهيز Python", "Install": "تثبيت الأدوات",
+  const STEP_AR = { "Offline regression tests": "اختبارات دقة البحث", "Verify PDF renderer": "التحقق من إنشاء PDF", "Set up job": "تجهيز الخادم", "Get the code": "تحميل الرادار", "Pick the task": "تحديد المهمة", "Run actions/setup-python@v5": "تجهيز Python", "Install": "تثبيت الأدوات",
     "Search the platforms": "البحث في المنصات وقراءة الإعلانات", "Send a test notification": "إرسال الإشعار التجريبي", "Save results": "حفظ النتائج", "Complete job": "إنهاء" };
   async function dispatch(inputs, label) {
     if (!S.token) return flash("هذا يحتاج مفتاح GitHub. أضفه من الإعدادات.", "warn");
@@ -892,6 +892,7 @@ section.tab { display: grid; gap: 14px; }
     S.live = { since, label, id: null }; store.set("live", JSON.stringify(S.live)); renderAll(); pollLive();
   }
   function runSearch(scope) {
+    if (S.live) return flash("هناك عملية قيد التنفيذ؛ انتظر اكتمالها قبل بدء بحث آخر.", "warn");
     if (!S.U.requests.some((r) => r.active !== false)) return flash("أضف طلب بحث نشطًا أولًا.", "warn");
     const chosen = S.U.requests.filter((r) => r.active !== false && (!scope || scope === "all" || r.id === scope));
     if (chosen.some((r) => !validName(r.make) || (r.model && !validName(r.model)))) return flash("اسم سيارة غير معروف. عدّل الطلب واختر الماركة والطراز المقترحين.", "bad");
@@ -937,8 +938,7 @@ section.tab { display: grid; gap: 14px; }
       const f = await readFile("data/diagnose.json"); if (!f.text) return;
       const d = JSON.parse(f.text);
       $("diagBox").innerHTML = `<div class="small">فحص ${esc(when(d.at))} على «${esc(d.probe)}»</div><dl class="kv">${Object.entries(d.platforms).filter(([k]) => PLATFORMS[k]).map(([k, v]) => {
-        const reads = (v.ad_reads || []).filter((x) => x.status === "ok").length;
-        const st = v.ok ? `صفحة النتائج تعمل · ${v.cards} إعلان` : v.via_search ? `محجوبة؛ وُجد ${v.cards} عبر البحث البديل` : `لا يمكن الوصول (${(v.status || []).join("، ")})`;
+                const st = v.ok ? `صفحة النتائج تعمل · ${v.cards} إعلان` : v.via_search ? `محجوبة؛ وُجد ${v.cards} عبر البحث البديل` : `لا يمكن الوصول (${(v.status || []).join("، ")})`;
         return `<dt>${PLATFORMS[k]}</dt><dd>${st}</dd>`; }).join("")}</dl>`;
       showTab("settings");
     } catch {}
