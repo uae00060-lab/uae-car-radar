@@ -121,7 +121,10 @@ def email(subject, text, pdf=None, pdf_name="report.pdf"):
         return "فشل: Gmail رفض الدخول (تحقق من SMTP_USER وكلمة مرور التطبيق في SMTP_PASSWORD)"
     except smtplib.SMTPServerDisconnected as e:
         if stage[0] == "تسجيل الدخول":
-            hint = "" if len(pw) == 16 else f"؛ كلمة مرور التطبيق يجب أن تكون 16 حرفًا والموجود {len(pw)}"
+            domain = user.rpartition("@")[2].lower() if "@" in user else ""
+            hint = ("؛ SMTP_USER ليس عنوان بريد كاملًا" if not domain else
+                    f"؛ SMTP_USER على {domain} وليس gmail.com" if domain not in ("gmail.com", "googlemail.com") else "")
+            hint += "" if len(pw) == 16 else f"؛ كلمة مرور التطبيق يجب أن تكون 16 حرفًا والموجود {len(pw)}"
             return f"فشل: Gmail أغلق الاتصال عند تسجيل الدخول (تحقق من SMTP_USER وSMTP_PASSWORD{hint})"
         return f"فشل أثناء {stage[0]} (SMTPServerDisconnected: {e})"
     except Exception as e:  # noqa: BLE001
