@@ -159,6 +159,16 @@ class Engine(unittest.TestCase):
         self.assertIn("جولتين", final["runs"][0]["warning"])
         self.assertEqual(final["reports"], [])
 
+    def test_hourly_opportunity_scan_never_creates_pdf(self):
+        args=self.args();args.mode="opportunity"
+        with patch.object(radar.report,"to_pdf") as pdf, patch.object(radar.notify,"send_all") as send:
+            radar.run_round(args,KEY)
+            pdf.assert_not_called();send.assert_not_called()
+        eng=store.read_json(radar.ENGINE_FILE,KEY,{})
+        self.assertEqual(eng["reports"],[])
+        self.assertEqual(eng["runs"][0]["mode"],"opportunity")
+        self.assertIn("opportunities",eng)
+
     def test_watch_alerts_followed_only(self):
         radar.run_round(self.args(), KEY)
         user = store.read_json(radar.USER_FILE, KEY, {})

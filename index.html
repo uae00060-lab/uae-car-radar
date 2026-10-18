@@ -299,6 +299,8 @@ body { font-family:"Inter","Cairo",sans-serif; font-weight:500; text-rendering:o
 @media(max-width:700px) { #hdr>.wrap { grid-template-columns:80px minmax(0,1fr); min-height:60px; padding-inline:12px; gap:7px; } #hdr .brand-lockup img { width:30px; height:30px; } #hdr .brand-lockup h1 { font-size:17px; } #hdr .brand-en { font-size:5px; letter-spacing:1px; } #hdr .header-actions { grid-column:2; justify-content:flex-end; } #hdr .header-actions select { display:none; } #hdr .header-actions button { font-size:10px; padding:6px 8px; } #hdr .nav-toggle { display:block; color:#fff; background:#ffffff0D; border-color:#ffffff18; width:32px; } #hdr nav.tabs { display:none; } #hdr.nav-open nav.tabs { display:grid; position:absolute; top:calc(100% + 7px); right:12px; left:12px; grid-template-columns:repeat(4,minmax(0,1fr)); padding:8px; border:1px solid #263E61; border-radius:14px; background:#0B1732F2; backdrop-filter:blur(18px); box-shadow:0 12px 35px #0B173230; } #hdr.nav-open nav.tabs button { flex-direction:column; min-height:64px; font-size:10px; padding:9px 3px; } #hdr.nav-open nav.tabs .count { position:absolute; left:6px; top:4px; } .floating-tools { top:9px; gap:6px; } }
 @media(prefers-reduced-motion:reduce) { #hdr,.floating-tools { transition:none; } }
 
+
+.op-hero{padding:28px;border-radius:22px;background:radial-gradient(circle at 5% 0%,#36D5C130,transparent 42%),#0B1732;color:#fff;margin-bottom:18px}.op-hero h2{font-size:30px;margin:7px 0}.op-hero p{color:#BDCCE0;max-width:750px;line-height:1.9}.op-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:16px}.op-card{padding:23px;background:#fff;border:1px solid #DBE4EE;border-radius:18px;display:flex;flex-direction:column;gap:13px;min-width:0}.op-card.call{border-top:4px solid #20B6A0}.op-card.verify{border-top:4px solid #D59B36}.op-card.watch{border-top:4px solid #7488A5}.op-card h3{margin:0;font-size:18px}.op-price{font:700 30px Inter,sans-serif;color:#0B1732}.op-card ul{padding-inline-start:18px;margin:0;font-size:12px;line-height:2;color:#4E6077}.op-card .op-missing{background:#FFF8E9;border-radius:10px;padding:10px;font-size:11px;line-height:1.9;color:#87621F}.op-window{width:min(580px,calc(100% - 28px));max-height:85vh;overflow:auto;border:0;border-radius:24px;padding:0;background:#F5F8FC;color:#0B1732;box-shadow:0 25px 100px #020C2866}.op-window::backdrop{background:#04112799;backdrop-filter:blur(5px)}.op-window-head{padding:25px;background:#0B1732;color:#fff}.op-window-body{padding:22px;display:grid;gap:15px}.op-window-head h2{margin:8px 0}.op-window .row{justify-content:space-between}.op-empty{padding:35px;text-align:center;background:#fff;border:1px dashed #BECBD9;border-radius:18px;line-height:2}.op-stamp{font-size:11px;color:#7D8BA0}.op-actions{margin-top:auto;display:flex;gap:8px;flex-wrap:wrap}@media(max-width:1000px){.op-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}@media(max-width:700px){.op-grid{grid-template-columns:1fr}.op-hero{padding:21px}.op-hero h2{font-size:24px}#hdr.nav-open nav.tabs{grid-template-columns:repeat(3,minmax(0,1fr))}}
 </style>
 </head>
 <body>
@@ -319,6 +321,7 @@ body { font-family:"Inter","Cairo",sans-serif; font-weight:500; text-rendering:o
       <button role="tab" data-tab="compare" aria-selected="false" aria-label="المقارنة" title="المقارنة"><svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 3v18m6-18v18M3 7h6m6 10h6M3 17h6m6-10h6"/></svg><span class="nav-label">المقارنة</span><span class="count" id="cCmp">0</span></button>
       <button role="tab" data-tab="deals" aria-selected="false" aria-label="المتابعة" title="المتابعة"><svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m12 3 2.8 5.7 6.2.9-4.5 4.4 1.1 6.2-5.6-3-5.6 3 1.1-6.2L3 9.6l6.2-.9Z"/></svg><span class="nav-label">المتابعة</span><span class="count" id="cDeals">0</span></button>
       <button role="tab" data-tab="reqs" aria-selected="false" aria-label="طلبات البحث" title="طلبات البحث"><svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="10.5" cy="10.5" r="6.5"/><path d="m16 16 5 5M8 10.5h5m-2.5-2.5v5"/></svg><span class="nav-label">طلبات البحث</span><span class="count" id="cReqs">0</span></button>
+      <button role="tab" data-tab="opportunities" aria-selected="false" aria-label="الفرص" title="الفرص"><svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="m13 2-9 12h7l-1 8 10-13h-7z"/></svg><span class="nav-label">الفرص</span><span class="count" id="cOpportunities">0</span></button>
       <button role="tab" data-tab="updates" aria-selected="false" aria-label="التحديثات" title="التحديثات"><svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9M10 21h4"/></svg><span class="nav-label">التحديثات</span><span class="count" id="cAlerts">0</span></button>
       <button role="tab" data-tab="reports" aria-selected="false" aria-label="التقارير" title="التقارير"><svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 3H6a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9Z"/><path d="M14 3v6h6M8 13h8m-8 4h5"/></svg><span class="nav-label">التقارير</span><span class="count" id="cReports">0</span></button>
       <button role="tab" data-tab="history" aria-selected="false" aria-label="سجل الجولات" title="سجل الجولات"><svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg><span class="nav-label">سجل الجولات</span></button>
@@ -426,6 +429,10 @@ body { font-family:"Inter","Cairo",sans-serif; font-weight:500; text-rendering:o
   </section>
 
   <!-- history -->
+  <section class="tab" id="tab-opportunities" hidden>
+    <div class="op-hero"><span class="eyebrow">رادار الفرص / FRESH FINDS</span><h2>الفرصة الجيدة لا تنتظر طويلًا.</h2><p>قائمة قصيرة لإعلانات حديثة بسعر يستحق الانتباه. نوضح سبب الاختيار وما يحتاج تأكيدًا؛ الترشيح مبني على الإعلانات التي رصدناها، ولا يثبت سلامة السيارة.</p><div class="row"><button class="primary sm" id="opScan">⌕ افحص الفرص الآن</button><button class="sm" id="opRead">تعليم التنبيهات كمقروءة</button><label><input type="checkbox" id="opEnabled"> تفعيل رصد الفرص وتنبيهاتها</label></div></div>
+    <p class="small" id="opStatus"></p><p class="small" id="opDelivery"></p><div id="opGrid" class="op-grid"></div>
+  </section>
   <section class="tab" id="tab-updates" hidden><div class="section-heading"><div><span class="eyebrow light">تابع ما تغيّر</span><h2>تحديثات سياراتك</h2></div><button type="button" id="reviewNow" class="primary sm">↻ مراجعة المحفوظة الآن</button></div><div class="review-summary"><div><b>مراجعة أسبوعية تلقائية</b><p id="reviewNote"></p></div><button type="button" id="readAlerts" class="btn sm">تعليم الكل كمقروء</button></div><div id="alertsList" class="alerts-list"></div></section>
   <section class="tab" id="tab-history" hidden>
     <div class="list" id="histList"></div>
@@ -466,6 +473,7 @@ body { font-family:"Inter","Cairo",sans-serif; font-weight:500; text-rendering:o
   </section>
 </main>
 
+<dialog id="opWindow" class="op-window" aria-labelledby="opWindowTitle"><div class="op-window-head"><div class="row"><span>⚡ رادار الفرص</span><button class="sm" id="opClose" aria-label="إغلاق نافذة الفرص">×</button></div><h2 id="opWindowTitle">فرصة جديدة تستحق النظر</h2><p class="small">سعر منخفض، إعلان حديث، وسبب واضح للتحرك.</p></div><div class="op-window-body"><div id="opWindowList"></div><div class="row"><button class="primary sm" id="opOpen">فتح نافذة الفرص</button><button class="sm" id="opLater">لاحقًا</button></div></div></dialog>
 <div class="cmpbar" id="cmpBar" hidden><span id="cmpTxt"></span><button type="button" class="primary sm" id="cmpGo">قارن</button><button type="button" class="sm" id="cmpX">مسح</button></div>
 <div class="viewer" id="viewer" hidden role="dialog" aria-label="عرض التقرير">
   <div class="vbar"><b id="vTitle" class="grow">التقرير</b><a class="btn sm" id="vDl" download>تنزيل PDF</a><a class="btn sm" id="vWa" target="_blank" rel="noopener">واتساب</a><button type="button" class="sm primary" id="vClose">إغلاق</button></div>
@@ -993,7 +1001,7 @@ body { font-family:"Inter","Cairo",sans-serif; font-weight:500; text-rendering:o
   function renderHistory() {
     const runs = S.E.runs || [];
     $("histList").innerHTML = runs.length ? runs.slice(0, 80).map((r) => `<div class="item">
-      <div class="when"><b class="num">${esc(when(r.at))}</b><span class="small">${{ scheduled: "جولة مجدولة", manual: "بحث يدوي", watch: "مراجعة المحفوظة" }[r.mode] || r.mode}</span></div>
+      <div class="when"><b class="num">${esc(when(r.at))}</b><span class="small">${{ scheduled: "جولة مجدولة", manual: "بحث يدوي", opportunity:"فحص الفرص", watch: "مراجعة المحفوظة" }[r.mode] || r.mode}</span></div>
       <span class="pill ${r.status === "done" ? "good" : "bad"}">${RUNSTATE[r.status] || esc(r.status)}</span>
       <div class="kp grow">${r.mode === "watch" ? `<span><b>${fmt(r.opened)}</b>سيارة فُحصت</span><span><b>${fmt(r.changes || 0)}</b>تغييرات</span><span><b>${fmt(r.failed || 0)}</b>تعذّر فحصها</span><span><b>${fmt(r.deferred || 0)}</b>مؤجلة</span>`
         : `<span><b>${fmt(r.found)}</b>إعلانات وُجدت</span><span><b>${fmt(r.opened)}</b>صفحات فُتحت</span><span><b>${fmt(r.new)}</b>جديد</span><span><b>${fmt(r.price_drops)}</b>تخفيضات</span><span><b>${fmt(r.seconds)}</b>ثانية</span>`}</div>
@@ -1019,6 +1027,41 @@ body { font-family:"Inter","Cairo",sans-serif; font-weight:500; text-rendering:o
   $("meForm").addEventListener("submit", async (e) => { e.preventDefault(); S.U.profile = { name: $("mName").value.trim(), phone: $("mPhone").value.trim(), city: $("mCity").value.trim() }; if (await saveUser("profile")) $("mMsg").textContent = "حُفظت."; });
   $("btnForget").addEventListener("click", () => { store.set("pass", null); store.set("token", null); store.set("deviceCredentials", null); indexedDB.deleteDatabase("radar-device"); location.reload(); });
 
+  // Fresh purchase opportunities are independent of lifecycle updates.
+  function opportunityRows() {
+    if(S.U.opportunities_enabled === false) return [];
+    return (S.E.opportunities?.items || []).filter(o=>{
+      const l=S.E.listings?.[o.listing_id], elapsed=Date.now()-Date.parse(l?.last_checked || "");
+      const days=(Date.parse(ymd(uaeNow()))-Date.parse(o.posted))/86400000;
+      return l && hasPrice(l) && live(l) && mark(l.id).status!=="purchased" && l.price===o.price && elapsed>=0 && elapsed<=21600000 && days>=0 && days<=2 && !l.price_changed_at;
+    });
+  }
+  function renderOpportunities() {
+    const rows=opportunityRows(), seen=new Set(S.U.opportunity_seen || []), labels={call:"اتصل اليوم",watch:"راقب السعر",verify:"تحقق أولًا"};
+    const keys=new Set(rows.filter(r=>r.tier === "call").map(r=>r.key));
+    const unread=(S.E.opportunities?.events || []).filter(e=>keys.has(e.key) && !seen.has(e.id));
+    $("cOpportunities").textContent=unread.length;
+    $("opEnabled").checked=S.U.opportunities_enabled !== false;
+    const delivery=S.E.opportunities?.delivery, channelNames={email:"البريد",telegram:"تيليجرام",whatsapp:"واتساب"};
+    $("opDelivery").textContent=delivery ? "آخر محاولة توصيل خارجية: "+Object.entries(delivery).map(([k,v])=>(channelNames[k] || k)+": "+v).join(" · ") : "تنبيه الصفحة يعمل عند فتح اللوحة. الإشعارات الخارجية تستخدم القنوات المفعّلة في الإعدادات عند اكتشاف فرصة قوية.";
+
+    $("opScan").disabled=!S.token || !!S.live || S.U.opportunities_enabled === false;
+    $("opStatus").textContent=`فحص خفيف كل ساعة عند الدقيقة 17، إضافة إلى جولات البحث. قد تتأخر مهام GitHub؛ ليس رصدًا لحظيًا. إعلان منشور خلال آخر يومين، وتحقق لا يتجاوز 6 ساعات. نستبعد المباعة والمحجوزة والتعديلات التي رصدناها. لا نستنتج مهنة البائع من التعديل. آخر تقييم: ${S.E.opportunities?.updated ? when(S.E.opportunities.updated) : "لم يُنفذ بعد"}.`;
+    $("opGrid").innerHTML=rows.length ? rows.map(o=>{const l=S.E.listings[o.listing_id];return `<article class="op-card ${o.tier}"><div class="row"><span class="pill ${o.tier === "call" ? "good" : "warn"}">${labels[o.tier]}</span><span class="small">${esc(PLATFORMS[l.platform] || l.platform)}</span></div><h3>${esc(l.title || carName(l))}</h3><div class="op-price">${fmt(o.price)} <small>درهم</small></div><div class="small">تقدير المقارنة ${fmt(o.expected)} درهم · فرق ${fmt(o.expected-o.price)} درهم</div><ul>${o.reasons.map(r=>`<li>${esc(r)}</li>`).join("")}</ul>${o.missing.length ? `<div class="op-missing">${o.missing.map(esc).join("<br>")}</div>` : ""}<div class="op-stamp">${esc(o.request_name || "")} · آخر تحقق ${esc(when(o.checked_at))}</div><div class="op-actions"><a class="btn primary sm" href="${esc(l.url)}" target="_blank" rel="noopener">افتح الإعلان ↗</a>${o.tier === "call" && l.phone ? `<a class="btn sm" href="tel:${esc(l.phone)}">اتصل بالبائع</a>` : ""}</div></article>`}).join("") : `<div class="op-empty" style="grid-column:1/-1"><b>${S.U.opportunities_enabled === false ? "رصد الفرص متوقف" : "لا توجد فرصة تستوفي المعايير حاليًا"}</b><p>لن نملأ القائمة بإعلانات قديمة أو أسعار غير مؤكدة. يحتاج التقييم طلبًا بماركة وطراز محددين وثمانية إعلانات مقارنة على الأقل.</p></div>`;
+    const fresh=unread.filter(e=>!store.get("opShown:"+e.id));
+    const busy=["INPUT","SELECT","TEXTAREA"].includes(document.activeElement?.tagName) || document.querySelector("dialog[open]");
+    if(fresh.length && !busy && document.visibilityState === "visible") {
+      $("opWindowList").innerHTML=fresh.slice(0,3).map(e=>{const l=S.E.listings[e.listing_id];return `<div style="padding:12px 0;border-bottom:1px solid #DCE5EF"><b>${esc(l.title || carName(l))}</b><div class="op-price">${fmt(e.price)} <small>درهم</small></div><p class="small">أقل بنحو ${Math.round(e.discount*100)}٪ من تقدير المقارنة · نُشر ${esc(e.posted)}</p></div>`}).join("");
+      $("opWindow").showModal(); fresh.forEach(e=>store.set("opShown:"+e.id,"1"));
+    }
+  }
+  $("opScan").addEventListener("click",()=>dispatch({cmd:"run",mode:"opportunity",request:"all",run_id:""},"فحص الفرص"));
+  $("opEnabled").addEventListener("change",async()=>{S.U.opportunities_enabled=$("opEnabled").checked;if(await saveUser("opportunity preference"))renderAll();});
+  $("opRead").addEventListener("click",async()=>{S.U.opportunity_seen=[...new Set([...(S.U.opportunity_seen || []),...(S.E.opportunities?.events || []).map(e=>e.id)])].slice(-300); await saveUser("read opportunities");renderOpportunities();});
+  ["opClose","opLater"].forEach(id=>$(id).addEventListener("click",()=>$("opWindow").close()));
+  $("opOpen").addEventListener("click",()=>{$("opWindow").close();showTab("opportunities");});
+
+  setInterval(()=>{if(S.E && S.U)renderOpportunities();},60000);
   function renderUpdates() {
     const events = S.E.alerts || [], seen = S.U.alerts_seen_at || "";
     $("cAlerts").textContent = events.filter(e => e.at > seen).length;
@@ -1031,7 +1074,7 @@ body { font-family:"Inter","Cairo",sans-serif; font-weight:500; text-rendering:o
   $("readAlerts").addEventListener("click", async () => { S.U.alerts_seen_at = (S.E.alerts || [])[0]?.at || new Date().toISOString(); renderUpdates(); await saveUser("read updates"); });
   function renderAll() {
     $("nextRun").textContent = nextRunText();
-    renderReqs(); renderAds(); renderDeals(); renderUpdates(); renderReports(); renderHistory(); renderSettings(); renderCmpBar(); renderProblems();
+    renderReqs(); renderAds(); renderOpportunities(); renderDeals(); renderUpdates(); renderReports(); renderHistory(); renderSettings(); renderCmpBar(); renderProblems();
     if (S.tab === "compare") renderCompare();
     $("searchNow").disabled = !S.token || !!S.live;
     if (!S.live) $("searchNow").innerHTML = '<span aria-hidden="true">⌕</span> ابحث الآن';
@@ -1237,7 +1280,7 @@ body { font-family:"Inter","Cairo",sans-serif; font-weight:500; text-rendering:o
     const items = [];
     const lastRound = (S.E.runs || []).find((r) => r.mode !== "watch");
     if (lastRound && (lastRound.status === "failed" || lastRound.warning)) {
-      items.push(`<li><b>${lastRound.status === "failed" ? "لم تكتمل" : "تنبيه"} — ${{ scheduled: "جولة مجدولة", manual: "بحث يدوي" }[lastRound.mode] || "جولة"} ${esc(when(lastRound.at))}:</b> ${esc(lastRound.warning || "سبب غير معروف")}</li>`);
+      items.push(`<li><b>${lastRound.status === "failed" ? "لم تكتمل" : "تنبيه"} — ${{ scheduled: "جولة مجدولة", manual: "بحث يدوي", opportunity:"فحص الفرص" }[lastRound.mode] || "جولة"} ${esc(when(lastRound.at))}:</b> ${esc(lastRound.warning || "سبب غير معروف")}</li>`);
     }
     const lastReview=(S.E.runs || []).find(r=>r.mode === "watch");
     if(lastReview?.warning || lastReview?.status === "failed") items.push(`<li><b>تنبيه — مراجعة المحفوظة ${esc(when(lastReview.at))}:</b> ${esc(lastReview.warning || "لم تكتمل المراجعة")}</li>`);

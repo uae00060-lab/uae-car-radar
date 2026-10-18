@@ -3,6 +3,7 @@ name: radar
 on:
   schedule:
     - cron: "0 6,16 * * *"        # 10:00 and 20:00 UAE time: full rounds with report and notifications
+    - cron: "17 * * * *"         # hourly fresh opportunities only; no PDF
     - cron: "0 4 * * 1"          # Monday 08:00 UAE: weekly saved-ad review, no PDF
   workflow_dispatch:
     inputs:
@@ -13,7 +14,7 @@ on:
         default: run
       mode:
         type: choice
-        options: [manual, scheduled]
+        options: [manual, scheduled, opportunity]
         default: manual
       request:
         description: "request id, or all"
@@ -59,7 +60,7 @@ jobs:
         run: |
           clean() { printf '%s' "$1" | tr -cd 'A-Za-z0-9_-'; }
           if [ "$EVENT" = "schedule" ]; then
-            if [ "$SCHEDULE" = "0 6,16 * * *" ]; then args="run --mode scheduled"; else args="watch --weekly"; fi
+            if [ "$SCHEDULE" = "0 6,16 * * *" ]; then args="run --mode scheduled"; elif [ "$SCHEDULE" = "17 * * * *" ]; then args="run --mode opportunity"; else args="watch --weekly"; fi
           else
             case "$CMD" in
               run)

@@ -25,6 +25,7 @@ sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from progress import Progress
 import lifecycle
 import health
+import opportunities
 import analytics  # noqa: E402
 import extract  # noqa: E402
 import fetch  # noqa: E402
@@ -44,7 +45,7 @@ SITE = os.environ.get("RADAR_SITE") or "https://uae00060-lab.github.io/uae-car-r
 
 PLACEHOLDER_PHONES = ("1234567", "0000000", "1111111", "9999999")
 PLATFORM_PHONES = ("45061300",)  # CarSwitch head office, shown on every ad
-MAX_OPEN = {"scheduled": 70, "manual": 45, "watch": 40}
+MAX_OPEN = {"scheduled": 70, "manual": 45, "watch": 40, "opportunity": 20}
 RECHECK_HOURS = 10      # saved ads are re-read at most twice a day
 SKIP_DAYS = 7           # an ad that did not match is looked at again after a week
 KEEP_REPORTS = 90
@@ -393,7 +394,9 @@ def run_round(a, key):
     start = window_start(today)
     user, eng = load_all(key)
     marks = marks_of(user)
-    run_id = a.run_id or (("s" if a.mode == "scheduled" else "m") + now.strftime("%Y%m%d%H%M"))
+    if a.mode == "opportunity" and user.get("opportunities_enabled") is False:
+        return
+    run_id = a.run_id or (("s" if a.mode == "scheduled" else "o" if a.mode == "opportunity" else "m") + now.strftime("%Y%m%d%H%M"))
     reqs = [r for r in (user.get("requests") or []) if r.get("active", True)]
     if a.request and a.request != "all":
         reqs = [r for r in reqs if r.get("id") == a.request]
@@ -402,6 +405,8 @@ def run_round(a, key):
             log("scheduled_skipped", why="dashboard active")
             return
         reqs = [r for r in reqs if r.get("scheduled")]
+    if a.mode == "opportunity":
+        reqs = [r for r in reqs if r.get("make") and r.get("model")]
     invalid = [validate_request(r) for r in reqs if validate_request(r)]
     reqs = [r for r in reqs if not validate_request(r)]
     progress=Progress(run_id)
@@ -476,6 +481,8 @@ def run_round(a, key):
         if age >= RECHECK_HOURS:
             due.append((age, l))
     due.sort(key=lambda x: -x[0])
+    if a.mode == "opportunity":
+        due = []  # fresh discovery only; saved-ad review has its own schedule
     order += [(req_by_id[next(r for r in l.get("request_ids", [l["request_id"]]) if r in run_req_ids)], {"id": l["id"], "url": l["url"], "platform": l["platform"],
                                            "ad_id": l["ad_id"], "title": l.get("title"), "_recheck": True})
               for _, l in due[: max(20, cap - len(order))]]
@@ -608,6 +615,7 @@ def run_round(a, key):
         l.update({"fair": fp, "rating": rating, "dev": round(dev, 4) if dev is not None else None,
                   "urgency": {"score": score, "level": level, "why": why}})
 
+    opportunities.update(eng, user, now, notify=a.mode == "opportunity")
     progress.update("save", len(order), len(order), force=True)
     # 5) report
     live = lambda l: not l.get("dup_of") and trusted_price(l) and l.get("price_version") == 3 and l.get("price_currency") == "AED" and l.get("availability", "available") == "available" and l.get("state") in ("verified", "approx", "unverified") and (marks.get(l["id"]) or {}).get("status") not in ("dismissed", "purchased")
@@ -652,6 +660,10 @@ def run_round(a, key):
     run["health_warnings"] = health.update(eng, reqs, diag, opened_stats, stamp, {p: v["name"] for p, v in PLATFORMS.items()})
     for problem in run["health_warnings"] + quality_warnings():
         run["warning"] = (run.get("warning", "") + "؛ " + problem).strip("؛ ")
+    if a.mode == "opportunity":
+        problem = notify.delivery_problem(eng.get("opportunities", {}).get("delivery"))
+        if problem:
+            run["warning"] = (run.get("warning", "") + "؛ " + problem.replace("التقرير", "تنبيه الفرص")).strip("؛ ")
     profile = user.get("profile") or {}
     os.makedirs(WORK, exist_ok=True)
     pdf_plain = os.path.join(WORK, f"{run_id}.pdf")
@@ -738,6 +750,7 @@ def watch(a, key):
         if assessments:
             listing.update(min(assessments,key=lambda x:{'verified':0,'unverified':1,'approx':1,'excluded':2}.get(x['state'],3)))
     mark_duplicates(eng["listings"])
+    opportunities.update(eng,user,now)
     sent=None
     if events:
         text=lifecycle.message(events,SITE)
@@ -834,7 +847,7 @@ def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("cmd", choices=["run", "watch", "diagnose"])
     ap.add_argument("--weekly", action="store_true", help="review saved searches weekly")
-    ap.add_argument("--mode", choices=["scheduled", "manual"], default="scheduled")
+    ap.add_argument("--mode", choices=["scheduled", "manual", "opportunity"], default="scheduled")
     ap.add_argument("--request", default="all")
     ap.add_argument("--run-id", default="")
     ap.add_argument("--make", default="Toyota")
