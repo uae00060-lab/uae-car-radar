@@ -1,5 +1,5 @@
 {
- "at": "2026-10-18T22:23:00+04:00",
+ "at": "2026-10-18T22:24:16+04:00",
  "probe": "Toyota Yaris",
  "platforms": {
   "dubizzle": {
@@ -34,7 +34,7 @@
      "debug": {
       "status": 200,
       "final": "https://uae.yallamotor.com/used-cars/toyota/yaris/2016/used-toyota-yaris-2016-sharjah-2145040",
-      "bytes": 754917,
+      "bytes": 754874,
       "sold_hit": null,
       "values": {
        "title": "Used Toyota Yaris 1.5L SE 2016",
@@ -80,7 +80,7 @@
        "AED 128,622",
        "AED 35,000",
        "AED 460,000",
-       "AED 99,569",
+       "AED 99,842",
        "AED 13,500",
        "AED 292,100",
        "AED 101,823",
@@ -150,7 +150,7 @@
      "debug": {
       "status": 200,
       "final": "https://uae.yallamotor.com/used-cars/toyota/yaris/2021/used-toyota-yaris-2021-dubai-2141327",
-      "bytes": 781355,
+      "bytes": 781954,
       "sold_hit": null,
       "values": {
        "title": "Used Toyota Yaris 1.5L SE+ (Hatchback) 2021",
@@ -183,6 +183,14 @@
        "AED 37,000",
        "AED 29,500",
        "Popular brands in UAE - Prices, Specs & Features",
+       "Toyota Yaris under 30,000 AED",
+       "(127) Toyota Yaris under 50,000 AED",
+       "(161) Toyota Yaris under 70,000 AED",
+       "(165) Toyota Yaris under 100,000 AED",
+       "(167) Toyota Yaris under 120,000 AED",
+       "(167) Toyota Yaris under 150,000 AED",
+       "(167) Toyota Yaris under 250,000 AED",
+       "Cars by year",
        "Used Toyota by price in UAE",
        "Starting Price",
        "Maximum Price",
@@ -198,15 +206,7 @@
        "AED 128,622",
        "AED 35,000",
        "AED 460,000",
-       "AED 99,842",
-       "AED 13,500",
-       "AED 292,100",
-       "AED 101,823",
-       "AED 26,000",
-       "AED 300,000",
-       "AED 96,219",
-       "AED 1,000",
-       "AED 950,000"
+       "AED 99,569"
       ]
      },
      "url": "https://uae.yallamotor.com/used-cars/toyota/yaris/2021/used-toyota-yaris-2021-dubai-2141327",
@@ -806,7 +806,7 @@
      "debug": {
       "status": 200,
       "final": "https://ae.opensooq.com/en/search/288806664",
-      "bytes": 941985,
+      "bytes": 941708,
       "sold_hit": null,
       "values": {
        "title": "تويوتا يارس موديل 2023 خليجي",
@@ -881,7 +881,7 @@
      "debug": {
       "status": 200,
       "final": "https://ae.opensooq.com/en/search/288804462",
-      "bytes": 941993,
+      "bytes": 941907,
       "sold_hit": null,
       "values": {
        "title": "فرصة للبيع  تويوتا يارس 2023 خليجي  57 ألف كم  فحص ممتاز",
@@ -1096,84 +1096,15 @@
      }
     },
     {
-     "status": "ok",
+     "status": "failed",
      "debug": {
-      "status": 200,
+      "status": 403,
       "final": "https://auto.ae/dubai/sale/car/toyota/toyota-yaris-iv-facelift-2026/id/287836/",
-      "bytes": 480510,
-      "sold_hit": null,
-      "values": {
-       "title": "Toyota Yaris IV Facelift, 2026",
-       "image": "https://auto-ae-prod-storage.storage.googleapis.com/auto_dubai_toyota_yaris_sale",
-       "price": "199500",
-       "year": "280 hp",
-       "specs": "Hatchback 3 dr. GR",
-       "transmission": "Grey / Black",
-       "seller_type": "Showroom",
-       "phone": "+971566455550"
-      },
-      "lines": [
-       "Buy Toyota Yaris (2026) 1.6 l Petrol in UAE, Dubai - ⁦199,500 AED⁩ | AUTO.AE | Listing #287836",
-       "For sale ⁦Toyota Yaris IV Facelift, 1.6 l, 2026⁩ in UAE, Dubai ⁦199,500 AED⁩",
-       "⁦199,500 AED⁩",
-       "Year",
-       "Subscribe to updates",
-       "0 km",
-       "5,000 km",
-       "13,500 km",
-       "⁦165,000 AED⁩",
-       "13,000 km",
-       "16,000 km",
-       "Fuel consumption (combined, 100 km), liters",
-       "Acceleration 0-100 km/h, seconds",
-       "Explore all the possibilities of the platform — search for cars to buy or rent, post ads, and connect with other users. "
-      ]
+      "bytes": 5957
      },
      "url": "https://auto.ae/dubai/sale/car/toyota/toyota-yaris-iv-facelift-2026/id/287836/",
-     "found": [
-      [
-       "image",
-       "ld:image"
-      ],
-      [
-       "phone",
-       "tel"
-      ],
-      [
-       "price",
-       "ld:price"
-      ],
-      [
-       "seller_type",
-       "text"
-      ],
-      [
-       "specs",
-       "label"
-      ],
-      [
-       "title",
-       "ld:name"
-      ],
-      [
-       "transmission",
-       "label"
-      ],
-      [
-       "year",
-       "label"
-      ]
-     ],
-     "has": {
-      "price": true,
-      "year": true,
-      "km": false,
-      "date": false,
-      "phone": true,
-      "image": true,
-      "color": false,
-      "emirate": true
-     }
+     "found": "HTTP 403",
+     "has": null
     }
    ]
   },
@@ -1411,17 +1342,17 @@
    "dubizzle": {
     "query": "site:uae.dubizzle.com/motors/used-cars/toyota/yaris toyota yaris",
     "ddg": {
-     "status": 200,
+     "status": 202,
      "blocked": false,
-     "bytes": 9419,
+     "bytes": 14431,
      "result_a": 0,
      "b_algo": 0,
-     "head": " site:uae.dubizzle.com/motors/used-cars/toyota/yaris toyota yaris at DuckDuckGo All Regions Argentina Australia Austria Belgium (fr) Belgium (nl) Brazil Bulgaria Canada (en) Canada (fr) Catalonia Chil"
+     "head": " --> DuckDuckGo DuckDuckGo Unfortunately, bots use DuckDuckGo too. Please complete the following challenge to confirm this search was made by a human. Select all squares containing a duck: Submit Imag"
     },
     "bing": {
      "status": 200,
      "blocked": false,
-     "bytes": 93675,
+     "bytes": 95352,
      "result_a": 0,
      "b_algo": 0,
      "head": " \"use strict\";// site:uae.dubizzle.com/motors/used-cars/toyota/yaris toyota yaris - Search // 2&&a.substring(0,3)===\"IG=\")){ig='IG='+_G.IG;}if(document.images){_G.GPImg=new Image;_G.GPImg.src=_G.gpUrl"
@@ -1434,7 +1365,7 @@
     "ddg": {
      "status": 202,
      "blocked": false,
-     "bytes": 14389,
+     "bytes": 14377,
      "result_a": 0,
      "b_algo": 0,
      "head": " --> DuckDuckGo DuckDuckGo Unfortunately, bots use DuckDuckGo too. Please complete the following challenge to confirm this search was made by a human. Select all squares containing a duck: Submit Imag"
@@ -1442,7 +1373,7 @@
     "bing": {
      "status": 200,
      "blocked": false,
-     "bytes": 92642,
+     "bytes": 94369,
      "result_a": 0,
      "b_algo": 0,
      "head": " \"use strict\";// site:mourjan.com toyota yaris used - Search // 2&&a.substring(0,3)===\"IG=\")){ig='IG='+_G.IG;}if(document.images){_G.GPImg=new Image;_G.GPImg.src=_G.gpUrl+ig+'&'+a;}return true;}_G.BAT"
@@ -1453,7 +1384,39 @@
   },
   "_mourjan_home": {
    "status": 200,
-   "links": []
+   "bytes": 38280,
+   "links": [
+    "//adservice.google.com",
+    "//pagead2.googlesyndication.com",
+    "//tpc.googlesyndication.com",
+    "//www.googletagmanager.com",
+    "/about/",
+    "/ae/",
+    "/ae/apartments/for-sale/",
+    "/ae/apartments/rental/",
+    "/ae/contracting/offered-services/",
+    "/ae/en/",
+    "/ae/furnished-apartments/rental/",
+    "/ae/private-lessons/offered-services/",
+    "/ae/studios/rental/",
+    "/ae/warehouses/rental/",
+    "/contact/",
+    "/faq/",
+    "/gold/",
+    "/privacy/",
+    "/signin/",
+    "/terms/",
+    "data:application/manifest+json;base64,eyJuYW1lIjoiTW91cmphbiBDbGFzc2lmaWVkcyIsInNob3J0X25hbWUiOiJtb3VyamFuIiwic3RhcnRfdXJsIjoiLyIsImRpc3BsYXkiOiJzdGFuZGFsb25lIiwiYmFja2dyb3VuZF9jb2xvciI6IiNmZmZmZmYiLCJ0aGVtZV9jb2xvciI6IiMzMzY1OGEiLCJpY29ucyI6W3sic3JjIjoiL2Nzcy8xLjAvYXNzZXRzL2FuZHJvaWQtY2hyb21lLTE5MngxOTIucG5nIiwic2l6ZXMiOiIxOTJ4MTkyIiwidHlwZSI6ImltYWdlL3BuZyJ9LHsic3JjIjoiL2Nzcy8xLjAvYXNzZXRzL2FuZHJvaWQtY2hyb21lLTUxMng1MTIucG5nIiwic2l6ZXMiOiI1MTJ4NTEyIiwidHlwZSI6ImltYWdlL3BuZyJ9XX0=",
+    "https://doxplxe8wce37.cloudfront.net",
+    "https://doxplxe8wce37.cloudfront.net/css/1.0/assets/apple-touch-icon.png",
+    "https://doxplxe8wce37.cloudfront.net/css/1.0/assets/favicon-16x16.png",
+    "https://doxplxe8wce37.cloudfront.net/css/1.0/assets/favicon-32x32.png",
+    "https://itunes.apple.com/app/id876330682?mt=8",
+    "https://play.google.com/store/apps/details?id=com.mourjan.classifieds",
+    "https://www.mourjan.com/ae/",
+    "javascript:menu('mmenu')",
+    "javascript:regionWidget()"
+   ]
   },
   "_dubizzle_page": {
    "status": 200,
