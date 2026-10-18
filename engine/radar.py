@@ -662,7 +662,7 @@ def watch(a, key):
     user,eng=load_all(key); marks=marks_of(user)
     reqs={r["id"]:r for r in user.get("requests",[]) if r.get("active",True)}
     weekly=getattr(a,"weekly",False)
-    targets=[l for l in eng["listings"].values() if l.get("state")!='excluded' and any(r in reqs for r in l.get("request_ids",[l.get("request_id")])) and (weekly or (marks.get(l["id"]) or {}).get("favorite") or (marks.get(l["id"]) or {}).get("status") in FOLLOWING) and (marks.get(l["id"]) or {}).get("status") not in ('dismissed','purchased')]
+    targets=[l for l in eng["listings"].values() if (l.get("state")!='excluded' or (marks.get(l["id"]) or {}).get("favorite") or (marks.get(l["id"]) or {}).get("status") in FOLLOWING) and any(r in reqs for r in l.get("request_ids",[l.get("request_id")])) and (weekly or (marks.get(l["id"]) or {}).get("favorite") or (marks.get(l["id"]) or {}).get("status") in FOLLOWING) and (marks.get(l["id"]) or {}).get("status") not in ('dismissed','purchased')]
     targets.sort(key=lambda l:l.get('last_reviewed') or '')
     total=len(targets); targets=targets[:100]
     events=[]; drops=[]; failed=0
@@ -700,7 +700,7 @@ def watch(a, key):
         text=lifecycle.message(events,SITE)
         sent=notify.send_all('تحديثات السيارات المحفوظة',text,text)
     eng['last_weekly_review']=stamp if weekly else eng.get('last_weekly_review')
-    eng['runs'].insert(0,{"id":"w"+now.strftime('%Y%m%d%H%M'),"at":stamp,"mode":"watch","weekly":weekly,"status":"done","opened":len(targets),"changes":len(events),"price_drops":len(drops),"failed":failed,"deferred":max(0,total-len(targets)),"notify":sent})
+    eng['runs'].insert(0,{"id":"w"+now.strftime('%Y%m%d%H%M'),"at":stamp,"mode":"watch","weekly":weekly,"status":"done","opened":len(targets),"changes":len(events),"price_drops":len(drops),"failed":failed,"deferred":max(0,total-len(targets)),"warning":f"تعذّر فحص {failed} سيارة؛ احتُفظ بآخر حالة مؤكدة." if failed else "","notify":sent})
     finish(eng,key);log('watch',reviewed=len(targets),changes=len(events),failed=failed,notify=sent)
 
 
