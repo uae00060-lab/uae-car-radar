@@ -121,6 +121,8 @@ section.tab { display: grid; gap: 14px; }
 .card-lines { display: grid; gap: 4px; font-size: .86rem; min-width: 0; }
 .card-lines .where b { font-weight: 600; }
 .card-lines .meta { color: var(--muted); overflow-wrap: anywhere; }
+.card-lines .meta.caution { color: var(--bad); background: var(--bad-soft); border-radius: 6px; padding: 4px 8px; }
+.btn.wa { background: #1f9d55; border-color: #1f9d55; color: #fff; }
 .card-lines .meta .btn { padding: 0 6px; }
 .dup { border-top: 1px dashed var(--line); padding-top: 6px; }
 .foot { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; border-top: 1px solid var(--line); padding-top: 9px; }
@@ -727,6 +729,8 @@ body { font-family:"Inter","Cairo",sans-serif; font-weight:500; text-rendering:o
     if (l.state === "unverified") tags.push('<span class="pill bad">يحتاج تأكيدًا</span>');
     if (isNoDate(l)) tags.push('<span class="pill">بلا تاريخ نشر</span>');
     if (availabilityOf(l) !== "available") tags.push(`<span class="pill">${availabilityLabel(l)}</span>`);
+    if (l.spec) tags.push(`<span class="pill ${l.spec === "gcc" ? "good" : "warn"}">${SPEC_AR[l.spec] || "وارد"}</span>`);
+    if (l.flags?.length) tags.push(`<span class="pill bad">⚠ ${esc(l.flags[0].label)}${l.flags.length > 1 ? ` +${l.flags.length - 1}` : ""}</span>`);
     const img = l.image ? `<img src="${esc(l.image)}" alt="" loading="lazy" referrerpolicy="no-referrer" onerror="this.replaceWith(Object.assign(document.createElement('div'),{className:'noimg',textContent:'${esc(PLATFORMS[l.platform] || "")}'}))">`
       : `<div class="noimg">${esc(PLATFORMS[l.platform] || "")}</div>`;
     return `<div class="ph">${img}<div class="tags">${tags.join("")}</div><button class="star" type="button" data-fav="${esc(l.id)}" aria-pressed="${!!m.favorite}" aria-label="مفضلة">${m.favorite ? "★" : "☆"}</button><span class="platf">${esc(PLATFORMS[l.platform] || "")}</span></div>`;
@@ -737,7 +741,7 @@ body { font-family:"Inter","Cairo",sans-serif; font-weight:500; text-rendering:o
     const fp = l.fair || {};
     const pos = Math.max(0, Math.min(100, 50 + l.dev * 200));
     return `<div class="verdict v-${r}"><span class="small">مقابل السوق</span><b>${RATING[r]} <span class="num">${pct(l.dev)}</span></b>
-      <span class="small">المتوقع</span><span><span class="num">${fmt(fp.expected)}</span> درهم <span class="small">(من ${fp.n} إعلانًا)</span></span>
+      <span class="small">المتوقع</span><span><span class="num">${fmt(fp.expected)}</span> درهم <span class="small">(من ${fp.n} إعلانًا${BASIS_AR[fp.basis] || ""})</span></span>
       <div class="meter" title="موقع السعر بين الأرخص والأغلى"><i style="width:${pos}%"></i></div></div>`;
   }
   function urgencyHtml(l) {
@@ -746,6 +750,22 @@ body { font-family:"Inter","Cairo",sans-serif; font-weight:500; text-rendering:o
   }
   function phoneHtml(p) { return p ? `<span class="num" style="user-select:all">${esc(p)}</span> <a class="btn sm ghost" href="tel:${esc(p.replace(/\s/g, ""))}">اتصال</a>` : '<span class="small">لم يتوفر رقم بائع منشور بوضوح</span>'; }
   function vinHtml(l) { return l.identity_version === 1 && l.vin ? `<span class="num identity-value" dir="ltr">${esc(l.vin)}</span><small class="identity-note">${l.vin_status === "checksum" ? "فحص الصيغة وخانة التحقق؛ منشور في الإعلان" : "صيغة 17 خانة؛ منشور في الإعلان"}</small>` : `<span class="small">${l.vin_status === "conflict" ? "بيانات متعارضة؛ يحتاج تأكيدًا" : "لم يتوفر رقم كامل موثوق من الإعلان"}</span>`; }
+  const SPEC_AR = { gcc: "خليجي", american: "وارد أمريكا", canadian: "وارد كندا", japanese: "وارد اليابان", european: "وارد أوروبا", korean: "وارد كوريا", chinese: "وارد الصين", other: "وارد" };
+  const BASIS_AR = { gcc: " خليجيًا", import: " واردًا", "gcc+unstated": " خليجيًا أو بلا مواصفات مذكورة", "not-import": " غير وارد" };
+  function cautionLines(l) {
+    const out = [];
+    if (l.flags?.length) out.push(`⚠ يذكر الإعلان: ${l.flags.map((f) => `${esc(f.label)} <span class="small" dir="auto">«${esc(f.word)}»</span>`).join("، ")}`);
+    (l.vin_check || []).forEach((n) => out.push(`⚠ ${esc(n)}`));
+    return out;
+  }
+  // Prefilled WhatsApp message to the seller; UAE mobile numbers only (landlines have no WhatsApp).
+  function waLink(l) {
+    const digits = String(l.identity_version === 1 && l.phone || "").replace(/\D/g, "").replace(/^00/, "");
+    if (!/^9715\d{8}$/.test(digits)) return "";
+    const name = (String(l.title || "").includes(String(l.year)) ? l.title : [l.year, l.title].filter(Boolean).join(" ")).slice(0, 80);
+    const text = `Hello, regarding your ad: ${name}${l.price ? ` (${fmt(l.price)} AED)` : ""}\n${l.url}\nIs it still available? What is your best price?\n\nمرحبًا، بخصوص إعلانك أعلاه: هل السيارة ما زالت متاحة؟ وما آخر سعر؟`;
+    return `<a class="btn sm wa" href="https://wa.me/${digits}?text=${encodeURIComponent(text)}" target="_blank" rel="noopener">راسل البائع واتساب</a>`;
+  }
   function sellerPhone(l) { return l.identity_version === 1 ? phoneHtml(l.phone) : '<span class="small">بانتظار إعادة فحص بيانات البائع</span>'; }
   function stageSelect(l) { const st = mark(l.id).status || "new"; return `<select data-stage="${esc(l.id)}" aria-label="مرحلة المتابعة">${STAGES.map((s) => `<option value="${s.k}"${st === s.k ? " selected" : ""}>${s.t}</option>`).join("")}</select>`; }
   const EMIRATE_FROM_TEXT = [["dubai", "دبي"], ["abu-dhabi", "أبوظبي"], ["abu dhabi", "أبوظبي"], ["abudhabi", "أبوظبي"], ["al ain", "أبوظبي"], ["sharjah", "الشارقة"],
@@ -763,7 +783,8 @@ body { font-family:"Inter","Cairo",sans-serif; font-weight:500; text-rendering:o
     const phone = l.identity_version === 1 && l.phone ? phoneHtml(l.phone) : "";
     return `<div class="card-lines"><div class="where">📍 <b>${esc(em || "الإمارة غير مذكورة")}</b></div>
       <div class="meta">${bits.join(" · ")}</div>
-      ${seller || phone ? `<div class="meta">${esc(seller)}${seller && phone ? " · " : ""}${phone}</div>` : ""}
+      ${seller || phone ? `<div class="meta">${esc(seller)}${seller && phone ? " · " : ""}${phone} ${waLink(l)}</div>` : ""}
+      ${cautionLines(l).map((x) => `<div class="meta caution">${x}</div>`).join("")}
       ${["high", "medium"].includes(l.urgency?.level) ? `<div class="meta">استعجال البائع: <span class="urg-${l.urgency.level}">${URG[l.urgency.level]}</span></div>` : ""}</div>`;
   }
   function facts(l) {
@@ -771,7 +792,8 @@ body { font-family:"Inter","Cairo",sans-serif; font-weight:500; text-rendering:o
     const rows = [["الممشى", l.mileage ? `<span class="num">${fmt(l.mileage)}</span> كم` : "—"], ["اللون", esc(l.color || "—")],
       ["الموقع", esc([l.emirate, (l.location || "").split(",")[0]].filter((x, i, a) => x && a.indexOf(x) === i).join(" – ") || "—")],
       ["التاريخ", `${DATE_KIND[dateKind(l)]} <span class="num">${dmy(adDate(l))}</span>`], ["البائع", esc(seller || "—")],
-      ["استعجال البائع", urgencyHtml(l)], ["رقم الشاصي VIN", vinHtml(l)], ["هاتف البائع", sellerPhone(l)]];
+      ["استعجال البائع", urgencyHtml(l)], ["المواصفات", esc(SPEC_AR[l.spec] || "غير مذكورة")], ["تنبيهات", cautionLines(l).join("<br>") || "لا شيء مذكور"],
+      ["رقم الشاصي VIN", vinHtml(l)], ["هاتف البائع", sellerPhone(l) + " " + waLink(l)]];
     return `<dl class="facts">${rows.map(([k, v]) => `<dt>${k}</dt><dd>${v}</dd>`).join("")}</dl>`;
   }
 
@@ -861,6 +883,8 @@ body { font-family:"Inter","Cairo",sans-serif; font-weight:500; text-rendering:o
         ${line("الممشى", (l) => l.mileage ? `<span class="num">${fmt(l.mileage)}</span> كم` : "—", minBy("mileage"))}
         ${line("الممشى لكل سنة", (l) => l.mileage ? `<span class="num">${fmt(Math.round(l.mileage / age(l)))}</span> كم` : "—")}
         ${line("اللون", (l) => esc(l.color || "—"))}
+        ${line("المواصفات", (l) => esc(SPEC_AR[l.spec] || "غير مذكورة"))}
+        ${line("تنبيهات", (l) => cautionLines(l).join("<br>") || "لا شيء مذكور")}
         ${line("الموقع", (l) => esc(l.emirate || (l.location || "").split(",")[0] || "—"))}
         ${line("البائع", (l) => esc([SELLER[l.seller_type], l.seller_name].filter(Boolean).join(" · ") || "—"))}
         ${line("التاريخ", (l) => `${DATE_KIND[dateKind(l)]} <span class="num">${dmy(adDate(l))}</span>`)}
@@ -868,7 +892,7 @@ body { font-family:"Inter","Cairo",sans-serif; font-weight:500; text-rendering:o
         ${line("تغيّر السعر", (l) => (l.price_history || []).length > 1 ? (l.price_history || []).map((h) => fmt(h.price)).join(" ← ") : "لم يتغيّر")}
         ${line("درجة التأكد", (l) => isMatch(l) ? '<span class="pill good">مطابقة</span>' : isNoDate(l) ? '<span class="pill">تاريخ النشر يحتاج تأكيدًا</span>' : `<span class="pill warn">تحتاج تأكيدًا</span><div class="small">${esc(l.note || "")}</div>`)}
         ${line("رقم الشاصي VIN", (l) => vinHtml(l))}
-        ${line("هاتف البائع", (l) => sellerPhone(l))}
+        ${line("هاتف البائع", (l) => sellerPhone(l) + " " + waLink(l))}
         ${line("", (l) => `<a class="btn sm" href="${esc(l.url)}" target="_blank" rel="noopener">فتح الإعلان ↗</a> <button type="button" class="sm ghost" data-unpick="${esc(l.id)}">إزالة</button>`)}
         </tbody></table></div>`;
   }

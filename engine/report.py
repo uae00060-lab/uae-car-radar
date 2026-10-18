@@ -9,6 +9,7 @@ import subprocess
 
 from analytics import RATING_AR, URGENCY_AR
 from common import DATE_KIND_AR, PLATFORMS, SELLER_AR
+from condition import SPEC_AR
 
 AR_DAYS = ["الاثنين", "الثلاثاء", "الأربعاء", "الخميس", "الجمعة", "السبت", "الأحد"]
 TITLE_NOISE = re.compile(
@@ -147,6 +148,8 @@ def summary_text(run, groups, drops, now, start, link, short=False):
             if not short:
                 lines.append(f"   VIN: {l.get('vin') if l.get('identity_version') == 1 and l.get('vin') else 'غير متوفر كاملًا'}")
                 lines.append(f"   👤 {kind}{' – ' + name if name else ''} · 📞 {(l.get('phone') if l.get('identity_version') == 1 else None) or 'غير منشور بوضوح'}")
+            for note in caution_notes(l):
+                lines.append(f"   ⚠️ {note}")
             lines.append(f"   🔗 {l['url']}")
             for d in l.get("duplicates") or []:
                 lines.append(f"   ↔ نفس السيارة على {PLATFORMS[d['platform']]['name']} بسعر {d['price']:,} درهم: {d['url']}")
@@ -155,6 +158,12 @@ def summary_text(run, groups, drops, now, start, link, short=False):
         lines.append("")
     lines.append(f"اللوحة: {link}")
     return "\n".join(lines).strip() + "\n"
+
+
+def caution_notes(l):
+    """What the ad itself says against the car, and where its chassis number disagrees with it."""
+    notes = [f"يذكر الإعلان: {f['label']} («{f['word']}»)" for f in l.get("flags") or []]
+    return notes + list(l.get("vin_check") or [])
 
 
 def drop_alert_text(drops, link):
@@ -184,6 +193,10 @@ def render_html(run, groups, drops, now, start, profile, platforms_used):
             tags += f"<span class='tag down'>انخفض من {l['price_prev']:,}</span>"
         elif l.get("price_prev") and l.get("price") and l["price"] > l["price_prev"]:
             tags += f"<span class='tag up'>ارتفع من {l['price_prev']:,}</span>"
+        if l.get("spec"):
+            tags += f"<span class='tag{'' if l['spec'] == 'gcc' else ' up'}'>{e(SPEC_AR.get(l['spec'], 'وارد'))}</span>"
+        for note in caution_notes(l):
+            tags += f"<span class='tag up'>⚠ {e(note)}</span>"
         for d in l.get("duplicates") or []:
             tags += f"<span class='tag'>أيضًا على {e(PLATFORMS[d['platform']]['name'])} بسعر {d['price']:,}</span>"
         em, area = place(l)
