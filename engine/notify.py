@@ -134,13 +134,21 @@ def delivery_problem(result):
     return ("تعذّر إرسال التقرير عبر: " + "، ".join(failed)) if failed else ""
 
 
+REQUIRED = {"telegram": ("TELEGRAM_BOT_TOKEN", "TELEGRAM_CHAT_ID"), "whatsapp": ("CALLMEBOT_PHONE", "CALLMEBOT_APIKEY"),
+            "email": ("SMTP_USER", "SMTP_PASSWORD")}
+
+
 def report_test(result):
     """Per-channel outcome of a test message as GitHub annotations and job summary; 1 if not all good."""
     names = {"telegram": "تيليجرام", "whatsapp": "واتساب", "email": "البريد"}
-    lines = [f"{names[k]}: {v}" for k, v in result.items()]
+    lines = []
     for k, v in result.items():
         level = "notice" if v == SENT else "warning" if v == OFF else "error"
+        missing = [n for n in REQUIRED[k] if not (env(n) or "").strip()]
+        if v == OFF and missing:
+            v = f"{v}: لا يصل للخادم {' و'.join(missing)}"
         print(f"::{level} title={names[k]}::{v}")
+        lines.append(f"{names[k]}: {v}")
     summary = env("GITHUB_STEP_SUMMARY")
     if summary:
         with open(summary, "a", encoding="utf-8") as f:
