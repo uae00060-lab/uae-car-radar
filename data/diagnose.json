@@ -1,5 +1,5 @@
 {
- "at": "2026-10-18T22:18:51+04:00",
+ "at": "2026-10-18T22:21:13+04:00",
  "probe": "Toyota Yaris",
  "platforms": {
   "dubizzle": {
@@ -44,7 +44,8 @@
        "transmission": "Automatic",
        "km": "75050",
        "price": "16000",
-       "specs": "American",
+       "specs": "American Specs",
+       "location": "Sharjah",
        "phone": "+971 50 123 4567"
       },
       "lines": [
@@ -105,6 +106,10 @@
        "ld:mileageFromOdometer"
       ],
       [
+       "location",
+       "label"
+      ],
+      [
        "phone",
        "tel"
       ],
@@ -114,7 +119,7 @@
       ],
       [
        "specs",
-       "text"
+       "label"
       ],
       [
        "title",
@@ -134,7 +139,7 @@
       "year": true,
       "km": true,
       "date": true,
-      "phone": true,
+      "phone": false,
       "image": true,
       "color": true,
       "emirate": true
@@ -155,8 +160,9 @@
        "transmission": "Automatic",
        "km": "77000",
        "price": "29500",
+       "specs": "GCC Specs",
+       "location": "Dubai",
        "updated": "on:",
-       "specs": "GCC",
        "seller_type": "owner",
        "phone": "0555256720"
       },
@@ -218,6 +224,10 @@
        "ld:mileageFromOdometer"
       ],
       [
+       "location",
+       "label"
+      ],
+      [
        "phone",
        "tel"
       ],
@@ -231,7 +241,7 @@
       ],
       [
        "specs",
-       "text"
+       "label"
       ],
       [
        "title",
@@ -265,16 +275,259 @@
   },
   "dubicars": {
    "pages": 1,
-   "ok": 0,
-   "blocked": 1,
-   "cards": 0,
+   "ok": 1,
+   "blocked": 0,
+   "cards": 30,
    "via_search": 0,
    "status": [
-    403
+    200
    ],
-   "card_sources": [],
-   "cards_with_price": 0,
-   "ad_reads": []
+   "card_sources": [
+    "json"
+   ],
+   "cards_with_price": 30,
+   "ad_reads": [
+    {
+     "status": "ok",
+     "debug": {
+      "status": 200,
+      "final": "https://www.dubicars.com/2019-toyota-yaris-2019-aed-487month-0-dp-30-day-return-warranty-service-history-1036097.html",
+      "bytes": 349789,
+      "sold_hit": "d \n Report this car\n Email: \n Report reason: \n -- Select -- Car is sold Calls are not answered Car specifications are wrong Car ima",
+      "values": {
+       "title": "Toyota Yaris SE 2019 | AED 487/Month | 0 DP | 30 Day Return | Warranty | Service",
+       "year": "2019",
+       "image": "https://www.dubicars.com/images/aedd40/960x540/cars24/69f7dca5-ed69-453a-b4ab-b8",
+       "price": "8719",
+       "km": "90684",
+       "color": "White",
+       "transmission": "Automatic",
+       "specs": "GCC",
+       "location": "Dubai",
+       "posted": "by",
+       "seller_type": "Showroom"
+      },
+      "lines": [
+       "Used Toyota Yaris 2019 | AED 487/Month | 0 DP | 30 Day Return | Warranty | Service History 2019 for sale in Dubai - 1036",
+       "AED",
+       "AED",
+       "AED",
+       "Toyota Yaris SE 2019 | AED 487/Month | 0 DP | 30 Day Return | Warranty | Service History",
+       "90,684 Km",
+       "Toyota Yaris SE 2019 | AED 487/Month | 0 DP | 30 Day Return | Warranty | Service History",
+       "Toyota Yaris SE 2019 | AED 487/Month | 0 DP | 30 Day Return | Warranty | Service History",
+       "90,684 Kms",
+       "Model year",
+       "Kilometers",
+       "90,684 Kms",
+       "2019 Toyota Yaris SE | 90,684 km | AED 487/month | Zero Down Payment | Warranty",
+       "💰 AED 31,999 (+ AED 3,000 Convenience Fee)",
+       "💳 Car Finance: AED 487/month in easy monthly installments, Zero Down Payment option through our partner banks",
+       "🔧 22 Oct 2025 | Non - Agency Service Center | 80,142 km",
+       "⚙️ Body: Sedan | Engine: 1.5L 4-cylinder | Drive: Front Wheel Drive | Fuel economy: 17.5 km/l",
+       "5.1 L/100km official combined fuel economy",
+       "Is there a problem with this ad? Dealer information Posted by",
+       "97K Km",
+       "75K Km",
+       "51K Km",
+       "87K Km",
+       "79K Km",
+       "51K Km",
+       "84K Km",
+       "74K Km",
+       "0 Km",
+       "0 Km",
+       "93.4K Km",
+       "43.4K Km",
+       "Used Toyota Yaris by Year",
+       "-- Select -- Car is sold Calls are not answered Car specifications are wrong Car images are incorrect Price is not accur",
+       "2019 Toyota Yaris SE | 90,684 km | AED 487/month | Zero Down Payment | Warranty",
+       "💰 AED 31,999 (+ AED 3,000 Convenience Fee)",
+       "💳 Car Finance: AED 487/month in easy monthly installments, Zero Down Payment option through our partner banks",
+       "🔧 22 Oct 2025 | Non - Agency Service Center | 80,142 km",
+       "⚙️ Body: Sedan | Engine: 1.5L 4-cylinder | Drive: Front Wheel Drive | Fuel economy: 17.5 km/l",
+       "5.1 L/100km official combined fuel economy"
+      ]
+     },
+     "url": "https://www.dubicars.com/2019-toyota-yaris-2019-aed-487month-0-dp-30-day-return-warranty-service-history-1036097.html",
+     "found": [
+      [
+       "color",
+       "ld:color"
+      ],
+      [
+       "image",
+       "ld:image"
+      ],
+      [
+       "km",
+       "ld:mileageFromOdometer"
+      ],
+      [
+       "location",
+       "label"
+      ],
+      [
+       "posted",
+       "text"
+      ],
+      [
+       "price",
+       "ld:price"
+      ],
+      [
+       "seller_type",
+       "text"
+      ],
+      [
+       "specs",
+       "label"
+      ],
+      [
+       "title",
+       "ld:name"
+      ],
+      [
+       "transmission",
+       "ld:vehicleTransmission"
+      ],
+      [
+       "year",
+       "ld:vehicleModelDate"
+      ]
+     ],
+     "has": {
+      "price": true,
+      "year": true,
+      "km": true,
+      "date": false,
+      "phone": false,
+      "image": true,
+      "color": true,
+      "emirate": true
+     }
+    },
+    {
+     "status": "ok",
+     "debug": {
+      "status": 200,
+      "final": "https://www.dubicars.com/2024-toyota-yaris-2023-by-agmc-gcc-specs-full-service-history-1024103.html",
+      "bytes": 393103,
+      "sold_hit": "d \n Report this car\n Email: \n Report reason: \n -- Select -- Car is sold Calls are not answered Car specifications are wrong Car ima",
+      "values": {
+       "title": "Toyota Yaris E | 2023 | BY AGMC | GCC Specs | Full-service History",
+       "year": "2024",
+       "image": "https://www.dubicars.com/images/fba2a1/960x540/agmc/a5595f13-dd8a-4756-b619-a78f",
+       "price": "10500",
+       "km": "75400",
+       "color": "White",
+       "transmission": "Automatic",
+       "specs": "GCC",
+       "location": "Dubai",
+       "posted": "by",
+       "updated": "safety tech that older, lower-mileage un",
+       "seller_type": "Showroom",
+       "phone": "+971508254454"
+      },
+      "lines": [
+       "AED",
+       "AED",
+       "AED",
+       "75,400 Km",
+       "75,400 Kms",
+       "Model year",
+       "Kilometers",
+       "75,400 Kms",
+       "• Model Year: 2023",
+       "• 75,400 Km",
+       "Is there a problem with this ad? Dealer information Posted by",
+       "90.6K Km",
+       "48K Km",
+       "75K Km",
+       "57.5K Km",
+       "51K Km",
+       "74K Km",
+       "79K Km",
+       "51K Km",
+       "0 Km",
+       "159K Km",
+       "230K Km",
+       "125K Km",
+       "230.5K Km",
+       "87K Km",
+       "Used Toyota Yaris by Year",
+       "-- Select -- Car is sold Calls are not answered Car specifications are wrong Car images are incorrect Price is not accur",
+       "• Model Year: 2023",
+       "• 75,400 Km"
+      ]
+     },
+     "url": "https://www.dubicars.com/2024-toyota-yaris-2023-by-agmc-gcc-specs-full-service-history-1024103.html",
+     "found": [
+      [
+       "color",
+       "ld:color"
+      ],
+      [
+       "image",
+       "ld:image"
+      ],
+      [
+       "km",
+       "ld:mileageFromOdometer"
+      ],
+      [
+       "location",
+       "label"
+      ],
+      [
+       "phone",
+       "tel"
+      ],
+      [
+       "posted",
+       "text"
+      ],
+      [
+       "price",
+       "ld:price"
+      ],
+      [
+       "seller_type",
+       "text"
+      ],
+      [
+       "specs",
+       "label"
+      ],
+      [
+       "title",
+       "ld:name"
+      ],
+      [
+       "transmission",
+       "ld:vehicleTransmission"
+      ],
+      [
+       "updated",
+       "text"
+      ],
+      [
+       "year",
+       "ld:vehicleModelDate"
+      ]
+     ],
+     "has": {
+      "price": true,
+      "year": true,
+      "km": true,
+      "date": false,
+      "phone": true,
+      "image": true,
+      "color": true,
+      "emirate": true
+     }
+    }
+   ]
   },
   "carswitch": {
    "pages": 1,
@@ -305,8 +558,8 @@
        "color": "Gray",
        "transmission": "Automatic",
        "price": "29000",
+       "specs": "GCC specs",
        "inspected": "& certified",
-       "specs": "GCC",
        "seller_type": "owner",
        "phone": "+971 4 506 1300"
       },
@@ -385,7 +638,7 @@
       ],
       [
        "specs",
-       "text"
+       "label"
       ],
       [
        "title",
@@ -405,7 +658,7 @@
       "year": true,
       "km": true,
       "date": false,
-      "phone": true,
+      "phone": false,
       "image": true,
       "color": true,
       "emirate": true
@@ -426,8 +679,8 @@
        "color": "White",
        "transmission": "Automatic",
        "price": "38500",
+       "specs": "GCC specs",
        "inspected": "& certified",
-       "specs": "GCC",
        "seller_type": "owner",
        "phone": "+971 4 506 1300"
       },
@@ -506,7 +759,7 @@
       ],
       [
        "specs",
-       "text"
+       "label"
       ],
       [
        "title",
@@ -526,7 +779,7 @@
       "year": true,
       "km": true,
       "date": false,
-      "phone": true,
+      "phone": false,
       "image": true,
       "color": true,
       "emirate": true
@@ -553,15 +806,16 @@
      "debug": {
       "status": 200,
       "final": "https://ae.opensooq.com/en/search/288806664",
-      "bytes": 941751,
+      "bytes": 941928,
       "sold_hit": null,
       "values": {
        "title": "تويوتا يارس موديل 2023 خليجي",
        "price": "37000",
        "image": "https://opensooq-imagesv2.os-cdn.com/previews/1024x0/bc/3b/bc3bddc081f57ea65bd96",
-       "color": "Hair Extensions and",
-       "posted": "Date",
        "transmission": "Automatic",
+       "color": "White",
+       "location": "Sharjah",
+       "posted": "18-10-2026",
        "seller_type": "owner"
       },
       "lines": [
@@ -580,15 +834,19 @@
      "found": [
       [
        "color",
-       "text"
+       "label"
       ],
       [
        "image",
        "meta:og:image"
       ],
       [
+       "location",
+       "label"
+      ],
+      [
        "posted",
-       "text"
+       "label"
       ],
       [
        "price",
@@ -604,18 +862,18 @@
       ],
       [
        "transmission",
-       "text"
+       "label"
       ]
      ],
      "has": {
       "price": true,
       "year": true,
       "km": false,
-      "date": false,
+      "date": true,
       "phone": false,
       "image": true,
-      "color": false,
-      "emirate": false
+      "color": true,
+      "emirate": true
      }
     },
     {
@@ -623,16 +881,17 @@
      "debug": {
       "status": 200,
       "final": "https://ae.opensooq.com/en/search/288804462",
-      "bytes": 941993,
+      "bytes": 942227,
       "sold_hit": null,
       "values": {
        "title": "فرصة للبيع  تويوتا يارس 2023 خليجي  57 ألف كم  فحص ممتاز",
        "price": "37000",
        "image": "https://opensooq-imagesv2.os-cdn.com/previews/1024x0/fb/37/fb3720fcab6be0dc9c497",
-       "km": "57,245",
-       "color": "Hair Extensions and",
-       "posted": "Date",
        "transmission": "Automatic",
+       "color": "White",
+       "location": "Sharjah",
+       "posted": "18-10-2026",
+       "km": "57,245",
        "seller_type": "owner"
       },
       "lines": [
@@ -657,7 +916,7 @@
      "found": [
       [
        "color",
-       "text"
+       "label"
       ],
       [
        "image",
@@ -668,8 +927,12 @@
        "text"
       ],
       [
+       "location",
+       "label"
+      ],
+      [
        "posted",
-       "text"
+       "label"
       ],
       [
        "price",
@@ -685,18 +948,18 @@
       ],
       [
        "transmission",
-       "text"
+       "label"
       ]
      ],
      "has": {
       "price": true,
       "year": true,
       "km": true,
-      "date": false,
+      "date": true,
       "phone": false,
       "image": true,
-      "color": false,
-      "emirate": false
+      "color": true,
+      "emirate": true
      }
     }
    ]
@@ -739,7 +1002,10 @@
        "title": "Toyota Yaris IV (AC100), 2026",
        "image": "https://auto-ae-prod-storage.storage.googleapis.com/auto_dubai_toyota_yaris_sale",
        "price": "57000",
-       "color": "Ownership",
+       "year": "105 hp",
+       "specs": "Sedan",
+       "transmission": "White / Beige",
+       "km": "New",
        "seller_type": "Showroom",
        "phone": "+971585870922"
       },
@@ -782,12 +1048,12 @@
      "url": "https://auto.ae/dubai/sale/car/toyota/toyota-yaris-iv-ac100-2026/id/284340/",
      "found": [
       [
-       "color",
-       "text"
-      ],
-      [
        "image",
        "ld:image"
+      ],
+      [
+       "km",
+       "label"
       ],
       [
        "phone",
@@ -802,13 +1068,25 @@
        "text"
       ],
       [
+       "specs",
+       "label"
+      ],
+      [
        "title",
        "ld:name"
+      ],
+      [
+       "transmission",
+       "label"
+      ],
+      [
+       "year",
+       "label"
       ]
      ],
      "has": {
       "price": true,
-      "year": true,
+      "year": false,
       "km": false,
       "date": false,
       "phone": true,
@@ -828,8 +1106,9 @@
        "title": "Toyota Yaris IV Facelift, 2026",
        "image": "https://auto-ae-prod-storage.storage.googleapis.com/auto_dubai_toyota_yaris_sale",
        "price": "199500",
-       "color": "Ownership",
-       "transmission": "Automatic",
+       "year": "280 hp",
+       "specs": "Hatchback 3 dr. GR",
+       "transmission": "Grey / Black",
        "seller_type": "Showroom",
        "phone": "+971566455550"
       },
@@ -853,10 +1132,6 @@
      "url": "https://auto.ae/dubai/sale/car/toyota/toyota-yaris-iv-facelift-2026/id/287836/",
      "found": [
       [
-       "color",
-       "text"
-      ],
-      [
        "image",
        "ld:image"
       ],
@@ -873,17 +1148,25 @@
        "text"
       ],
       [
+       "specs",
+       "label"
+      ],
+      [
        "title",
        "ld:name"
       ],
       [
        "transmission",
-       "text"
+       "label"
+      ],
+      [
+       "year",
+       "label"
       ]
      ],
      "has": {
       "price": true,
-      "year": true,
+      "year": false,
       "km": false,
       "date": false,
       "phone": true,
@@ -920,8 +1203,9 @@
       "values": {
        "title": "Buy and Drive the Toyota Yaris Sedan 2019 in Dubai",
        "image": "https://static.oneclickdrive.com/uploads/car_sale/user_uploads/275662/1878/img_T",
-       "km": "144,000",
+       "location": "Country",
        "year": "2019",
+       "km": "144,000 km",
        "color": "White",
        "inspected": "and payment is made, the transfer of own",
        "specs": "GCC",
@@ -965,7 +1249,11 @@
       ],
       [
        "km",
-       "text"
+       "label"
+      ],
+      [
+       "location",
+       "label"
       ],
       [
        "phone",
@@ -985,7 +1273,7 @@
       ],
       [
        "year",
-       "text"
+       "label"
       ]
      ],
      "has": {
@@ -1009,8 +1297,10 @@
       "values": {
        "title": "Buy and Drive the Toyota Yaris E 2021 in Dubai",
        "image": "https://static.oneclickdrive.com/uploads/Toyota-Yaris-E_877974_2192177838728-1_t",
-       "km": "165,963",
+       "location": "Country",
+       "seller": "Seating Capacity",
        "year": "2021",
+       "km": "165,963 km",
        "color": "White",
        "updated": "on 16 Oct, 2026",
        "inspected": "and quality-checked by Wasel Auto Repair",
@@ -1060,11 +1350,19 @@
       ],
       [
        "km",
-       "text"
+       "label"
+      ],
+      [
+       "location",
+       "label"
       ],
       [
        "phone",
        "tel"
+      ],
+      [
+       "seller",
+       "label"
       ],
       [
        "seller_type",
@@ -1084,7 +1382,7 @@
       ],
       [
        "year",
-       "text"
+       "label"
       ]
      ],
      "has": {
@@ -1100,14 +1398,14 @@
     }
    ]
   },
-  "_samples": 107,
+  "_samples": 137,
   "_search": {
    "dubizzle": {
-    "query": "site:uae.dubizzle.com/motors toyota yaris used",
+    "query": "site:uae.dubizzle.com/motors/used-cars/toyota/yaris toyota yaris",
     "ddg": {
      "status": 202,
      "blocked": false,
-     "bytes": 14419,
+     "bytes": 14449,
      "result_a": 0,
      "b_algo": 0,
      "head": " --> DuckDuckGo DuckDuckGo Unfortunately, bots use DuckDuckGo too. Please complete the following challenge to confirm this search was made by a human. Select all squares containing a duck: Submit Imag"
@@ -1115,19 +1413,20 @@
     "bing": {
      "status": 200,
      "blocked": false,
-     "bytes": 124938,
+     "bytes": 98067,
      "result_a": 0,
-     "b_algo": 7,
-     "head": " \"use strict\";// site:uae.dubizzle.com/motors toyota yaris used - Search // 2&&a.substring(0,3)===\"IG=\")){ig='IG='+_G.IG;}if(document.images){_G.GPImg=new Image;_G.GPImg.src=_G.gpUrl+ig+'&'+a;}return "
+     "b_algo": 0,
+     "head": " \"use strict\";// site:uae.dubizzle.com/motors/used-cars/toyota/yaris toyota yaris - Search // 2&&a.substring(0,3)===\"IG=\")){ig='IG='+_G.IG;}if(document.images){_G.GPImg=new Image;_G.GPImg.src=_G.gpUrl"
     },
-    "links": 7
+    "links": 0,
+    "sample": []
    },
    "mourjan": {
     "query": "site:mourjan.com toyota yaris used",
     "ddg": {
      "status": 202,
      "blocked": false,
-     "bytes": 14389,
+     "bytes": 14395,
      "result_a": 0,
      "b_algo": 0,
      "head": " --> DuckDuckGo DuckDuckGo Unfortunately, bots use DuckDuckGo too. Please complete the following challenge to confirm this search was made by a human. Select all squares containing a duck: Submit Imag"
@@ -1135,12 +1434,13 @@
     "bing": {
      "status": 200,
      "blocked": false,
-     "bytes": 124522,
+     "bytes": 97035,
      "result_a": 0,
-     "b_algo": 7,
+     "b_algo": 0,
      "head": " \"use strict\";// site:mourjan.com toyota yaris used - Search // 2&&a.substring(0,3)===\"IG=\")){ig='IG='+_G.IG;}if(document.images){_G.GPImg=new Image;_G.GPImg.src=_G.gpUrl+ig+'&'+a;}return true;}_G.BAT"
     },
-    "links": 7
+    "links": 0,
+    "sample": []
    }
   },
   "_dubizzle_page": {
