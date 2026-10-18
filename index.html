@@ -802,7 +802,7 @@ body { font-family:"Inter","Cairo",sans-serif; font-weight:500; text-rendering:o
       <div><a class="title" href="${esc(l.url)}" target="_blank" rel="noopener">${esc(carName(l))}</a><div class="var">${esc(l.title || "")}</div></div>
       <div class="priceline"><span class="price">${l.price ? fmt(l.price) + " <small>درهم</small>" : ""}</span>${l.price_prev && l.price_prev !== l.price ? `<span class="price-prev num">${fmt(l.price_prev)}</span>` : ""}${l.year ? `<span class="plate">${l.year}</span>` : ""}</div>
       ${statusHtml(l)}${verdict(l)}${cardLines(l)}
-      ${(l.state === "unverified" || isNoDate(l)) && l.note ? `<div class="note">${esc(l.note)}</div>` : ""}
+      ${(l.state === "unverified" || isNoDate(l)) && l.note ? `<div class="note">${esc(isNoDate(l) ? "المواصفات متوافقة؛ تاريخ النشر يحتاج تأكيدًا." : l.note)}</div>` : ""}
       ${(l.dup_version === 2 ? (l.duplicates || []) : []).map((d) => `<div class="small dup">نفس السيارة على ${esc(PLATFORMS[d.platform] || d.platform)} بسعر <span class="num">${fmt(d.price)}</span> درهم · <a href="${esc(d.url)}" target="_blank" rel="noopener">فتح</a></div>`).join("")}
       <div class="foot">${stageSelect(l)}<label class="cmp-toggle"><input type="checkbox" data-pick="${esc(l.id)}"${S.pick.includes(l.id) ? " checked" : ""}> قارن</label><a class="btn sm" href="${esc(l.url)}" target="_blank" rel="noopener">فتح الإعلان ↗</a></div>
     </div></article>`).join("");
