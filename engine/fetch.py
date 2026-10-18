@@ -123,24 +123,32 @@ def search_debug(query):
         out[name] = {"status": p.status, "blocked": p.blocked, "bytes": len(p.html),
                      "result_a": p.html.count('class="result__a"'), "b_algo": p.html.count('class="b_algo"'),
                      "head": re.sub(r"\s+", " ", re.sub(r"<[^>]+>", " ", p.html))[:200]}
-    out["links"] = len(search_links(query))
+    links = search_links(query)
+    out["links"] = len(links)
+    out["sample"] = [u for u, _ in links[:12]]
     return out
 
 
-def search_links(query, limit=30):
-    """Result links from DuckDuckGo's HTML endpoint, then Bing. Returns [(url, title)]."""
+def search_links(query, limit=40):
+    """Result links from Bing (two pages), then DuckDuckGo. Returns [(url, title)]."""
     out = []
-    p = get("https://html.duckduckgo.com/html/?" + urllib.parse.urlencode({"q": query, "kl": "ae-en"}), retries=0)
-    if p.ok:
-        for m in re.finditer(r'class="result__a"[^>]*href="([^"]+)"[^>]*>(.*?)</a>', p.html, re.S):
-            href = unescape(m[1])
-            q = urllib.parse.parse_qs(urllib.parse.urlparse(href).query).get("uddg")
-            out.append((q[0] if q else href, re.sub(r"<[^>]+>", "", unescape(m[2])).strip()))
+    for first in (1, 11, 21):
+        p = get("https://www.bing.com/search?" + urllib.parse.urlencode({"q": query, "first": first, "setlang": "en", "cc": "AE"}), retries=0)
+        if not p.ok:
+            break
+        got = 0
+        for m in re.finditer(r'<li class="b_algo".*?<h2[^>]*>\s*<a[^>]+href="(https?://[^"]+)"[^>]*>(.*?)</a>', p.html, re.S):
+            out.append((unescape(m[1]), re.sub(r"<[^>]+>", "", unescape(m[2])).strip()))
+            got += 1
+        if got < 5:
+            break
     if len(out) < 3:
-        p = get("https://www.bing.com/search?" + urllib.parse.urlencode({"q": query, "count": "50", "setlang": "en"}), retries=0)
+        p = get("https://html.duckduckgo.com/html/?" + urllib.parse.urlencode({"q": query, "kl": "ae-en"}), retries=0)
         if p.ok:
-            for m in re.finditer(r'<li class="b_algo".*?<h2[^>]*>\s*<a[^>]+href="(https?://[^"]+)"[^>]*>(.*?)</a>', p.html, re.S):
-                out.append((unescape(m[1]), re.sub(r"<[^>]+>", "", unescape(m[2])).strip()))
+            for m in re.finditer(r'class="result__a"[^>]*href="([^"]+)"[^>]*>(.*?)</a>', p.html, re.S):
+                href = unescape(m[1])
+                q = urllib.parse.parse_qs(urllib.parse.urlparse(href).query).get("uddg")
+                out.append((q[0] if q else href, re.sub(r"<[^>]+>", "", unescape(m[2])).strip()))
     seen, uniq = set(), []
     for u, t in out:
         if u not in seen:

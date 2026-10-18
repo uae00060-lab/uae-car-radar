@@ -39,6 +39,8 @@ REPORTS_DIR = os.path.join(ROOT, "reports")
 WORK = os.path.join(ROOT, ".work")
 SITE = os.environ.get("RADAR_SITE") or "https://uae00060-lab.github.io/uae-car-radar/"
 
+PLACEHOLDER_PHONES = ("1234567", "0000000", "1111111", "9999999")
+PLATFORM_PHONES = ("45061300",)  # CarSwitch head office, shown on every ad
 MAX_OPEN = {"scheduled": 70, "manual": 45, "watch": 40}
 RECHECK_HOURS = 10      # saved ads are re-read at most twice a day
 SKIP_DAYS = 7           # an ad that did not match is looked at again after a week
@@ -85,14 +87,23 @@ def search_urls(plat, req, market=False):
     return []
 
 
-def search_query(plat, req):
-    host = {"dubizzle": "uae.dubizzle.com/motors", "yallamotor": "uae.yallamotor.com", "dubicars": "dubicars.com",
-            "carswitch": "carswitch.com/uae", "autoae": "auto.ae", "oneclickdrive": "oneclickdrive.com",
+def search_queries(plat, req):
+    """Search-engine queries that land on individual ads of this platform."""
+    make, model = slug(req.get("make")), slug(req.get("model"))
+    words = f"{make} {model}".replace("-", " ").strip()
+    years = []
+    if req.get("year_from") and req.get("year_to") and int(req["year_to"]) - int(req["year_from"]) <= 4:
+        years = [str(y) for y in range(int(req["year_from"]), int(req["year_to"]) + 1)]
+    site = {"dubizzle": f"uae.dubizzle.com/motors/used-cars/{make}/{model}", "yallamotor": f"uae.yallamotor.com/used-cars/{make}/{model}",
+            "dubicars": "dubicars.com", "carswitch": "carswitch.com", "autoae": "auto.ae", "oneclickdrive": "oneclickdrive.com",
             "opensooq": "ae.opensooq.com", "mourjan": "mourjan.com"}[plat]
-    years = ""
-    if req.get("year_from") and req.get("year_to") and int(req["year_to"]) - int(req["year_from"]) <= 3:
-        years = " (" + " OR ".join(str(y) for y in range(int(req["year_from"]), int(req["year_to"]) + 1)) + ")"
-    return f"site:{host} {slug(req.get('make'))} {slug(req.get('model'))} used{years}".replace("-", " ")
+    qs = [f"site:{site} {words}" + (" used" if plat in ("dubicars", "opensooq", "mourjan") else "")]
+    qs += [f"site:{site} {words} {y}" for y in years[:3]]
+    return qs
+
+
+def search_query(plat, req):
+    return search_queries(plat, req)[0]
 
 
 def card_ok(req, c):
@@ -134,7 +145,8 @@ def discover(req, plats, diag):
                     cards[key] = c
                     got += 1
         if got == 0:  # results page blocked or unreadable: find ad links through a search engine
-            for link, title in fetch.search_links(search_query(plat, req)):
+            links = [x for q in search_queries(plat, req) for x in fetch.search_links(q)]
+            for link, title in links:
                 p, ad_id = ad_identity(link)
                 if p == plat and ad_id:
                     key = f"{plat}-{ad_id}"
@@ -215,6 +227,8 @@ def read_ad(item, today, debug=None):
             date, kind = d, "inspected"
     phone = g("phone")
     phone = str(phone).strip() if phone and len(re.sub(r"\D", "", str(phone))) >= 8 else None
+    if phone and (re.sub(r"\D", "", phone)[-7:] in PLACEHOLDER_PHONES or re.sub(r"\D", "", phone).endswith(PLATFORM_PHONES)):
+        phone = None  # a sample number in the page template, or the platform's own office line
     return "ok", {
         "title": str(g("title") or item.get("title") or "")[:160], "price": price, "year": year, "km": km,
         "color": color_of(str(g("color") or "")), "emirate": emirate_of(" ".join(str(x or "") for x in (loc, g("title"), item["url"]))),

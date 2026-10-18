@@ -57,7 +57,7 @@ PAGES = {
                                            (32000, 2021, 70000), (29500, 2021, 100000), (34000, 2022, 50000), (27500, 2020, 140000)], 1)]}}) + '</script>',
     "https://uae.yallamotor.com/used-cars/toyota/yaris": f'<a href="{YM}">Toyota Yaris 2021 AED 29,500 77,000 km</a>',
     "https://www.dubicars.com/uae/used/toyota/yaris": f'<a href="{DC}">2021 Toyota Yaris AED 29,500 77,000 km</a>',
-    "https://uae.dubizzle.com" + DZ1: ld_ad("Toyota Yaris 2022 GCC Specs", 26500, 2022, 132000, d(10), phone="+971501234567"),
+    "https://uae.dubizzle.com" + DZ1: ld_ad("Toyota Yaris 2022 GCC Specs", 26500, 2022, 132000, d(10), phone="+971552398817"),
     "https://uae.dubizzle.com" + DZ2: ld_ad("Toyota Yaris 2020 SE GCC Urgent sale leaving UAE", 26999, 2020, 249000, d(15)),
     "https://uae.dubizzle.com" + DZ_OLD: ld_ad("Toyota Yaris 2021", 25000, 2021, 99000, d(90)),
     "https://uae.yallamotor.com" + YM: ld_ad("Toyota Yaris 2021 1.5L", 29500, 2021, 77000, d(5), seller="AutoDealer"),
@@ -103,7 +103,7 @@ class Engine(unittest.TestCase):
         L = eng["listings"]
         self.assertIn("dubizzle-0e178fe896f34a32b34968b5266f36dd", L)
         self.assertEqual(L["dubizzle-0e178fe896f34a32b34968b5266f36dd"]["state"], "verified")
-        self.assertEqual(L["dubizzle-0e178fe896f34a32b34968b5266f36dd"]["phone"], "+971501234567")
+        self.assertEqual(L["dubizzle-0e178fe896f34a32b34968b5266f36dd"]["phone"], "+971552398817")
         self.assertNotIn("dubizzle-1111111111111111111111111111aaaa", L)        # posted 90 days ago
         self.assertIn("dubizzle-1111111111111111111111111111aaaa", eng["skipped"])
         # same car on yallamotor and dubicars -> one record pointing at the other link

@@ -197,6 +197,44 @@ LABELS = {
 PHONE = re.compile(r'href="(?:tel|https?://wa\.me/|whatsapp://send\?phone=)([+\d][\d\s\-]{7,16})"|(\+971[\s\-]?\d{1,2}[\s\-]?\d{3}[\s\-]?\d{4}|\b05\d[\s\-]?\d{3}[\s\-]?\d{4}\b)', re.I)
 
 
+LINE_LABELS = {
+    "km": ("kilometers", "kilometres", "mileage", "odometer", "km driven", "الكيلومترات", "المسافة المقطوعة", "عدد الكيلومترات", "الممشى"),
+    "year": ("year", "model year", "سنة الصنع", "سنة الموديل", "الموديل", "السنة"),
+    "color": ("exterior color", "exterior colour", "color", "colour", "لون الهيكل", "اللون الخارجي", "اللون"),
+    "posted": ("posted", "posted on", "published", "published date", "published on", "date posted", "ad posted", "listed on", "added on",
+               "تاريخ النشر", "نشر في", "نُشر في", "تاريخ الإعلان"),
+    "updated": ("last updated", "updated", "updated on", "آخر تحديث"),
+    "specs": ("regional specs", "specs", "المواصفات الإقليمية", "المواصفات"),
+    "transmission": ("transmission", "transmission type", "ناقل الحركة"),
+    "location": ("location", "city", "area", "الموقع", "المدينة", "المنطقة"),
+    "seller": ("seller", "posted by", "dealer", "البائع"),
+}
+_LL = {lab: f for f, labs in LINE_LABELS.items() for lab in labs}
+
+
+def label_pairs(text):
+    """Values from label/value pairs in the page text (first occurrence wins)."""
+    out = {}
+    lines = [ln.strip() for ln in text.split("\n") if ln.strip()]
+    for i, ln in enumerate(lines[:4000]):
+        m = re.match(r"^([A-Za-z\u0600-\u06FF ]{3,30}?)\s*[:：]\s*(.{1,60})$", ln)
+        if m and m[1].strip().lower() in _LL:
+            f = _LL[m[1].strip().lower()]
+            out.setdefault(f, m[2].strip())
+            continue
+        key = ln.rstrip(":：").strip().lower()
+        if key in _LL and i + 1 < len(lines):
+            nxt = lines[i + 1]
+            if len(nxt) <= 60 and nxt.rstrip(":：").strip().lower() not in _LL:
+                out.setdefault(_LL[key], nxt)
+    return out
+
+
+def color_ok(v):
+    from common import color_of
+    return bool(color_of(str(v)))
+
+
 def ad_page(html, url, ad_id):
     """Values for one ad page, each as (value, source). Also 'sold' and 'single'."""
     found = {}
@@ -236,13 +274,18 @@ def ad_page(html, url, ad_id):
             re.search(r'<meta[^>]+content="([^"]+)"[^>]+(?:property|name)="' + re.escape(prop) + r'"', html, re.I)
         if m and f not in found:
             found[f] = (unescape(m[1]), "meta:" + prop)
-    # labelled text
+    # labelled text: "Label" on one line and its value on the next, or "Label: value"
     text = text_of(html)
+    for f, val in label_pairs(text).items():
+        if f not in found:
+            found[f] = (val, "label")
     for f, rx in LABELS.items():
         if f not in found:
             m = re.search(rx, text, re.I)
             if m:
                 found[f] = (m[1].strip(), "text")
+    if "color" in found and not color_ok(found["color"][0]):
+        del found["color"]
     if "phone" not in found:
         m = PHONE.search(html)
         if m:
@@ -251,5 +294,14 @@ def ad_page(html, url, ad_id):
         m = re.search(r"<title[^>]*>(.*?)</title>", html, re.S | re.I)
         if m:
             found["title"] = (unescape(m[1]).strip(), "title")
-    found["_sold"] = bool(SOLD.search(text[:20000]))
+    avail = ""
+    for blob in blobs:
+        for d in walk(blob):
+            a = d.get("availability")
+            if isinstance(a, str):
+                avail = a.lower()
+    if avail:
+        found["_sold"] = any(x in avail for x in ("soldout", "outofstock", "discontinued"))
+    else:
+        found["_sold"] = "price" not in found and bool(SOLD.search(text[:20000]))
     return found
