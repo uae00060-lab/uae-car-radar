@@ -1,5 +1,5 @@
 {
- "at": "2026-10-18T22:24:16+04:00",
+ "at": "2026-10-18T22:25:37+04:00",
  "probe": "Toyota Yaris",
  "platforms": {
   "dubizzle": {
@@ -806,7 +806,7 @@
      "debug": {
       "status": 200,
       "final": "https://ae.opensooq.com/en/search/288806664",
-      "bytes": 941708,
+      "bytes": 941296,
       "sold_hit": null,
       "values": {
        "title": "تويوتا يارس موديل 2023 خليجي",
@@ -881,7 +881,7 @@
      "debug": {
       "status": 200,
       "final": "https://ae.opensooq.com/en/search/288804462",
-      "bytes": 941907,
+      "bytes": 942227,
       "sold_hit": null,
       "values": {
        "title": "فرصة للبيع  تويوتا يارس 2023 خليجي  57 ألف كم  فحص ممتاز",
@@ -965,12 +965,13 @@
    ]
   },
   "mourjan": {
-   "pages": 1,
+   "pages": 2,
    "ok": 0,
    "blocked": 0,
    "cards": 0,
    "via_search": 0,
    "status": [
+    404,
     404
    ],
    "card_sources": [],
@@ -1096,255 +1097,110 @@
      }
     },
     {
-     "status": "failed",
+     "status": "ok",
      "debug": {
-      "status": 403,
+      "status": 200,
       "final": "https://auto.ae/dubai/sale/car/toyota/toyota-yaris-iv-facelift-2026/id/287836/",
-      "bytes": 5957
+      "bytes": 480510,
+      "sold_hit": null,
+      "values": {
+       "title": "Toyota Yaris IV Facelift, 2026",
+       "image": "https://auto-ae-prod-storage.storage.googleapis.com/auto_dubai_toyota_yaris_sale",
+       "price": "199500",
+       "year": "280 hp",
+       "specs": "Hatchback 3 dr. GR",
+       "transmission": "Grey / Black",
+       "seller_type": "Showroom",
+       "phone": "+971566455550"
+      },
+      "lines": [
+       "Buy Toyota Yaris (2026) 1.6 l Petrol in UAE, Dubai - ⁦199,500 AED⁩ | AUTO.AE | Listing #287836",
+       "For sale ⁦Toyota Yaris IV Facelift, 1.6 l, 2026⁩ in UAE, Dubai ⁦199,500 AED⁩",
+       "⁦199,500 AED⁩",
+       "Year",
+       "Subscribe to updates",
+       "0 km",
+       "5,000 km",
+       "13,500 km",
+       "⁦165,000 AED⁩",
+       "13,000 km",
+       "16,000 km",
+       "Fuel consumption (combined, 100 km), liters",
+       "Acceleration 0-100 km/h, seconds",
+       "Explore all the possibilities of the platform — search for cars to buy or rent, post ads, and connect with other users. "
+      ]
      },
      "url": "https://auto.ae/dubai/sale/car/toyota/toyota-yaris-iv-facelift-2026/id/287836/",
-     "found": "HTTP 403",
-     "has": null
+     "found": [
+      [
+       "image",
+       "ld:image"
+      ],
+      [
+       "phone",
+       "tel"
+      ],
+      [
+       "price",
+       "ld:price"
+      ],
+      [
+       "seller_type",
+       "text"
+      ],
+      [
+       "specs",
+       "label"
+      ],
+      [
+       "title",
+       "ld:name"
+      ],
+      [
+       "transmission",
+       "label"
+      ],
+      [
+       "year",
+       "label"
+      ]
+     ],
+     "has": {
+      "price": true,
+      "year": true,
+      "km": false,
+      "date": false,
+      "phone": true,
+      "image": true,
+      "color": false,
+      "emirate": true
+     }
     }
    ]
   },
   "oneclickdrive": {
    "pages": 3,
-   "ok": 3,
-   "blocked": 0,
-   "cards": 32,
+   "ok": 0,
+   "blocked": 3,
+   "cards": 0,
    "via_search": 0,
    "status": [
-    200,
-    200,
-    200
+    403,
+    403,
+    403
    ],
-   "card_sources": [
-    "json"
-   ],
-   "cards_with_price": 32,
-   "ad_reads": [
-    {
-     "status": "ok",
-     "debug": {
-      "status": 200,
-      "final": "https://www.oneclickdrive.com/details/index/search-usedcar-dubai/Toyota/Yaris-Sedan/?id=855142",
-      "bytes": 572594,
-      "sold_hit": null,
-      "values": {
-       "title": "Buy and Drive the Toyota Yaris Sedan 2019 in Dubai",
-       "image": "https://static.oneclickdrive.com/uploads/car_sale/user_uploads/275662/1878/img_T",
-       "location": "Country",
-       "year": "2019",
-       "km": "144,000 km",
-       "color": "White",
-       "inspected": "and payment is made, the transfer of own",
-       "specs": "GCC",
-       "seller_type": "Owner",
-       "phone": "+971501116474"
-      },
-      "lines": [
-       "AED",
-       "- AED",
-       "New Car Prices",
-       "144,000 km",
-       "The model year of the car",
-       "144,000 km (89,441 mi)",
-       "Price:",
-       "Model year: 2019",
-       "Mileage: 144,000 km",
-       "1 year",
-       "2 years",
-       "3 years+",
-       "Pick-up Date",
-       "Stress-Free Selling: Be able to post your car, reach out to serious buyers, and get top value.",
-       "Set budget: Consider purchase price, insurance, and maintenance.",
-       "Wrong price",
-       "We update our stock daily with the latest , Sedan, Bus and more. Contact us for the newest arrivals and current availabi",
-       "This listing (including pricing and details) has been added by ."
-      ]
-     },
-     "url": "https://www.oneclickdrive.com/details/index/search-usedcar-dubai/Toyota/Yaris-Sedan-/?id=855142",
-     "found": [
-      [
-       "color",
-       "text"
-      ],
-      [
-       "image",
-       "meta:og:image"
-      ],
-      [
-       "inspected",
-       "text"
-      ],
-      [
-       "km",
-       "label"
-      ],
-      [
-       "location",
-       "label"
-      ],
-      [
-       "phone",
-       "tel"
-      ],
-      [
-       "price",
-       "card"
-      ],
-      [
-       "seller_type",
-       "text"
-      ],
-      [
-       "specs",
-       "text"
-      ],
-      [
-       "title",
-       "meta:og:title"
-      ],
-      [
-       "year",
-       "label"
-      ]
-     ],
-     "has": {
-      "price": true,
-      "year": true,
-      "km": true,
-      "date": false,
-      "phone": true,
-      "image": true,
-      "color": true,
-      "emirate": true
-     }
-    },
-    {
-     "status": "ok",
-     "debug": {
-      "status": 200,
-      "final": "https://www.oneclickdrive.com/details/index/search-usedcar-dubai/Toyota/Yaris-E/?id=877974",
-      "bytes": 610792,
-      "sold_hit": null,
-      "values": {
-       "title": "Buy and Drive the Toyota Yaris E 2021 in Dubai",
-       "image": "https://static.oneclickdrive.com/uploads/Toyota-Yaris-E_877974_2192177838728-1_t",
-       "location": "Country",
-       "seller": "Seating Capacity",
-       "year": "2021",
-       "km": "165,963 km",
-       "color": "White",
-       "updated": "on 16 Oct, 2026",
-       "inspected": "and quality-checked by Wasel Auto Repair",
-       "specs": "GCC",
-       "seller_type": "dealer",
-       "phone": "+971554972961"
-      },
-      "lines": [
-       "AED",
-       "- AED",
-       "New Car Prices",
-       "165,963 km",
-       "Last updated on 16 Oct, 2026",
-       "The model year of the car",
-       "165,963 km (103,083 mi)",
-       "Car Price",
-       "4 years",
-       "1+ year",
-       "Toyota Yaris 2021 – Drive Now from Just AED 500/Month",
-       "Price:",
-       "Model year: 2021",
-       "Mileage: 165,963 km",
-       "1 year",
-       "2 years",
-       "3 years+",
-       "Pick-up Date",
-       "Stress-Free Selling: Be able to post your car, reach out to serious buyers, and get top value.",
-       "Set budget: Consider purchase price, insurance, and maintenance.",
-       "Wrong price",
-       "We update our stock daily with the latest Sedan, SUV, Compact and more. Contact us for the newest arrivals and current a",
-       "This listing (including pricing and details) has been added by Belhasa Used Car Trading L.L.C ."
-      ]
-     },
-     "url": "https://www.oneclickdrive.com/details/index/search-usedcar-dubai/Toyota/Yaris-E/?id=877974",
-     "found": [
-      [
-       "color",
-       "text"
-      ],
-      [
-       "image",
-       "meta:og:image"
-      ],
-      [
-       "inspected",
-       "text"
-      ],
-      [
-       "km",
-       "label"
-      ],
-      [
-       "location",
-       "label"
-      ],
-      [
-       "phone",
-       "tel"
-      ],
-      [
-       "price",
-       "card"
-      ],
-      [
-       "seller",
-       "label"
-      ],
-      [
-       "seller_type",
-       "text"
-      ],
-      [
-       "specs",
-       "text"
-      ],
-      [
-       "title",
-       "meta:og:title"
-      ],
-      [
-       "updated",
-       "text"
-      ],
-      [
-       "year",
-       "label"
-      ]
-     ],
-     "has": {
-      "price": true,
-      "year": true,
-      "km": true,
-      "date": true,
-      "phone": true,
-      "image": true,
-      "color": true,
-      "emirate": true
-     }
-    }
-   ]
+   "card_sources": [],
+   "cards_with_price": 0,
+   "ad_reads": []
   },
-  "_samples": 137,
+  "_samples": 101,
   "_search": {
    "dubizzle": {
     "query": "site:uae.dubizzle.com/motors/used-cars/toyota/yaris toyota yaris",
     "ddg": {
      "status": 202,
      "blocked": false,
-     "bytes": 14431,
+     "bytes": 14455,
      "result_a": 0,
      "b_algo": 0,
      "head": " --> DuckDuckGo DuckDuckGo Unfortunately, bots use DuckDuckGo too. Please complete the following challenge to confirm this search was made by a human. Select all squares containing a duck: Submit Imag"
@@ -1352,7 +1208,7 @@
     "bing": {
      "status": 200,
      "blocked": false,
-     "bytes": 95352,
+     "bytes": 94239,
      "result_a": 0,
      "b_algo": 0,
      "head": " \"use strict\";// site:uae.dubizzle.com/motors/used-cars/toyota/yaris toyota yaris - Search // 2&&a.substring(0,3)===\"IG=\")){ig='IG='+_G.IG;}if(document.images){_G.GPImg=new Image;_G.GPImg.src=_G.gpUrl"
@@ -1365,7 +1221,7 @@
     "ddg": {
      "status": 202,
      "blocked": false,
-     "bytes": 14377,
+     "bytes": 14395,
      "result_a": 0,
      "b_algo": 0,
      "head": " --> DuckDuckGo DuckDuckGo Unfortunately, bots use DuckDuckGo too. Please complete the following challenge to confirm this search was made by a human. Select all squares containing a duck: Submit Imag"
@@ -1373,7 +1229,7 @@
     "bing": {
      "status": 200,
      "blocked": false,
-     "bytes": 94369,
+     "bytes": 93255,
      "result_a": 0,
      "b_algo": 0,
      "head": " \"use strict\";// site:mourjan.com toyota yaris used - Search // 2&&a.substring(0,3)===\"IG=\")){ig='IG='+_G.IG;}if(document.images){_G.GPImg=new Image;_G.GPImg.src=_G.gpUrl+ig+'&'+a;}return true;}_G.BAT"
@@ -1384,7 +1240,7 @@
   },
   "_mourjan_home": {
    "status": 200,
-   "bytes": 38280,
+   "bytes": 38258,
    "links": [
     "//adservice.google.com",
     "//pagead2.googlesyndication.com",
@@ -1392,12 +1248,10 @@
     "//www.googletagmanager.com",
     "/about/",
     "/ae/",
-    "/ae/apartments/for-sale/",
     "/ae/apartments/rental/",
-    "/ae/contracting/offered-services/",
     "/ae/en/",
     "/ae/furnished-apartments/rental/",
-    "/ae/private-lessons/offered-services/",
+    "/ae/offices/rental/",
     "/ae/studios/rental/",
     "/ae/warehouses/rental/",
     "/contact/",
