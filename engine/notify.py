@@ -81,11 +81,12 @@ def whatsapp(text):
 
 
 def email(subject, text, pdf=None, pdf_name="report.pdf"):
-    user, pw = env("SMTP_USER"), env("SMTP_PASSWORD")
+    user = (env("SMTP_USER") or "").strip()
+    pw = re.sub(r"\s", "", env("SMTP_PASSWORD") or "")  # Gmail shows app passwords in groups of four
     if not user or not pw:
         return "غير مفعّل"
     msg = EmailMessage()
-    msg["Subject"], msg["From"], msg["To"] = subject, user, env("MAIL_TO") or user
+    msg["Subject"], msg["From"], msg["To"] = subject, user, (env("MAIL_TO") or "").strip() or user
     msg.set_content(text)
     msg.add_alternative(f'<div dir="rtl" style="font-family:Tahoma,Arial,sans-serif;white-space:pre-wrap;line-height:1.6">'
                         f'{text.replace("&", "&amp;").replace("<", "&lt;")}</div>', subtype="html")
