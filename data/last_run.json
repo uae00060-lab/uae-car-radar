@@ -1,83 +1,14 @@
 {
- "at": "2026-10-18T23:55:11+04:00",
+ "at": "2026-10-19T00:14:19+04:00",
  "mode": "manual",
  "requests": 1,
- "seconds": 35,
- "opened": 19,
+ "seconds": 45,
+ "opened": 10,
  "saved_new": 0,
  "drops": 0,
  "sold": 0,
  "listings_total": 47,
  "platforms": {
-  "dubicars": {
-   "pages": 1,
-   "ok": 1,
-   "blocked": 0,
-   "cards": 30,
-   "via_search": 0,
-   "http": [
-    200
-   ],
-   "opened": 6,
-   "read_ok": 6,
-   "read_failed": 0,
-   "known": 19,
-   "skipped_recently": 3,
-   "card_rejected": 8,
-   "planned": 0,
-   "states": {
-    "unverified": 6
-   },
-   "excluded_by": {}
-  },
-  "opensooq": {
-   "pages": 1,
-   "ok": 1,
-   "blocked": 0,
-   "cards": 30,
-   "via_search": 0,
-   "http": [
-    200
-   ],
-   "known": 0,
-   "skipped_recently": 0,
-   "card_rejected": 30,
-   "planned": 0,
-   "states": {},
-   "excluded_by": {}
-  },
-  "dubizzle": {
-   "pages": 2,
-   "ok": 0,
-   "blocked": 2,
-   "cards": 0,
-   "via_search": 0,
-   "http": [
-    200,
-    200
-   ]
-  },
-  "yallamotor": {
-   "pages": 1,
-   "ok": 1,
-   "blocked": 0,
-   "cards": 22,
-   "via_search": 0,
-   "http": [
-    200
-   ],
-   "opened": 3,
-   "read_ok": 3,
-   "read_failed": 0,
-   "known": 3,
-   "skipped_recently": 0,
-   "card_rejected": 19,
-   "planned": 0,
-   "states": {
-    "unverified": 3
-   },
-   "excluded_by": {}
-  },
   "autoae": {
    "pages": 1,
    "ok": 1,
@@ -88,11 +19,29 @@
     200
    ],
    "opened": 1,
-   "read_ok": 0,
-   "read_failed": 1,
+   "read_ok": 1,
+   "read_failed": 0,
    "known": 1,
    "skipped_recently": 0,
    "card_rejected": 7,
+   "planned": 0,
+   "states": {
+    "unverified": 1
+   },
+   "excluded_by": {}
+  },
+  "carswitch": {
+   "pages": 1,
+   "ok": 1,
+   "blocked": 0,
+   "cards": 18,
+   "via_search": 0,
+   "http": [
+    200
+   ],
+   "known": 5,
+   "skipped_recently": 0,
+   "card_rejected": 13,
    "planned": 0,
    "states": {},
    "excluded_by": {}
@@ -120,12 +69,13 @@
    "missing_price": 4
   },
   "mourjan": {
-   "pages": 1,
-   "ok": 1,
+   "pages": 2,
+   "ok": 2,
    "blocked": 0,
    "cards": 5,
    "via_search": 0,
    "http": [
+    200,
     200
    ],
    "known": 0,
@@ -135,25 +85,70 @@
    "states": {},
    "excluded_by": {}
   },
-  "carswitch": {
+  "dubizzle": {
+   "pages": 2,
+   "ok": 0,
+   "blocked": 2,
+   "cards": 0,
+   "via_search": 0,
+   "http": [
+    200,
+    200
+   ]
+  },
+  "opensooq": {
    "pages": 1,
    "ok": 1,
    "blocked": 0,
-   "cards": 18,
+   "cards": 30,
    "via_search": 0,
    "http": [
     200
    ],
-   "opened": 5,
-   "read_ok": 5,
+   "opened": 4,
+   "read_ok": 4,
    "read_failed": 0,
-   "known": 5,
+   "known": 0,
    "skipped_recently": 0,
-   "card_rejected": 13,
+   "card_rejected": 26,
+   "planned": 4,
+   "states": {},
+   "excluded_by": {},
+   "missing_price": 4
+  },
+  "dubicars": {
+   "pages": 1,
+   "ok": 1,
+   "blocked": 0,
+   "cards": 30,
+   "via_search": 0,
+   "http": [
+    200
+   ],
+   "known": 19,
+   "skipped_recently": 3,
+   "card_rejected": 8,
    "planned": 0,
-   "states": {
-    "unverified": 5
-   },
+   "states": {},
+   "excluded_by": {}
+  },
+  "yallamotor": {
+   "pages": 1,
+   "ok": 1,
+   "blocked": 0,
+   "cards": 22,
+   "via_search": 0,
+   "http": [
+    200
+   ],
+   "opened": 1,
+   "read_ok": 0,
+   "read_failed": 0,
+   "known": 2,
+   "skipped_recently": 0,
+   "card_rejected": 19,
+   "planned": 1,
+   "states": {},
    "excluded_by": {}
   }
  }
