@@ -160,9 +160,11 @@ def epoch_or_date(v, today):
     return parse_date(v, today)
 
 
-def read_ad(item, today):
+def read_ad(item, today, debug=None):
     """Open one ad page -> (status, values) where status is ok / sold / gone / failed."""
     page = fetch.get(item["url"])
+    if debug is not None:
+        debug.update({"status": page.status, "final": page.final_url[:160], "bytes": len(page.html)})
     if page.status in (404, 410):
         return "gone", {}
     if not page.ok:
@@ -171,6 +173,13 @@ def read_ad(item, today):
     if id2 != item["ad_id"]:  # redirected to a results page: the ad was removed
         return "gone", {}
     f = extract.ad_page(page.html, page.final_url, item["ad_id"])
+    if debug is not None:
+        text = extract.text_of(page.html)
+        m = extract.SOLD.search(text[:20000])
+        debug["sold_hit"] = text[max(0, m.start() - 60): m.end() + 60] if m else None
+        debug["values"] = {k: str(v[0])[:80] for k, v in f.items() if isinstance(v, tuple)}
+        debug["lines"] = [ln.strip()[:120] for ln in text.split("\n") if re.search(
+            r"post|publish|added|updated|date|ago|AED|price|km|kilomet|mileage|year|نشر|تاريخ|منذ|درهم|السعر|كم", ln, re.I) and len(ln.strip()) < 140][:40]
     if f.get("_sold"):
         return "sold", {}
     g = lambda k: (f.get(k) or (None, None))[0]
@@ -570,12 +579,20 @@ def diagnose(a):
         sample = per.get(plat, [])[:2]
         reads = []
         for c in sample:
-            status, v = read_ad({**c, "id": f"{plat}-{c['ad_id']}"}, today)
-            reads.append({"status": status, "found": sorted(v.get("_src", {}).items()) if status == "ok" else v.get("_why"),
+            dbg = {}
+            status, v = read_ad({**c, "id": f"{plat}-{c['ad_id']}"}, today, dbg)
+            reads.append({"status": status, "debug": dbg, "url": c["url"], "found": sorted(v.get("_src", {}).items()) if status == "ok" else v.get("_why"),
                           "has": {k: bool(v.get(k)) for k in ("price", "year", "km", "date", "phone", "image", "color", "emirate")} if status == "ok" else None})
         out[plat] = {**diag.get(plat, {}), "card_sources": sorted({c.get("src") for c in per.get(plat, [])}),
                      "cards_with_price": sum(1 for c in per.get(plat, []) if c.get("price")), "ad_reads": reads}
     out["_samples"] = len(samples)
+    out["_search"] = {}
+    for plat in ("dubizzle", "mourjan"):
+        q = search_query(plat, req)
+        out["_search"][plat] = {"query": q, **fetch.search_debug(q)}
+    bp = fetch.get(search_urls("dubizzle", req)[0])
+    out["_dubizzle_page"] = {"status": bp.status, "blocked": bp.blocked, "bytes": len(bp.html),
+                             "head": re.sub(r"\s+", " ", extract.text_of(bp.html))[:300]}
     print(json.dumps(out, ensure_ascii=False, indent=1))
     with open(os.path.join(ROOT, "data", "diagnose.json"), "w") as f:
         json.dump({"at": now_uae().isoformat(timespec="seconds"), "probe": f"{a.make} {a.model}", "platforms": out}, f, ensure_ascii=False, indent=1)

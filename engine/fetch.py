@@ -114,6 +114,19 @@ def get(url, referer=None, timeout=25, retries=1):
 
 # ---------------------------------------------------------------- search-engine fallback
 
+def search_debug(query):
+    """Status of each search engine for one query (for the diagnose run)."""
+    out = {}
+    for name, url in (("ddg", "https://html.duckduckgo.com/html/?" + urllib.parse.urlencode({"q": query, "kl": "ae-en"})),
+                      ("bing", "https://www.bing.com/search?" + urllib.parse.urlencode({"q": query, "count": "50", "setlang": "en"}))):
+        p = get(url, retries=0)
+        out[name] = {"status": p.status, "blocked": p.blocked, "bytes": len(p.html),
+                     "result_a": p.html.count('class="result__a"'), "b_algo": p.html.count('class="b_algo"'),
+                     "head": re.sub(r"\s+", " ", re.sub(r"<[^>]+>", " ", p.html))[:200]}
+    out["links"] = len(search_links(query))
+    return out
+
+
 def search_links(query, limit=30):
     """Result links from DuckDuckGo's HTML endpoint, then Bing. Returns [(url, title)]."""
     out = []
