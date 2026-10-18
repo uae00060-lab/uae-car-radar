@@ -301,6 +301,18 @@ body { font-family:"Inter","Cairo",sans-serif; font-weight:500; text-rendering:o
 
 
 .op-hero{padding:28px;border-radius:22px;background:radial-gradient(circle at 5% 0%,#36D5C130,transparent 42%),#0B1732;color:#fff;margin-bottom:18px}.op-hero h2{font-size:30px;margin:7px 0}.op-hero p{color:#BDCCE0;max-width:750px;line-height:1.9}.op-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:16px}.op-card{padding:23px;background:#fff;border:1px solid #DBE4EE;border-radius:18px;display:flex;flex-direction:column;gap:13px;min-width:0}.op-card.call{border-top:4px solid #20B6A0}.op-card.verify{border-top:4px solid #D59B36}.op-card.watch{border-top:4px solid #7488A5}.op-card h3{margin:0;font-size:18px}.op-price{font:700 30px Inter,sans-serif;color:#0B1732}.op-card ul{padding-inline-start:18px;margin:0;font-size:12px;line-height:2;color:#4E6077}.op-card .op-missing{background:#FFF8E9;border-radius:10px;padding:10px;font-size:11px;line-height:1.9;color:#87621F}.op-window{width:min(580px,calc(100% - 28px));max-height:85vh;overflow:auto;border:0;border-radius:24px;padding:0;background:#F5F8FC;color:#0B1732;box-shadow:0 25px 100px #020C2866}.op-window::backdrop{background:#04112799;backdrop-filter:blur(5px)}.op-window-head{padding:25px;background:#0B1732;color:#fff}.op-window-body{padding:22px;display:grid;gap:15px}.op-window-head h2{margin:8px 0}.op-window .row{justify-content:space-between}.op-empty{padding:35px;text-align:center;background:#fff;border:1px dashed #BECBD9;border-radius:18px;line-height:2}.op-stamp{font-size:11px;color:#7D8BA0}.op-actions{margin-top:auto;display:flex;gap:8px;flex-wrap:wrap}@media(max-width:1000px){.op-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}@media(max-width:700px){.op-grid{grid-template-columns:1fr}.op-hero{padding:21px}.op-hero h2{font-size:24px}#hdr.nav-open nav.tabs{grid-template-columns:repeat(3,minmax(0,1fr))}}
+
+/* Ambient radar identity; an active search and confirmed opportunities have distinct states. */
+#heroRadar .radar-line{width:235px;height:235px;left:48px;top:10px;border:0;border-radius:50%;background:conic-gradient(from 0deg,transparent 0deg,transparent 268deg,#36D5C108 295deg,#36D5C13D 355deg,#62F2DD88 359deg,transparent 360deg);transform-origin:center;animation:radarSweep 10s linear infinite;opacity:.65}
+#heroRadar .orbit-two{animation:radarOrbit 65s linear infinite}
+#heroRadar .radar-ping{animation:radarEcho 10s ease-out infinite;opacity:.35}
+#heroRadar .ping-one{animation-delay:-2s}#heroRadar .ping-two{animation-delay:-6s}
+#heroRadar .radar-ping::after{content:"";position:absolute;inset:-5px;border-radius:50%;border:1px solid currentColor;color:#36D5C1;animation:radarRipple 10s ease-out infinite;animation-delay:inherit}
+#heroRadar[data-state="scanning"] .radar-line{animation-duration:3s;opacity:1}#heroRadar[data-state="scanning"] .radar-ping,#heroRadar[data-state="scanning"] .radar-ping::after{animation-duration:3s}
+#heroRadar[data-state="found"] img{box-shadow:0 0 0 1px #36D5C180,0 0 35px #36D5C13D}
+#heroRadar .art-label{bottom:3px}#radarMotionLabel{display:block;font:10px/1.8 Cairo,sans-serif;letter-spacing:0;color:#A6BED9;margin-top:7px}#heroRadar[data-state="scanning"] #radarMotionLabel,#heroRadar[data-state="found"] #radarMotionLabel{color:#75E8D8}
+@keyframes radarSweep{from{transform:rotate(0)}to{transform:rotate(360deg)}}@keyframes radarOrbit{to{transform:rotate(-360deg)}}@keyframes radarEcho{0%,12%{opacity:.3;box-shadow:0 0 0 3px #36D5C108}18%,27%{opacity:1;box-shadow:0 0 15px 4px #36D5C13D}50%,100%{opacity:.3;box-shadow:0 0 0 3px #36D5C108}}@keyframes radarRipple{0%,12%{transform:scale(.5);opacity:0}18%{opacity:.7}48%,100%{transform:scale(2.3);opacity:0}}
+@media(prefers-reduced-motion:reduce){#heroRadar .radar-line,#heroRadar .orbit-two,#heroRadar .radar-ping,#heroRadar .radar-ping::after{animation:none!important}#heroRadar .radar-ping{opacity:.7}}
 </style>
 </head>
 <body>
@@ -354,7 +366,7 @@ body { font-family:"Inter","Cairo",sans-serif; font-weight:500; text-rendering:o
   <section class="tab" id="tab-ads">
     <section class="radar-hero" aria-label="ملخص الرصد">
       <div class="hero-copy"><span class="eyebrow">رصد أذكى. قرار أوضح.</span><h2>سيارتك القادمة،<br><span>تبدأ من هنا.</span></h2><p>عروض مسعّرة من منصات متعددة، ومتابعة منظمة لكل فرصة تستحق اهتمامك.</p><div class="hero-actions"><button type="button" class="hero-primary" id="heroNew">＋ طلب بحث جديد</button><button type="button" class="hero-secondary" id="heroReports">عرض التقارير <span aria-hidden="true">↗</span></button></div></div>
-      <div class="hero-art" aria-hidden="true"><div class="orbit orbit-one"></div><div class="orbit orbit-two"></div><div class="radar-line"></div><span class="radar-ping ping-one"></span><span class="radar-ping ping-two"></span><img src="assets/logo-mark.svg" width="126" height="126" alt=""><span class="art-label">CAR RADAR <span>/ UAE</span></span></div>
+      <div class="hero-art" id="heroRadar" data-state="standby" aria-hidden="true"><div class="orbit orbit-one"></div><div class="orbit orbit-two"></div><div class="radar-line"></div><span class="radar-ping ping-one"></span><span class="radar-ping ping-two"></span><img src="assets/radar-live.svg" width="126" height="126" alt=""><span class="art-label">CAR RADAR <span>/ UAE</span><small id="radarMotionLabel">جاهز للرصد</small></span></div>
     </section>
     <div class="metrics" aria-label="ملخص الإعلانات">
       <div class="metric"><span class="metric-symbol mint" aria-hidden="true">◈</span><div><span>إعلانات بسعر واضح</span><b id="statPriced" class="num">0</b></div><small>من نتائج البحث المحفوظة</small></div>
@@ -1074,6 +1086,9 @@ body { font-family:"Inter","Cairo",sans-serif; font-weight:500; text-rendering:o
   $("readAlerts").addEventListener("click", async () => { S.U.alerts_seen_at = (S.E.alerts || [])[0]?.at || new Date().toISOString(); renderUpdates(); await saveUser("read updates"); });
   function renderAll() {
     $("nextRun").textContent = nextRunText();
+    const radar=$("heroRadar"), count=opportunityRows().filter(o=>o.tier === "call").length;
+    radar.dataset.state=S.live ? "scanning" : count ? "found" : "standby";
+    $("radarMotionLabel").textContent=S.live ? "جارٍ الفحص والتحقق" : count ? `${count} فرصة مؤهلة للرصد` : "جاهز للرصد · حركة تعريفية";
     renderReqs(); renderAds(); renderOpportunities(); renderDeals(); renderUpdates(); renderReports(); renderHistory(); renderSettings(); renderCmpBar(); renderProblems();
     if (S.tab === "compare") renderCompare();
     $("searchNow").disabled = !S.token || !!S.live;
