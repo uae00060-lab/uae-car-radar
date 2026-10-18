@@ -18,6 +18,7 @@ import re
 import sys
 import time
 import urllib.parse
+from html import unescape
 from concurrent.futures import ThreadPoolExecutor
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
@@ -27,11 +28,13 @@ import lifecycle
 import health
 import opportunities
 import analytics  # noqa: E402
+import condition  # noqa: E402
 import extract  # noqa: E402
 import fetch  # noqa: E402
 import notify  # noqa: E402
 import report  # noqa: E402
 import store  # noqa: E402
+import vindecode  # noqa: E402
 from common import (COLOR_AR, EMIRATE_AR, FIELD_AR, NO_DATE_PLATFORMS, PLATFORMS, ad_identity, clean_url,  # noqa: E402
                     color_of, date_in_path, emirate_of, has_terms, model_terms, now_uae, parse_date, slug,
                     to_num, window_start, validate_request, request_view, MOURJAN_BRANDS, MOURJAN_ALIASES)
@@ -250,15 +253,19 @@ def read_ad(item, today, debug=None):
     phone = str(phone).strip() if phone and len(re.sub(r"\D", "", str(phone))) >= 8 else None
     if phone and (re.sub(r"\D", "", phone)[-7:] in PLACEHOLDER_PHONES or re.sub(r"\D", "", phone).endswith(PLATFORM_PHONES)):
         phone = None  # a sample number in the page template, or the platform's own office line
+    title = str(g("title") or item.get("title") or "")[:160]
+    desc = re.sub(r"<[^>]+>", " ", unescape(str(g("description") or "")))
+    desc = re.sub(r"\s+", " ", desc).strip()[:1500] or None
     return "ok", {
-        "title": str(g("title") or item.get("title") or "")[:160], "price": price,
+        "title": title, "price": price,
         "availability": "reserved" if f.get("_reserved") else "available",
         "price_source": src.get("price"), "price_currency": "AED" if price else None, "price_version": 3, "year": year, "km": km,
         "color": color_of(str(g("color") or "")), "emirate": emirate_of(" ".join(str(x or "") for x in (loc, g("title"), item["url"]))),
         **{k: g(k) for k in ("vin", "vin_source", "vin_status", "phone_source", "phone_status", "identity_version")},
         "location": loc[:120] if loc else None, "phone": phone, "seller_name": str(g("seller") or "")[:80] or None,
         "seller_type": seller_type, "specs": str(g("specs") or "")[:30] or None, "transmission": str(g("transmission") or "")[:30] or None,
-        "image": image, "date": date, "date_kind": kind, "desc": None, "_src": src,
+        "spec": condition.spec_of(g("specs"), f"{title} {desc or ''}"), "flags": condition.red_flags(f"{title} {desc or ''}"),
+        "image": image, "date": date, "date_kind": kind, "desc": desc, "_src": src,
     }
 
 
@@ -359,6 +366,18 @@ def mark_duplicates(listings):
                 item.update(dup_of=best["id"], dup_version=2)
         count += 1
     return count
+
+
+def condition_counts(listings):
+    """Counts only (the log is public): how much the condition checks could read this round."""
+    listings = list(listings)
+    specs = {}
+    for l in listings:
+        specs[l.get("spec") or "unstated"] = specs.get(l.get("spec") or "unstated", 0) + 1
+    return {"ads": len(listings), "with_description": sum(1 for l in listings if l.get("desc")), "specs": specs,
+            "flagged": sum(1 for l in listings if l.get("flags")),
+            "vin": sum(1 for l in listings if l.get("vin")), "vin_decoded": sum(1 for l in listings if l.get("vin_info")),
+            "vin_disagrees": sum(1 for l in listings if l.get("vin_check"))}
 
 
 def load_presence(key):
@@ -513,7 +532,8 @@ def run_round(a, key):
             v = {"title": item.get("title") or "", "price": None, "year": item.get("year"), "km": item.get("km"),
                  "color": None, "emirate": emirate_of(item.get("title")), "location": None, "phone": None,
                  "seller_name": None, "seller_type": None, "specs": None, "transmission": None,
-                 "image": item.get("image"), "date": None, "date_kind": None, "desc": None, "_src": {}}
+                 "image": item.get("image"), "date": None, "date_kind": None, "desc": None,
+                 "spec": condition.spec_of(None, item.get("title")), "flags": condition.red_flags(item.get("title")), "_src": {}}
             fetched = False
         else:
             ps["read_ok"] += 1
@@ -529,7 +549,7 @@ def run_round(a, key):
             continue
         ps["priced"] = ps.get("priced", 0) + 1
         if fetched and v["price"] and v["year"] and has_terms(v["title"] + " " + item["url"].replace("-", " "), model_terms(req)):
-            analytics.add_samples(eng["market"], req["id"], [{"id": item["id"], "price": v["price"], "year": v["year"], "km": v["km"]}], today)
+            analytics.add_samples(eng["market"], req["id"], [{"id": item["id"], "price": v["price"], "year": v["year"], "km": v["km"], "spec": v.get("spec")}], today)
         v["_url"] = item["url"]
         checks = assess(req, v, start, plat)
         if not fetched:
@@ -552,6 +572,8 @@ def run_round(a, key):
             patch = {"last_seen": stamp, "last_checked": stamp, "state": st, "note": note, "checks": checks,
                      "price_source": v.get("price_source"), "price_currency": "AED", "price_version": 3}
             patch.update({k: v.get(k) for k in ("vin", "vin_source", "vin_status", "phone", "phone_source", "phone_status", "identity_version")})
+            if fetched:  # the seller may edit the description; keep what the page says now
+                patch.update({"desc": v.get("desc"), "spec": v.get("spec") or prev.get("spec"), "flags": v.get("flags") or []})
             for k in ("seller_name", "seller_type", "specs", "transmission", "image", "location", "mileage", "year"):
                 val = v.get("km" if k == "mileage" else k)
                 if val and not prev.get(k):
@@ -580,6 +602,7 @@ def run_round(a, key):
             **{k: v.get(k) for k in ("vin", "vin_source", "vin_status", "phone_source", "phone_status", "identity_version")},
             "location": v["location"], "phone": v["phone"], "seller_name": v["seller_name"], "seller_type": v["seller_type"],
             "availability": v.get("availability", "available"), "specs": v["specs"], "transmission": v["transmission"], "image": v["image"],
+            "desc": v.get("desc"), "spec": v.get("spec"), "flags": v.get("flags") or [],
             "date": (v["date"] or today).isoformat(), "date_kind": v["date_kind"] or "first_seen",
             "posted": v["date"].isoformat() if v["date"] and v["date_kind"] == "posted" else None,
             "state": st, "note": note, "checks": checks, "first_seen": stamp, "last_seen": stamp,
@@ -599,6 +622,10 @@ def run_round(a, key):
             listing.update(best)
 
     mark_duplicates(listings)
+    in_round = [l for l in listings.values() if set(l.get("request_ids", [l.get("request_id")])) & run_req_ids
+                and l.get("state") not in ("sold", "excluded")]
+    vindecode.update(eng, in_round, reqs)
+    vindecode.prune(eng, listings.values())
 
     # 4) analytics for every live listing of the round's requests
     market_info = {}
@@ -609,7 +636,8 @@ def run_round(a, key):
     for l in listings.values():
         if not (set(l.get("request_ids", [l.get("request_id")])) & run_req_ids) or l.get("state") in ("sold", "excluded"):
             continue
-        fp = analytics.fair_price(eng["market"].get(l["request_id"]) or {}, l.get("year"), l.get("mileage"), exclude_id=l["id"])
+        fp = analytics.fair_price(eng["market"].get(l["request_id"]) or {}, l.get("year"), l.get("mileage"), exclude_id=l["id"],
+                                 spec=l.get("spec"))
         rating, dev = analytics.rate(l.get("price"), fp)
         score, level, why = analytics.urgency(l, today, dev)
         l.update({"fair": fp, "rating": rating, "dev": round(dev, 4) if dev is not None else None,
@@ -707,7 +735,7 @@ def run_round(a, key):
     log("round", id=run_id, mode=a.mode, requests=len(reqs), found=run["found"], opened=run["opened"], new=run["new"],
         new_unverified=run["new_unverified"], drops=len(drops), sold=len(sold), seconds=run["seconds"],
         platforms={p: {k: v for k, v in d.items() if k != "fields"} for p, d in run["platforms"].items()},
-        notify=run.get("notify"))
+        notify=run.get("notify"), condition=condition_counts(in_round))
 
 
 def watch(a, key):

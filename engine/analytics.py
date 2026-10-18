@@ -1,7 +1,7 @@
 """Market analytics from the radar's own observations.
 
-fair_price  expected price for a year/mileage, from every priced ad of the same model the
-            radar has seen in the last 60 days (including ads above your budget).
+fair_price  expected price for a year/mileage, from every priced ad of the same model and the
+            same regional specs the radar has seen in the last 60 days (including ads above your budget).
 urgency     how motivated the seller looks: time on market, price cuts, wording.
 """
 
@@ -27,7 +27,7 @@ def add_samples(market, request_id, obs, today):
     for o in obs:
         if o.get("price") and o.get("year"):
             book[o["id"]] = {"price": int(o["price"]), "year": int(o["year"]),
-                             "km": int(o["km"]) if o.get("km") else None, "seen": today.isoformat()}
+                             "km": int(o["km"]) if o.get("km") else None, "spec": o.get("spec"), "seen": today.isoformat()}
     cutoff = (today - dt.timedelta(days=SAMPLE_DAYS)).isoformat()
     for k in [k for k, v in book.items() if v["seen"] < cutoff]:
         del book[k]
@@ -61,9 +61,33 @@ def _solve3(a, b):
     return out
 
 
-def fair_price(samples, year, km, exclude_id=None):
-    """{"expected", "low", "high", "n", "method"} or None."""
-    pool = _clean([s for k, s in samples.items() if k != exclude_id])
+def spec_group(spec):
+    """'gcc', 'import' or None (not stated)."""
+    return None if not spec else "gcc" if spec == "gcc" else "import"
+
+
+def comparable(samples, spec):
+    """(pool, basis): imports sell for less than GCC cars, so the two are never mixed.
+
+    A GCC car is compared with GCC cars, adding ads that do not state their specs only when GCC
+    ads alone are too few. An import is compared with imports only. An ad that does not state
+    its specs is compared with every ad that is not a declared import.
+    """
+    group = spec_group(spec)
+    same = [s for s in samples if spec_group(s.get("spec")) == group]
+    if group == "import":
+        return same, "import"
+    if group == "gcc":
+        if len(same) >= MIN_RATE:
+            return same, "gcc"
+        return same + [s for s in samples if not s.get("spec")], "gcc+unstated"
+    return [s for s in samples if spec_group(s.get("spec")) != "import"], "not-import"
+
+
+def fair_price(samples, year, km, exclude_id=None, spec=None):
+    """{"expected", "low", "high", "n", "method", "basis"} or None."""
+    pool, basis = comparable([s for k, s in samples.items() if k != exclude_id], spec)
+    pool = _clean(pool)
     if not year or len(pool) < MIN_RATE:
         return None
     with_km = [s for s in pool if s.get("km")]
@@ -83,7 +107,7 @@ def fair_price(samples, year, km, exclude_id=None):
             q1, q3 = resid[len(resid) // 4], resid[(3 * len(resid)) // 4]
             if year in years or min(abs(year - y) for y in years) <= 1:
                 return {"expected": round(pred, -2), "low": round(pred * math.exp(q1), -2),
-                        "high": round(pred * math.exp(q3), -2), "n": len(with_km), "method": "regression"}
+                        "high": round(pred * math.exp(q3), -2), "n": len(with_km), "method": "regression", "basis": basis}
     # Otherwise the median of the same model year (or within one year).
     for span in (0, 1):
         near = [s for s in pool if abs(s["year"] - year) <= span]
@@ -95,7 +119,7 @@ def fair_price(samples, year, km, exclude_id=None):
                 if len(kms) >= 3:
                     exp *= max(0.85, min(1.15, 1 - 0.02 * (km - statistics.median(kms)) / 20000))
             return {"expected": round(exp, -2), "low": p[len(p) // 4], "high": p[(3 * len(p)) // 4],
-                    "n": len(near), "method": "median" if span == 0 else "median±1"}
+                    "n": len(near), "method": "median" if span == 0 else "median±1", "basis": basis}
     return None
 
 

@@ -33,7 +33,7 @@ def candidates(engine, user, now):
             state = (l.get('by_request', {}).get(req['id']) or {}).get('state', l.get('state'))
             if state != 'verified':
                 continue
-            fp = analytics.fair_price(engine.get('market', {}).get(req['id'], {}), l.get('year'), l.get('mileage'), exclude_id=l['id'])
+            fp = analytics.fair_price(engine.get('market', {}).get(req['id'], {}), l.get('year'), l.get('mileage'), exclude_id=l['id'], spec=l.get('spec'))
             if not fp or fp['n'] < 8:
                 continue
             discount = 1-price/fp['expected']
@@ -45,6 +45,9 @@ def candidates(engine, user, now):
             if not l.get('vin') or l.get('identity_version') != 1: missing.append('الشاصي غير منشور؛ اطلب مطابقته بالملكية')
             strong = discount >= .10 and price <= fp['low'] and discount < .35
             tier = 'verify' if discount >= .35 or (strong and (not l.get('phone') or l.get('identity_version') != 1 or not l.get('mileage'))) else 'call' if strong else 'watch'
+            if l.get('flags'):  # the seller states a warning sign: never "call today" without a check
+                missing.insert(0,'الإعلان يذكر: '+'، '.join(f['label'] for f in l['flags']))
+                if tier == 'call': tier = 'verify'
             if discount >= .35: missing.insert(0,'انخفاض غير معتاد؛ تحقّق من السعر وحالة السيارة قبل أي دفع')
             vin, _ = vin_status(l.get('vin')) if l.get('identity_version') == 1 else (None,None)
             key = 'vin:'+vin if vin else l['id']

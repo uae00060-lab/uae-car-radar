@@ -84,6 +84,7 @@ KEYS = {
     "transmission": ("transmission", "vehicletransmission", "transmission_type", "gearbox"),
     "image": ("image", "main_image", "mainimage", "photo", "thumbnail", "cover_image", "image_url", "imageurl"),
     "title": ("name", "title", "headline"),
+    "description": ("description", "ad_description", "addescription", "description_text", "body_text"),
 }
 LOOKUP = {k: f for f, ks in KEYS.items() for k in ks}
 
@@ -401,6 +402,10 @@ def ad_page(html, url, ad_id):
     found.pop("phone", None)
     for key, value in identity.items():
         found[key] = (value, "ad:identity")
+    if "description" not in found:
+        meta_desc = meta.values.get("og:description") or meta.values.get("description")
+        if meta_desc:
+            found["description"] = (meta_desc, "meta:description")
     if "title" not in found:
         m = re.search(r"<title[^>]*>(.*?)</title>", html, re.S | re.I)
         if m:
