@@ -34,3 +34,11 @@ class Opportunities(unittest.TestCase):
  def test_pause_and_watch_price(self):
   self.l['price']=28000;self.assertEqual(self.rows()[0]['tier'],'watch')
   self.u['opportunities_enabled']=False;self.assertEqual(self.rows(),[])
+
+ def test_shared_ad_prefers_strongest_supported_request_at_same_price(self):
+  self.u['requests'].append(dict(self.u['requests'][0],id='r2'))
+  self.l['request_ids'].append('r2');self.l['by_request']['r2']={'state':'verified'}
+  self.e['market']['r2']={k:dict(v) for k,v in self.e['market']['r'].items()}
+  for sample in self.e['market']['r'].values():sample['price']=27000
+  self.assertEqual(self.rows()[0]['tier'],'call')
+  self.assertEqual(self.rows()[0]['request_id'],'r2')

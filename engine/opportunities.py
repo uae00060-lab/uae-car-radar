@@ -52,7 +52,8 @@ def candidates(engine, user, now):
                         expected=fp['expected'],comparables=fp['n'],discount=round(discount,4),posted=l['posted'],checked_at=l['last_checked'],
                         reasons=[f'أقل من تقدير الإعلانات المشابهة بنحو {round(discount*100)}٪',f'المقارنة من {fp["n"]} إعلانًا، وليست تقييم فحص للسيارة','نشر حديث: '+l['posted']],missing=missing)
             previous=picks.get(key)
-            if previous is None or price < previous['price']: picks[key]=item
+            priority={'call':0,'verify':1,'watch':2}
+            if previous is None or price < previous['price'] or (price == previous['price'] and priority[tier] < priority[previous['tier']]): picks[key]=item
     return sorted(picks.values(),key=lambda x:({'call':0,'verify':1,'watch':2}[x['tier']],-dt.date.fromisoformat(x['posted']).toordinal(),-x['discount']))[:12]
 
 
