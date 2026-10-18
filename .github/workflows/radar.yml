@@ -1,0 +1,104 @@
+name: radar
+
+on:
+  schedule:
+    - cron: "0 6,16 * * *"        # 10:00 and 20:00 UAE time: full rounds with report and notifications
+    - cron: "0 3,9,12,19 * * *"   # 07:00, 13:00, 16:00, 23:00 UAE: price watch on the cars you follow
+  workflow_dispatch:
+    inputs:
+      cmd:
+        description: "run = search, watch = price check of followed cars, diagnose = platform check, notify-test = test message"
+        type: choice
+        options: [run, watch, diagnose, notify-test]
+        default: run
+      mode:
+        type: choice
+        options: [manual, scheduled]
+        default: manual
+      request:
+        description: "request id, or all"
+        default: all
+      run_id:
+        description: "set by the dashboard"
+        default: ""
+
+permissions:
+  contents: write
+
+concurrency:
+  group: radar
+  cancel-in-progress: false
+
+jobs:
+  radar:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    env:
+      RADAR_KEY: ${{ secrets.RADAR_KEY }}
+      TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+      TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+      CALLMEBOT_PHONE: ${{ secrets.CALLMEBOT_PHONE }}
+      CALLMEBOT_APIKEY: ${{ secrets.CALLMEBOT_APIKEY }}
+      SMTP_USER: ${{ secrets.SMTP_USER }}
+      SMTP_PASSWORD: ${{ secrets.SMTP_PASSWORD }}
+      MAIL_TO: ${{ secrets.MAIL_TO }}
+      RADAR_SITE: https://${{ github.repository_owner }}.github.io/${{ github.event.repository.name }}/
+    steps:
+      - name: Get the code
+        uses: actions/checkout@v4
+
+      - name: Pick the task
+        id: task
+        env:
+          EVENT: ${{ github.event_name }}
+          SCHEDULE: ${{ github.event.schedule }}
+          CMD: ${{ inputs.cmd }}
+          MODE: ${{ inputs.mode }}
+          REQ: ${{ inputs.request }}
+          RID: ${{ inputs.run_id }}
+        run: |
+          clean() { printf '%s' "$1" | tr -cd 'A-Za-z0-9_-'; }
+          if [ "$EVENT" = "schedule" ]; then
+            if [ "$SCHEDULE" = "0 6,16 * * *" ]; then args="run --mode scheduled"; else args="watch"; fi
+          else
+            case "$CMD" in
+              run)
+                args="run --mode $(clean "$MODE") --request $(clean "${REQ:-all}")"
+                [ -n "$RID" ] && args="$args --run-id $(clean "$RID")" ;;
+              *) args="$(clean "$CMD")" ;;
+            esac
+          fi
+          echo "args=$args" >> "$GITHUB_OUTPUT"
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install
+        run: |
+          pip install --quiet cryptography==44.0.2
+          if echo "${{ steps.task.outputs.args }}" | grep -q '^run'; then
+            sudo apt-get install -y --no-install-recommends fonts-noto-core >/dev/null 2>&1 || true
+          fi
+
+      - name: Search the platforms
+        if: steps.task.outputs.args != 'notify-test'
+        run: python engine/radar.py ${{ steps.task.outputs.args }}
+
+      - name: Send a test notification
+        if: steps.task.outputs.args == 'notify-test'
+        run: python engine/notify.py
+
+      - name: Save results
+        if: steps.task.outputs.args != 'notify-test'
+        run: |
+          git config user.name "car-radar"
+          git config user.email "car-radar@users.noreply.github.com"
+          git add data reports
+          if git diff --cached --quiet; then echo "nothing to save"; exit 0; fi
+          git commit -q -m "radar: ${{ steps.task.outputs.args }}"
+          for i in 1 2 3 4; do
+            git pull -q --rebase origin "${GITHUB_REF_NAME}" && git push -q origin "HEAD:${GITHUB_REF_NAME}" && exit 0
+            sleep $((i * 3))
+          done
+          exit 1
