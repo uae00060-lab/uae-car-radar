@@ -605,8 +605,7 @@ def diagnose(a):
         q = search_query(plat, req)
         out["_search"][plat] = {"query": q, **fetch.search_debug(q)}
     mj = fetch.get("https://www.mourjan.com/ae/")
-    out["_mourjan_home"] = {"status": mj.status, "links": sorted({h for h in re.findall(r'href="([^"]+)"', mj.html)
-                                                                  if re.search(r"car|toyota|vehicle|motor|سيار", h, re.I)})[:60]}
+    out["_mourjan_home"] = {"status": mj.status, "bytes": len(mj.html), "links": sorted(set(re.findall(r'href="([^"#]+)"', mj.html)))[:120]}
     bp = fetch.get(search_urls("dubizzle", req)[0])
     out["_dubizzle_page"] = {"status": bp.status, "blocked": bp.blocked, "bytes": len(bp.html),
                              "head": re.sub(r"\s+", " ", extract.text_of(bp.html))[:300]}
