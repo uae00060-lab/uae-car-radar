@@ -123,9 +123,9 @@ class Engine(unittest.TestCase):
         twins = [l for l in L.values() if l.get("mileage") == 77000]
         self.assertEqual(len(twins), 2)
         self.assertFalse(any(l.get("also_on") for l in twins))
-        # fair price from 12 market samples + opened ads
-        self.assertIsNotNone(L["dubizzle-0e178fe896f34a32b34968b5266f36dd"]["fair"])
-        self.assertIn(L["dubizzle-0e178fe896f34a32b34968b5266f36dd"]["rating"], ("excellent", "good", "fair"))
+        # Result cards cannot contaminate estimates; opened comparables are still too few.
+        self.assertIsNone(L["dubizzle-0e178fe896f34a32b34968b5266f36dd"]["fair"])
+        self.assertEqual(L["dubizzle-0e178fe896f34a32b34968b5266f36dd"]["rating"], "unknown")
         self.assertEqual(L["dubizzle-8507a50ad04143bebd4191dbc57586e8"]["urgency"]["level"] in ("medium", "high"), True)
         self.assertEqual(len(eng["reports"]), 1)
         self.assertTrue(os.path.exists(os.path.join(self.tmp, eng["reports"][0]["file"])))

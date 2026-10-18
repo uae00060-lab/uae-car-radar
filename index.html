@@ -791,8 +791,8 @@ section.tab { display: grid; gap: 14px; }
       for (let i = 1; i <= doc.numPages; i++) {
         const page = await doc.getPage(i), base = page.getViewport({ scale: 1 });
         const vp = page.getViewport({ scale: (width / base.width) * (window.devicePixelRatio || 1) });
-        const c = document.createElement("canvas"); c.width = vp.width; c.height = vp.height; c.style.width = width + "px";
-        $("vPages").appendChild(c); await page.render({ canvasContext: c.getContext("2d"), viewport: vp }).promise;
+        const c = document.createElement("canvas"); c.dir = "ltr"; c.style.direction = "ltr"; c.width = vp.width; c.height = vp.height; c.style.width = width + "px";
+        $("vPages").appendChild(c); const ctx = c.getContext("2d"); ctx.direction = "ltr"; await page.render({ canvasContext: ctx, viewport: vp }).promise;
       }
     } catch (e) { $("vPages").innerHTML = `<div class="banner bad">تعذّر عرض التقرير (${esc(e.message)}). جرّب «تنزيل PDF».</div>`; }
   }

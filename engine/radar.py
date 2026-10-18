@@ -357,7 +357,11 @@ def run_round(a, key):
     for req in reqs:
         plats = [p for p in (req.get("platforms") or [p for p in PLATFORMS if p != "mourjan"]) if p in PLATFORMS]
         cards, samples = discover(req, plats, diag)
-        analytics.add_samples(eng["market"], req["id"], samples, today)
+        # Price estimates use opened ad evidence, never unverified result-card prices/years.
+        model_key = slug(req.get("make")) + "/" + slug(req.get("model"))
+        if eng.setdefault("market_models", {}).get(req["id"]) != model_key:
+            eng["market"][req["id"]] = {}
+            eng["market_models"][req["id"]] = model_key
         for k, c in cards.items():
             st = funnel.setdefault(c["platform"], {"cards": 0, "known": 0, "skipped_recently": 0, "card_rejected": 0, "planned": 0, "states": {}, "excluded_by": {}})
             st["cards"] += 1
