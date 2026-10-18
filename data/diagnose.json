@@ -1,5 +1,5 @@
 {
- "at": "2026-10-18T22:21:13+04:00",
+ "at": "2026-10-18T22:23:00+04:00",
  "probe": "Toyota Yaris",
  "platforms": {
   "dubizzle": {
@@ -806,7 +806,7 @@
      "debug": {
       "status": 200,
       "final": "https://ae.opensooq.com/en/search/288806664",
-      "bytes": 941928,
+      "bytes": 941985,
       "sold_hit": null,
       "values": {
        "title": "تويوتا يارس موديل 2023 خليجي",
@@ -881,7 +881,7 @@
      "debug": {
       "status": 200,
       "final": "https://ae.opensooq.com/en/search/288804462",
-      "bytes": 942227,
+      "bytes": 941993,
       "sold_hit": null,
       "values": {
        "title": "فرصة للبيع  تويوتا يارس 2023 خليجي  57 ألف كم  فحص ممتاز",
@@ -1086,7 +1086,7 @@
      ],
      "has": {
       "price": true,
-      "year": false,
+      "year": true,
       "km": false,
       "date": false,
       "phone": true,
@@ -1166,7 +1166,7 @@
      ],
      "has": {
       "price": true,
-      "year": false,
+      "year": true,
       "km": false,
       "date": false,
       "phone": true,
@@ -1260,6 +1260,10 @@
        "tel"
       ],
       [
+       "price",
+       "card"
+      ],
+      [
        "seller_type",
        "text"
       ],
@@ -1277,7 +1281,7 @@
       ]
      ],
      "has": {
-      "price": false,
+      "price": true,
       "year": true,
       "km": true,
       "date": false,
@@ -1361,6 +1365,10 @@
        "tel"
       ],
       [
+       "price",
+       "card"
+      ],
+      [
        "seller",
        "label"
       ],
@@ -1386,7 +1394,7 @@
       ]
      ],
      "has": {
-      "price": false,
+      "price": true,
       "year": true,
       "km": true,
       "date": true,
@@ -1403,17 +1411,17 @@
    "dubizzle": {
     "query": "site:uae.dubizzle.com/motors/used-cars/toyota/yaris toyota yaris",
     "ddg": {
-     "status": 202,
+     "status": 200,
      "blocked": false,
-     "bytes": 14449,
+     "bytes": 9419,
      "result_a": 0,
      "b_algo": 0,
-     "head": " --> DuckDuckGo DuckDuckGo Unfortunately, bots use DuckDuckGo too. Please complete the following challenge to confirm this search was made by a human. Select all squares containing a duck: Submit Imag"
+     "head": " site:uae.dubizzle.com/motors/used-cars/toyota/yaris toyota yaris at DuckDuckGo All Regions Argentina Australia Austria Belgium (fr) Belgium (nl) Brazil Bulgaria Canada (en) Canada (fr) Catalonia Chil"
     },
     "bing": {
      "status": 200,
      "blocked": false,
-     "bytes": 98067,
+     "bytes": 93675,
      "result_a": 0,
      "b_algo": 0,
      "head": " \"use strict\";// site:uae.dubizzle.com/motors/used-cars/toyota/yaris toyota yaris - Search // 2&&a.substring(0,3)===\"IG=\")){ig='IG='+_G.IG;}if(document.images){_G.GPImg=new Image;_G.GPImg.src=_G.gpUrl"
@@ -1426,7 +1434,7 @@
     "ddg": {
      "status": 202,
      "blocked": false,
-     "bytes": 14395,
+     "bytes": 14389,
      "result_a": 0,
      "b_algo": 0,
      "head": " --> DuckDuckGo DuckDuckGo Unfortunately, bots use DuckDuckGo too. Please complete the following challenge to confirm this search was made by a human. Select all squares containing a duck: Submit Imag"
@@ -1434,7 +1442,7 @@
     "bing": {
      "status": 200,
      "blocked": false,
-     "bytes": 97035,
+     "bytes": 92642,
      "result_a": 0,
      "b_algo": 0,
      "head": " \"use strict\";// site:mourjan.com toyota yaris used - Search // 2&&a.substring(0,3)===\"IG=\")){ig='IG='+_G.IG;}if(document.images){_G.GPImg=new Image;_G.GPImg.src=_G.gpUrl+ig+'&'+a;}return true;}_G.BAT"
@@ -1442,6 +1450,10 @@
     "links": 0,
     "sample": []
    }
+  },
+  "_mourjan_home": {
+   "status": 200,
+   "links": []
   },
   "_dubizzle_page": {
    "status": 200,
