@@ -81,8 +81,8 @@ def whatsapp(text):
 
 
 def email(subject, text, pdf=None, pdf_name="report.pdf"):
-    # Copied from an Arabic page, values often carry invisible direction marks; Gmail drops the
-    # connection on them. App passwords are 16 letters shown in groups of four.
+    # Copied from an Arabic page, values often carry invisible direction marks.
+    # App passwords are 16 letters shown in groups of four.
     user = re.sub(r"[^\x21-\x7e]", "", env("SMTP_USER") or "")
     pw = re.sub(r"[^A-Za-z0-9]", "", env("SMTP_PASSWORD") or "")
     if not user or not pw:
@@ -100,7 +100,11 @@ def email(subject, text, pdf=None, pdf_name="report.pdf"):
 
     def deliver(s):
         stage[0] = "تسجيل الدخول"
-        s.login(user, pw)
+        # One method only: login() retries LOGIN after a PLAIN refusal, Gmail then hangs up, and the
+        # real answer (wrong password) is lost behind "connection closed".
+        s.ehlo_or_helo_if_needed()
+        s.user, s.password = user, pw
+        s.auth("PLAIN", s.auth_plain)
         stage[0] = "الإرسال"
         s.send_message(msg)
 
@@ -117,16 +121,11 @@ def email(subject, text, pdf=None, pdf_name="report.pdf"):
                 s.starttls(context=ssl.create_default_context())
                 deliver(s)
         return "أُرسل"
-    except smtplib.SMTPAuthenticationError:
-        return "فشل: Gmail رفض الدخول (تحقق من SMTP_USER وكلمة مرور التطبيق في SMTP_PASSWORD)"
-    except smtplib.SMTPServerDisconnected as e:
-        if stage[0] == "تسجيل الدخول":
-            domain = user.rpartition("@")[2].lower() if "@" in user else ""
-            hint = ("؛ SMTP_USER ليس عنوان بريد كاملًا" if not domain else
-                    f"؛ SMTP_USER على {domain} وليس gmail.com" if domain not in ("gmail.com", "googlemail.com") else "")
-            hint += "" if len(pw) == 16 else f"؛ كلمة مرور التطبيق يجب أن تكون 16 حرفًا والموجود {len(pw)}"
-            return f"فشل: Gmail أغلق الاتصال عند تسجيل الدخول (تحقق من SMTP_USER وSMTP_PASSWORD{hint})"
-        return f"فشل أثناء {stage[0]} (SMTPServerDisconnected: {e})"
+    except smtplib.SMTPAuthenticationError as e:
+        domain = user.rpartition("@")[2].lower()
+        hint = "" if domain in ("gmail.com", "googlemail.com") else "؛ SMTP_USER ليس عنوان Gmail كاملًا"
+        hint += "" if len(pw) == 16 else f"؛ كلمة مرور التطبيق 16 حرفًا والمحفوظ {len(pw)}"
+        return f"فشل: Gmail رفض البريد أو كلمة مرور التطبيق (رمز {e.smtp_code}){hint}"
     except Exception as e:  # noqa: BLE001
         reason = re.sub(r"\S+@\S+", "…", str(e))[:120]  # the log is public: never echo an address
         return f"فشل أثناء {stage[0]} ({type(e).__name__}{': ' + reason if reason else ''})"
@@ -170,31 +169,6 @@ REQUIRED = {"telegram": ("TELEGRAM_BOT_TOKEN", "TELEGRAM_CHAT_ID"), "whatsapp": 
             "email": ("SMTP_USER", "SMTP_PASSWORD")}
 
 
-def gmail_control_check():
-    """Sign in with an account that does not exist, to tell bad details from a blocked server."""
-    outcomes = []
-    for port, method in ((465, "PLAIN"), (587, "PLAIN"), (465, "LOGIN")):
-        try:
-            if port == 465:
-                s = smtplib.SMTP_SSL("smtp.gmail.com", 465, context=ssl.create_default_context(), timeout=30)
-            else:
-                s = smtplib.SMTP("smtp.gmail.com", 587, timeout=30)
-                s.starttls(context=ssl.create_default_context())
-            with s:
-                s.ehlo()
-                auth = s.esmtp_features.get("auth", "")
-                user, pw = "radar.control.check.000@gmail.com", "aaaabbbbccccdddd"
-                s.user, s.password = user, pw
-                s.auth(method, s.auth_plain if method == "PLAIN" else s.auth_login)
-        except smtplib.SMTPAuthenticationError as e:
-            outcomes.append(f"{port}/{method}: رفض طبيعي {e.smtp_code}")
-        except Exception as e:  # noqa: BLE001
-            outcomes.append(f"{port}/{method}: {type(e).__name__} [{auth if 'auth' in dir() else ''}]")
-    if any("رفض طبيعي" in o for o in outcomes):
-        return "Gmail يرد طبيعيًا من الخادم، فالمشكلة في بيانات الدخول المحفوظة (" + " | ".join(outcomes) + ")"
-    return "Gmail يغلق الاتصال من خادم GitHub أيضًا مع حساب تجريبي (" + " | ".join(outcomes) + ")"
-
-
 def report_test(result):
     """Per-channel outcome of a test message as GitHub annotations and job summary; 1 if not all good."""
     names = {"telegram": "تيليجرام", "whatsapp": "واتساب", "email": "البريد"}
@@ -204,8 +178,6 @@ def report_test(result):
         missing = [n for n in REQUIRED[k] if not (env(n) or "").strip()]
         if v == OFF and missing:
             v = f"{v}: لا يصل للخادم {' و'.join(missing)}"
-        if k == "email" and "أغلق الاتصال" in v:
-            v += "؛ " + gmail_control_check()
         print(f"::{level} title={names[k]}::{v}")
         lines.append(f"{names[k]}: {v}")
     summary = env("GITHUB_STEP_SUMMARY")
