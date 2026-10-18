@@ -9,6 +9,7 @@ Secrets (GitHub → Settings → Secrets and variables → Actions):
 import json
 import os
 import time
+import re
 import smtplib
 import ssl
 import urllib.parse
@@ -69,7 +70,8 @@ def whatsapp(text):
     try:
         link = next((line for line in reversed(text.splitlines()) if "https://" in line), "")
         part = text if len(text) <= 1400 else text[:1100] + "\nالتفاصيل الكاملة في اللوحة:\n" + link
-        q = urllib.parse.urlencode({"phone": phone, "text": part, "apikey": key})
+        phone = "+" + re.sub(r"\D", "", phone).removeprefix("00")  # CallMeBot wants +<country><number>
+        q = urllib.parse.urlencode({"phone": phone, "text": part, "apikey": key.strip()})
         status, body = _post("https://api.callmebot.com/whatsapp.php?" + q)
         if status != 200:
             return f"فشل (HTTP {status})"
