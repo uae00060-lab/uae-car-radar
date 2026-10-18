@@ -590,7 +590,7 @@ section.tab { gap:20px; }
   }
 
   // ---------------------------------------------------------------- helpers over data
-  const hasPrice = (l) => Number.isFinite(Number(l.price)) && Number(l.price) >= 1500 && Number(l.price) <= 5000000;
+  const hasPrice = (l) => Number.isFinite(Number(l.price)) && Number(l.price) >= 1500 && Number(l.price) <= 5000000 && l.price_version === 3 && l.price_currency === "AED";
   const L = () => Object.values(S.E.listings || {}).filter(hasPrice);
   const mark = (id) => S.U.marks[id] || {};
   const isMatch = (l) => l.state === "verified" && dateKind(l) === "posted";

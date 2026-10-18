@@ -539,7 +539,7 @@ def run_round(a, key):
                   "urgency": {"score": score, "level": level, "why": why}})
 
     # 5) report
-    live = lambda l: bool(l.get("price")) and l.get("state") in ("verified", "approx", "unverified") and (marks.get(l["id"]) or {}).get("status") not in ("dismissed", "purchased")
+    live = lambda l: bool(l.get("price")) and l.get("price_version") == 3 and l.get("price_currency") == "AED" and l.get("state") in ("verified", "approx", "unverified") and (marks.get(l["id"]) or {}).get("status") not in ("dismissed", "purchased")
     full = a.mode == "manual"
     groups, cur_ver, cur_cand = [], 0, 0
     for req in reqs:
