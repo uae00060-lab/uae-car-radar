@@ -134,6 +134,22 @@ def delivery_problem(result):
     return ("تعذّر إرسال التقرير عبر: " + "، ".join(failed)) if failed else ""
 
 
-if __name__ == "__main__":  # python notify.py test  -> sends a test message on every configured channel
-    print(json.dumps(send_all("اختبار رادار السيارات", "✅ رسالة اختبار من رادار سيارات الإمارات.",
-                              "✅ رسالة اختبار من رادار سيارات الإمارات."), ensure_ascii=False))
+def report_test(result):
+    """Per-channel outcome of a test message as GitHub annotations and job summary; 1 if not all good."""
+    names = {"telegram": "تيليجرام", "whatsapp": "واتساب", "email": "البريد"}
+    lines = [f"{names[k]}: {v}" for k, v in result.items()]
+    for k, v in result.items():
+        level = "notice" if v == SENT else "warning" if v == OFF else "error"
+        print(f"::{level} title={names[k]}::{v}")
+    summary = env("GITHUB_STEP_SUMMARY")
+    if summary:
+        with open(summary, "a", encoding="utf-8") as f:
+            f.write("### نتيجة الإشعار التجريبي\n\n" + "\n".join("- " + line for line in lines) + "\n")
+    return 0 if not delivery_problem(result) else 1
+
+
+if __name__ == "__main__":  # python notify.py  -> sends a test message on every configured channel
+    outcome = send_all("اختبار رادار السيارات", "✅ رسالة اختبار من رادار سيارات الإمارات.",
+                       "✅ رسالة اختبار من رادار سيارات الإمارات.")
+    print(json.dumps(outcome, ensure_ascii=False))
+    raise SystemExit(report_test(outcome))
