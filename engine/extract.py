@@ -16,7 +16,7 @@ from common import AR_DIGITS, ad_identity, clean_url, to_num
 SCRIPT_JSON = re.compile(r'<script[^>]*type="application/(?:ld\+)?json"[^>]*>(.*?)</script>', re.S | re.I)
 NEXT_DATA = re.compile(r'<script[^>]*id="__NEXT_DATA__"[^>]*>(.*?)</script>', re.S)
 STATE_ASSIGN = re.compile(r"(?:window\.)?(__INITIAL_STATE__|__PRELOADED_STATE__|__NUXT__|__APOLLO_STATE__|__DATA__)\s*=\s*(\{.*?\})\s*;?\s*</script>", re.S)
-HREF = re.compile(r'href="([^"#]+)"', re.I)
+HREF = re.compile(r'href\s*=\s*["\']?([^"\'\s>#]+)', re.I)
 QUOTED_PATH = re.compile(r'"((?:https?:\\?/\\?/[^"\s]+)?\\?/[a-z0-9][^"\s]{10,300})"', re.I)
 
 
@@ -164,7 +164,7 @@ def results(html, base, plat):
         add(href, {"price": to_num(price[1] or price[2]) if price else None,
                    "km": to_num(km[1]) if km else None,
                    "year": to_num(year[1]) if year else None,
-                   "title": chunk.split("\n")[0][:160] if chunk else None}, "link")
+                   "title": next((line.strip()[:160] for line in chunk.split("\n") if line.strip()), None)}, "link")
     # 3) ad paths quoted anywhere in scripts (client-rendered lists)
     for m in QUOTED_PATH.finditer(html):
         add(m[1].replace("\\/", "/"), {}, "script")
@@ -389,10 +389,12 @@ def ad_page(html, url, ad_id):
         found["_price_reason"] = source
     if "color" in found and not color_ok(found["color"][0]):
         del found["color"]
-    if "phone" not in found:
-        m = PHONE.search(html)
-        if m:
-            found["phone"] = ((m[1] or m[2]).strip(), "tel")
+    from identity import extract_identity
+    meta = MetaReader(html)
+    identity = extract_identity(html, primary_schema(blobs, url, ad_id), meta.values.get("og:description") or meta.values.get("description", ""))
+    found.pop("phone", None)
+    for key, value in identity.items():
+        found[key] = (value, "ad:identity")
     if "title" not in found:
         m = re.search(r"<title[^>]*>(.*?)</title>", html, re.S | re.I)
         if m:

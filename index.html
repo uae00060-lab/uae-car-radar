@@ -233,7 +233,16 @@ section.tab { gap:20px; }
 .toolbar { background:#fff;border:1px solid var(--line);padding:12px;border-radius:12px;gap:9px; }.toolbar input,.toolbar select { font-size:12px;border-color:#E2E8F1;background:#FAFBFD;min-height:40px; }.toolbar input[type=search] { flex-basis:220px; }.toolbar button { min-height:39px; }
 .grid { gap:20px;grid-template-columns:repeat(auto-fill,minmax(min(100%,310px),1fr)); }.ad { border-radius:15px;box-shadow:0 5px 18px #20385A05;transition:transform .18s,box-shadow .18s;border-color:#DDE5EF; }.ad:hover { transform:translateY(-3px);box-shadow:0 12px 30px #10274A10; }.ph { aspect-ratio:16/9; }.ph img { transition:transform .3s; }.ad:hover .ph img { transform:scale(1.025); }.ph { overflow:hidden; }.ph .platf { background:#0B1732E0;padding:4px 10px;backdrop-filter:blur(5px);font-size:10px; }.ph .tags { top:12px;right:12px; }.pill { font-size:10px;padding:3px 9px; }.ph .star { top:10px;left:10px; }.bd { padding:18px;gap:12px; }.bd .title { font-size:17px;font-weight:600; }.var { font-size:11px;line-height:1.6; }.price { color:var(--navy);font-size:27px;letter-spacing:-.7px; }.price small { font-size:11px; }.plate { border:1px solid #E1E8F1;background:#F3F6FB;color:#60718B;border-radius:6px;font-size:12px;padding:2px 7px; }.plate::before { font-size:9px; }.verdict { font-size:11px;padding:9px 11px; }.verdict b { font-size:12px; }.facts { font-size:11px;gap:6px 12px; }.facts dt { color:#8592A8; }.facts dd { color:#344861; }.note { background:#FFF8E9;color:#9E762E;padding:8px 10px;border-radius:7px;font-size:10px; }.foot { padding-top:12px;gap:7px; }.foot select,.foot .btn,.cmp-toggle { font-size:10px; }.foot select { flex-basis:100px; }.foot .btn { background:#0B1732;color:#fff;border-color:#0B1732;padding:7px 10px; }
 .panel,.list,.ctable { border-radius:14px; }.panel h2 { font-size:18px; }.req .top { background:linear-gradient(125deg,#F7FAFF,#fff);padding:20px; }.spec div { padding:13px 20px; }.req .actions { padding:16px 20px; }.req .primary { background:var(--navy);border-color:var(--navy); }.item { padding:18px 20px; }.banner { border:1px solid #d3e8e4;font-size:12px; }.empty { border-style:solid;padding:55px 22px;background:linear-gradient(#fff,#FBFCFF); }.empty b { font-size:18px;margin-bottom:10px; }.gate { max-width:480px;margin:8vh auto; }.gate .panel { padding:34px;gap:19px; }.gate-logo { margin-bottom:16px; }.gate h1 { font-size:23px; }.gate .primary { background:var(--navy);border-color:var(--navy);min-height:44px; }
-@media(min-width:1450px) { .grid { grid-template-columns:repeat(3,minmax(0,1fr)); } }
+@media(min-width:1100px) { .grid { grid-template-columns:repeat(4,minmax(0,1fr)); gap:16px; } .grid .facts { font-size:12px; } .grid .card { min-width:0; } }
+@media(min-width:700px) and (max-width:1099px) { .grid { grid-template-columns:repeat(2,minmax(0,1fr)); } }
+.identity-value { overflow-wrap:anywhere; font-family:monospace; letter-spacing:.04em; }
+.identity-note { display:block; font-size:10px; color:var(--muted); margin-top:3px; }
+#repList { display:grid; grid-template-columns:repeat(auto-fill,minmax(320px,1fr)); gap:18px; }
+.report-card { background:#fff; border:1px solid #DEE5EF; border-radius:20px; padding:22px; box-shadow:0 6px 24px #0B173206; display:flex; flex-direction:column; gap:17px; }
+.report-top { display:flex; justify-content:space-between; align-items:center; gap:10px; }.report-type { background:#E6EEF8; color:#0B1732; padding:5px 10px; border-radius:8px; font-size:11px; }
+.report-card h3 { font-size:17px; margin:0 0 7px; }.report-card .kp { display:grid; grid-template-columns:repeat(4,1fr); width:100%; background:#F3F6FB; padding:12px 6px; border-radius:12px; }.report-card .kp span { text-align:center; font-size:10px; }.report-card .kp b { display:block; font-size:21px; color:#0B1732; }
+.report-foot { border-top:1px solid #E8EDF4; padding-top:14px; display:flex; align-items:center; justify-content:space-between; gap:8px; margin-top:auto; }.report-foot .primary { padding:9px 16px; }
+@media(max-width:699px) { #repList { grid-template-columns:minmax(0,1fr); } #headerNew { padding:9px 12px; } }
 @media(max-width:1000px) { .header-state { display:none; }.metrics { grid-template-columns:repeat(2,minmax(0,1fr)); }.hero-art { width:260px;transform:scale(.85);margin-inline:-25px; }.hero-copy h2 { font-size:32px; } }
 @media(max-width:700px) { .wrap { padding-inline:16px; }.hbar { gap:14px;min-height:auto;padding-block:17px; }.brand-lockup { flex-basis:100%; }.brand-lockup h1 { font-size:23px; }.hbar>.row { width:100%; }.hbar>.row select { flex:1; }.search-main { padding-inline:18px; }nav.tabs { gap:1px; }nav.tabs button { padding:10px 12px;font-size:12px; }.workspace-top { flex-direction:column;gap:6px;font-size:10px;margin-bottom:16px; }.radar-hero { padding:26px 24px;min-height:245px; }.hero-copy h2 { font-size:30px; }.hero-copy p { max-width:290px;font-size:11px; }.hero-art { display:none; }.hero-actions { gap:8px; }.hero-primary,.hero-secondary { font-size:11px;padding:9px 12px; }.metrics { gap:10px; }.metric { padding:15px 12px;grid-template-columns:30px 1fr;gap:7px; }.metric-symbol { width:30px;height:30px;font-size:17px; }.metric>div>span { font-size:9px; }.metric b { font-size:25px; }.metric small { font-size:9px; }.section-heading { align-items:flex-end;gap:8px; }.section-heading h2 { font-size:19px; }.price-policy { font-size:9px;max-width:145px; }.toolbar { padding:10px; }.toolbar input[type=search] { flex-basis:100%; }.toolbar select { flex:1 1 40%;max-width:100%;font-size:11px; }.grid { grid-template-columns:1fr; }.bd { padding:17px; }.gate .panel { padding:25px; }.workspace-top #nextRun { line-height:1.8; } }
 @media(prefers-reduced-motion:reduce) { .ad,.ph img { transition:none; } }
@@ -249,6 +258,7 @@ section.tab { gap:20px; }
       <a class="brand-lockup grow" href="./" aria-label="رادار سيارات الإمارات"><img src="assets/logo-mark.svg" width="56" height="56" alt="شعار رادار السيارات"><div><h1>رادار<span>سيارات الإمارات</span></h1><div class="brand-en" dir="ltr">CAR RADAR / UAE</div></div></a><div class="header-state"><span class="status-dot"></span><span id="headerState">لوحة الرصد</span></div>
       <div class="row">
         <select id="runScope" aria-label="نطاق البحث"><option value="all">كل الطلبات</option></select>
+        <button class="btn" id="headerNew" type="button">＋ طلب جديد</button>
         <button class="primary search-main" id="searchNow" type="button"><span aria-hidden="true">⌕</span> ابحث الآن</button>
       </div>
     </div>
@@ -356,7 +366,7 @@ section.tab { gap:20px; }
 
   <!-- reports -->
   <section class="tab" id="tab-reports" hidden>
-    <div class="small">كل بحث مكتمل ينشئ تقرير PDF، ويظهر فشل إنشائه في السجل. الموعدان: تقرير مجمّع بالعروض الجديدة والتغييرات. «عرض» يفتحه هنا، و«تنزيل» يحفظه، و«واتساب» يرسل الملخص.</div>
+    <div class="small">كل بحث مكتمل ينشئ تقرير PDF، ويظهر فشل إنشائه في السجل. الموعدان: تقرير مجمّع بالعروض الجديدة والتغييرات. «فتح التقرير» يعرضه هنا، و«تنزيل PDF» يحفظه، و«مشاركة الملخص» يجهز نصًا للواتساب. التقارير القديمة تبقى كما أُنشئت؛ التصميم الجديد يظهر في التقارير القادمة.</div>
     <div class="list" id="repList"></div>
   </section>
 
@@ -390,8 +400,9 @@ section.tab { gap:20px; }
           <dt>8:00 مساءً</dt><dd>بحث عند غيابك + تقرير مجمّع وPDF</dd>
           <dt>متابعة الأسعار</dt><dd>تُفحص الأسعار ضمن جولتي 10 صباحًا و8 مساءً فقط، دون تنبيهات إضافية</dd>
           <dt>«ابحث الآن»</dt><dd>بحث يدوي يظهر في اللوحة دون إشعار. تُتجاوز الجولة المجدولة عند وصول إشارة نشاط حديثة من اللوحة؛ قد يستغرق انتهاء الإشارة بعد إغلاقها 3 دقائق.</dd>
-          <dt>ملاحظة</dt><dd>GitHub قد يؤخر المواعيد المجدولة من 5 إلى 15 دقيقة في أوقات الضغط</dd>
+          <dt>ملاحظة</dt><dd>قد تتأخر المواعيد المجدولة أو تُفقد عند ضغط GitHub؛ ليست خدمة بموعد مضمون</dd>
         </dl></div>
+      <div class="panel"><h2>حدود البحث والتوكن</h2><dl class="kv"><dt>مفتاح GitHub</dt><dd>وسيلة دخول للمستودع وتشغيل المهام، وليس رصيد ذكاء اصطناعي.</dd><dt>المتاح في الساعة</dt><dd id="apiQuota">يظهر بعد أول اتصال بـ GitHub.</dd><dt>الجولة اليدوية</dt><dd>حتى 45 إعلانًا جديدًا، إضافة إلى حصة إعادة الفحص. تشمل الحصة جميع الطلبات في الجولة.</dd><dt>الجولة المجدولة</dt><dd>حتى 70 إعلانًا جديدًا، إضافة إلى حصة إعادة الفحص. جولتان يوميًا عند غيابك.</dd><dt>المدة</dt><dd>مهلة المهمة 30 دقيقة. حدود المنصات قد تمنع بعض النتائج. لا يوجد حد شهري 200 أو 900 بحث داخل الأداة.</dd><dt>التكاليف</dt><dd>لا تستخدم الأداة API لذكاء اصطناعي أو بحث مدفوع. تشغيل GitHub القياسي مجاني للمستودعات العامة؛ المستودعات الخاصة تخضع لخطة الحساب.</dd><dt>دوبيزل</dt><dd>الوصول الآلي غير مضمون. الربط الكامل يحتاج وسيلة وصول يجيزها دوبيزل؛ مفتاح GitHub لا يمنح هذه الصلاحية. <a href="https://business.dubizzle.com/" target="_blank" rel="noopener">التواصل مع دوبيزل</a></dd></dl></div>
       <div class="panel"><h2>فحص المنصات</h2><div id="diagBox" class="small">اضغط «فحص المنصات» لمعرفة ما تعرضه كل منصة من خوادم GitHub.</div></div>
     </div>
   </section>
@@ -508,6 +519,9 @@ section.tab { gap:20px; }
     const h = { Accept: "application/vnd.github+json", "X-GitHub-Api-Version": "2022-11-28", ...(opt.headers || {}) };
     if (S.token) h.Authorization = "Bearer " + S.token;
     const r = await fetch(API() + path, { ...opt, headers: h, cache: "no-store" });
+    const quota = r.headers.get("x-ratelimit-remaining"), limit = r.headers.get("x-ratelimit-limit"), reset = r.headers.get("x-ratelimit-reset");
+    if (quota !== null && $("apiQuota")) $("apiQuota").textContent = `${quota} طلب API متبقٍ من ${limit || "—"}؛ تجدد الحصة ${reset ? new Date(Number(reset) * 1000).toLocaleTimeString("ar-AE") : "حسب GitHub"}. هذه طلبات إدارة، وليست عدد السيارات أو عمليات البحث.`;
+    if ((r.status === 403 || r.status === 429) && (quota === "0" || r.headers.get("retry-after"))) { const e = new Error("بلغ GitHub حد الطلبات؛ انتظر تجدد الحصة ثم أعد المحاولة."); e.status = r.status; throw e; }
     if (!r.ok && r.status !== 404) { const e = new Error("GH" + r.status); e.status = r.status; e.body = await r.text().catch(() => ""); throw e; }
     return r;
   }
@@ -617,8 +631,8 @@ section.tab { gap:20px; }
     if (S.E) renderCmpBar();
   }
   document.querySelectorAll("nav.tabs button").forEach((b) => b.addEventListener("click", () => showTab(b.dataset.tab)));
-  const DEFAULT_OFF = ["mourjan"]; // no UAE car section at the moment
-  $("rPlats").innerHTML = Object.entries(PLATFORMS).map(([k, v]) => `<label title="${k === "mourjan" ? "روابط قسم مرجان المستخدمة غير متاحة في الفحص الأخير" : ""}"><input type="checkbox" id="p_${k}" value="${k}"${DEFAULT_OFF.includes(k) ? "" : " checked"}> ${v}</label>`).join("");
+  const DEFAULT_OFF = []; // supported UAE car categories
+  $("rPlats").innerHTML = Object.entries(PLATFORMS).map(([k, v]) => `<label title="${k === "mourjan" ? "بحث في قسم السيارات حسب الماركة" : ""}"><input type="checkbox" id="p_${k}" value="${k}"${DEFAULT_OFF.includes(k) ? "" : " checked"}> ${v}</label>`).join("");
 
   // ---------------------------------------------------------------- pieces
   function photo(l) {
@@ -644,14 +658,16 @@ section.tab { gap:20px; }
     const u = l.urgency; if (!u) return "—";
     return `<span class="urg-${u.level}">${URG[u.level]}</span>${u.why?.length ? ` <span class="small">· ${esc(u.why.join(" · "))}</span>` : ""}`;
   }
-  function phoneHtml(p) { return p ? `<span class="num" style="user-select:all">${esc(p)}</span> <a class="btn sm ghost" href="tel:${esc(p.replace(/\s/g, ""))}">اتصال</a>` : '<span class="small">في صفحة الإعلان</span>'; }
+  function phoneHtml(p) { return p ? `<span class="num" style="user-select:all">${esc(p)}</span> <a class="btn sm ghost" href="tel:${esc(p.replace(/\s/g, ""))}">اتصال</a>` : '<span class="small">لم يتوفر رقم بائع منشور بوضوح</span>'; }
+  function vinHtml(l) { return l.identity_version === 1 && l.vin ? `<span class="num identity-value" dir="ltr">${esc(l.vin)}</span><small class="identity-note">${l.vin_status === "checksum" ? "فحص الصيغة وخانة التحقق؛ منشور في الإعلان" : "صيغة 17 خانة؛ منشور في الإعلان"}</small>` : `<span class="small">${l.vin_status === "conflict" ? "بيانات متعارضة؛ يحتاج تأكيدًا" : "لم يتوفر رقم كامل موثوق من الإعلان"}</span>`; }
+  function sellerPhone(l) { return l.identity_version === 1 ? phoneHtml(l.phone) : '<span class="small">بانتظار إعادة فحص بيانات البائع</span>'; }
   function stageSelect(l) { const st = mark(l.id).status || "new"; return `<select data-stage="${esc(l.id)}" aria-label="مرحلة المتابعة">${STAGES.map((s) => `<option value="${s.k}"${st === s.k ? " selected" : ""}>${s.t}</option>`).join("")}</select>`; }
   function facts(l) {
     const seller = [SELLER[l.seller_type], l.seller_name].filter(Boolean).join(" · ");
     const rows = [["الممشى", l.mileage ? `<span class="num">${fmt(l.mileage)}</span> كم` : "—"], ["اللون", esc(l.color || "—")],
       ["الموقع", esc([l.emirate, (l.location || "").split(",")[0]].filter((x, i, a) => x && a.indexOf(x) === i).join(" – ") || "—")],
       ["التاريخ", `${DATE_KIND[dateKind(l)]} <span class="num">${dmy(adDate(l))}</span>`], ["البائع", esc(seller || "—")],
-      ["استعجال البائع", urgencyHtml(l)], ["الهاتف", phoneHtml(l.phone)]];
+      ["استعجال البائع", urgencyHtml(l)], ["رقم الشاصي VIN", vinHtml(l)], ["هاتف البائع", sellerPhone(l)]];
     return `<dl class="facts">${rows.map(([k, v]) => `<dt>${k}</dt><dd>${v}</dd>`).join("")}</dl>`;
   }
 
@@ -743,7 +759,8 @@ section.tab { gap:20px; }
         ${line("استعجال البائع", (l) => urgencyHtml(l))}
         ${line("تغيّر السعر", (l) => (l.price_history || []).length > 1 ? (l.price_history || []).map((h) => fmt(h.price)).join(" ← ") : "لم يتغيّر")}
         ${line("درجة التأكد", (l) => isMatch(l) ? '<span class="pill good">مطابقة</span>' : `<span class="pill warn">تحتاج تأكيدًا</span><div class="small">${esc(l.note || "")}</div>`)}
-        ${line("الهاتف", (l) => phoneHtml(l.phone))}
+        ${line("رقم الشاصي VIN", (l) => vinHtml(l))}
+        ${line("هاتف البائع", (l) => sellerPhone(l))}
         ${line("", (l) => `<a class="btn sm" href="${esc(l.url)}" target="_blank" rel="noopener">فتح الإعلان ↗</a> <button type="button" class="sm ghost" data-unpick="${esc(l.id)}">إزالة</button>`)}
         </tbody></table></div>`;
   }
@@ -756,7 +773,7 @@ section.tab { gap:20px; }
     $("cDeals").textContent = tracked.filter((l) => !["dismissed", "purchased"].includes(mark(l.id).status)).length;
     $("pipe").innerHTML = STAGES.map((s) => `<button type="button" data-pipe="${s.k}" aria-pressed="${S.stage === s.k}" style="--stage:${s.c}"><b>${counts[s.k]}</b><span>${s.k === "new" ? "مفضلة جديدة" : s.t}</span></button>`).join("");
     const rows = S.stage === "active" ? tracked.filter((l) => mark(l.id).status !== "dismissed") : L().filter((l) => (mark(l.id).status || "new") === S.stage && (S.stage !== "new" || mark(l.id).favorite));
-    $("pipeNote").textContent = "السيارات المفضلة والتي تتابعها تُفحص أسعارها 4 مرات إضافية يوميًا، ويصلك تنبيه فوري إذا نزل السعر.";
+    $("pipeNote").textContent = "تُراجع أسعار السيارات المتابَعة ضمن جولات البحث اليدوية والمجدولة. يعمل الجدول مرتين يوميًا عندما تكون الصفحة غير نشطة.";
     if (!rows.length) { $("dealGrid").innerHTML = '<div class="empty"><b>لا سيارات هنا</b>اضغط النجمة ☆ على أي إعلان، أو اختر مرحلة مثل «مهتم».</div>'; return; }
     $("dealGrid").innerHTML = rows.map((l) => {
       const st = STAGE[mark(l.id).status || "new"], d = mark(l.id).deal || {};
@@ -817,6 +834,7 @@ section.tab { gap:20px; }
   const CONDS = ["make", "model", "keywords", "year_from", "year_to", "price_max", "mileage_max", "color", "emirate"];
   function openForm(t) { $("reqForm").hidden = false; $("formTitle").textContent = t; $("rMsg").textContent = ""; $("rName").focus(); }
   function resetForm() { S.editing = null; $("reqForm").reset(); Object.keys(PLATFORMS).forEach((p) => { $("p_" + p).checked = !DEFAULT_OFF.includes(p); }); $("rSave").textContent = "حفظ الطلب"; $("reqForm").hidden = true; }
+  $("headerNew").addEventListener("click", () => { showTab("reqs"); resetForm(); openForm("طلب بحث جديد"); });
   $("heroNew").addEventListener("click", () => { showTab("reqs"); resetForm(); openForm("طلب بحث جديد"); });
   $("heroReports").addEventListener("click", () => showTab("reports"));
   $("newReq").addEventListener("click", () => { resetForm(); openForm("طلب بحث جديد"); });
@@ -845,10 +863,12 @@ section.tab { gap:20px; }
     const reps = S.E.reports || [];
     $("cReports").textContent = reps.length;
     if (!reps.length) { $("repList").innerHTML = '<div class="empty"><b>لا توجد تقارير بعد</b>أول تقرير يظهر بعد أول جولة.</div>'; return; }
-    $("repList").innerHTML = reps.map((r) => `<div class="item">
-      <div class="when"><b class="num">${esc(when(r.at))}</b><span class="small">${r.mode === "manual" ? "بحث يدوي" : (r.at || "").slice(11, 13) < "15" ? "ملخص الصباح" : "تقرير المساء"} · ${esc((r.request_names || []).join("، "))}</span></div>
-      <div class="kp grow"><span><b>${fmt(r.current_offers)}</b>مطابقة</span><span><b>${fmt(r.candidates)}</b>تحتاج تأكيدًا</span><span><b>${fmt(r.new)}</b>جديد</span><span><b>${fmt(r.price_drops)}</b>تخفيضات</span></div>
-      <div class="row"><button type="button" class="primary sm" data-view="${esc(r.id)}">عرض</button><a class="btn sm" href="https://wa.me/?text=${encodeURIComponent((r.summary || "").slice(0, 3500))}" target="_blank" rel="noopener">واتساب</a></div></div>`).join("");
+    $("repList").innerHTML = reps.map((r, i) => `<article class="report-card">
+      <div class="report-top"><span class="report-type">${r.mode === "manual" ? "بحث يدوي" : "رصد مجدول"}</span><span class="small">${i === 0 ? "أحدث تقرير" : "أرشيف الرصد"}</span></div>
+      <div><h3 class="num">${esc(when(r.at))}</h3><div class="small">${esc((r.request_names || []).join("، "))}</div></div>
+      <div class="kp"><span><b>${fmt(r.current_offers)}</b>مطابقة</span><span><b>${fmt(r.candidates)}</b>تحتاج تأكيدًا</span><span><b>${fmt(r.new)}</b>جديدة</span><span><b>${fmt(r.price_drops)}</b>تخفيضات</span></div>
+      <div class="small">${r.identity_coverage ? `شاصي منشور: ${r.identity_coverage.vin} · هاتف بائع منشور: ${r.identity_coverage.phone} · إجمالي السيارات: ${r.identity_coverage.total}` : "تقرير مؤرشف؛ بياناته تعكس وقت إنشائه"}</div>
+      <div class="report-foot"><button type="button" class="primary sm" data-view="${esc(r.id)}">فتح التقرير ↗</button><a class="btn sm ghost" href="https://wa.me/?text=${encodeURIComponent((r.summary || "").slice(0, 3500))}" target="_blank" rel="noopener">مشاركة الملخص</a></div></article>`).join("");
   }
   let pdfjs = null;
   const loadPdfJs = () => pdfjs || (pdfjs = new Promise((ok, no) => { const s = document.createElement("script"); s.src = "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js";
@@ -952,7 +972,7 @@ section.tab { gap:20px; }
   $("cmpX").addEventListener("click", () => { S.pick = []; renderAll(); });
   $("cmpClear").addEventListener("click", () => { S.pick = []; renderAll(); renderCompare(); });
   $("exportCsv").addEventListener("click", () => {
-    const cols = [["title", "الإعلان"], ["price", "السعر"], ["price_prev", "السعر السابق"], ["rating", "مقابل السوق"], ["dev", "الفرق عن المتوقع"], ["year", "الموديل"], ["mileage", "الممشى"], ["color", "اللون"], ["emirate", "الإمارة"], ["platform", "المنصة"], ["date", "التاريخ"], ["seller_name", "البائع"], ["phone", "الهاتف"], ["url", "الرابط"]];
+    const cols = [["title", "الإعلان"], ["price", "السعر"], ["price_prev", "السعر السابق"], ["rating", "مقابل السوق"], ["dev", "الفرق عن المتوقع"], ["year", "الموديل"], ["mileage", "الممشى"], ["color", "اللون"], ["emirate", "الإمارة"], ["platform", "المنصة"], ["date", "التاريخ"], ["seller_name", "البائع"], ["phone", "الهاتف"], ["vin", "رقم الشاصي VIN"], ["url", "الرابط"]];
     const q = (v) => `"${String(v ?? "").replace(/"/g, '""')}"`;
     const val = (l, c) => c === "rating" ? RATING[l.rating || "unknown"] : c === "dev" ? (l.dev != null ? pct(l.dev) : "") : c === "platform" ? PLATFORMS[l.platform] : c === "date" ? adDate(l) : l[c];
     const csv = "﻿" + [cols.map((c) => q(c[1])).join(","), ...visibleAds().map((l) => cols.map(([c]) => q(val(l, c))).join(","))].join("\n");

@@ -145,7 +145,8 @@ def summary_text(run, groups, drops, now, start, link, short=False):
             lines.append(f"   🛣 {(format(l['mileage'], ',') + ' كم') if l.get('mileage') else 'الممشى غير مذكور'} · 📍 {em}"
                          f"{' – ' + area if area else ''} · {PLATFORMS[l['platform']]['name']} · {date_label(l)}")
             if not short:
-                lines.append(f"   👤 {kind}{' – ' + name if name else ''} · 📞 {l.get('phone') or 'الرقم في صفحة الإعلان'}")
+                lines.append(f"   VIN: {l.get('vin') if l.get('identity_version') == 1 and l.get('vin') else 'غير متوفر كاملًا'}")
+                lines.append(f"   👤 {kind}{' – ' + name if name else ''} · 📞 {(l.get('phone') if l.get('identity_version') == 1 else None) or 'غير منشور بوضوح'}")
             lines.append(f"   🔗 {l['url']}")
         if not short and cand:
             lines.append(f"   + {len(cand)} عروض تحتاج تأكيدًا (في التقرير واللوحة)")
@@ -192,18 +193,14 @@ def render_html(run, groups, drops, now, start, profile, platforms_used):
         u = l.get("urgency") or {}
         urg = f"<span class='u-{u.get('level', 'low')}'>{URGENCY_AR.get(u.get('level'), '—')}</span>" if u else "—"
         miss = f"<div class='miss'>{e(l['note'])}</div>" if cand and l.get("note") else ""
-        return f"""<tr>
-<td class="i">{i}</td>
-<td class="car"><b>{e(car_name(l, req))}</b>{f'<div class="var">{e(variant)}</div>' if variant else ''}<div class="tags">{tags}</div>{miss}</td>
-<td class="pr">{f'<b class="n">{l["price"]:,}</b><small>درهم</small>' if l.get('price') else '<span class="na">غير مذكور</span>'}</td>
-<td class="c">{rate_cell}</td>
-<td class="c">{f'<span class="n">{l["mileage"]:,}</span><small>كم</small>' if l.get('mileage') else '<span class="na">—</span>'}<div class="sub">{e(l.get('color') or '')}</div></td>
-<td class="c">{e(em)}{f'<div class="sub">{e(area)}</div>' if area else ''}</td>
-<td class="c">{e(kind)}{f'<div class="sub">{e(name)}</div>' if name else ''}</td>
-<td class="c">{e(PLATFORMS[l['platform']]['name'])}<div class="sub">{e(date_label(l))}</div></td>
-<td class="c">{urg}</td>
-<td class="c">{f'<span class="n">{e(l["phone"])}</span>' if l.get('phone') else '<span class="na">في الإعلان</span>'}</td>
-<td class="c"><a href="{e(l['url'])}">فتح الإعلان</a></td></tr>"""
+        vin = l.get("vin") if l.get("identity_version") == 1 else None
+        phone = l.get("phone") if l.get("identity_version") == 1 else None
+        vin_note = "فحص الصيغة وخانة التحقق" if l.get("vin_status") == "checksum" else "صيغة 17 خانة؛ كما نشره المعلن"
+        return f"""<article class="dossier">
+<div class="dossier-head"><div><span class="serial">{i:02d}</span><b>{e(car_name(l, req))}</b><div class="var">{e(variant)}</div><div class="tags">{tags}</div></div><div class="asking"><b class="n">{l['price']:,}</b><small>درهم</small></div></div>
+{miss}<div class="dossier-facts"><div><small>مقابل السوق</small>{rate_cell}</div><div><small>الممشى واللون</small><b class="n">{format(l['mileage'], ',') if l.get('mileage') else '—'}</b> كم · {e(l.get('color') or '—')}</div><div><small>الموقع</small>{e(em)} {e(area)}</div><div><small>البائع</small>{e(kind)} {e(name)}</div><div><small>المنصة والتاريخ</small>{e(PLATFORMS[l['platform']]['name'])} · {e(date_label(l))}</div><div><small>استعجال البائع</small>{urg}</div></div>
+<div class="identity-strip"><div><small>رقم الشاصي / VIN</small><b class="n">{e(vin) if vin else 'غير متوفر من مصدر موثوق'}</b><div class="sub">{e(vin_note) if vin else 'لم يُنشر كاملًا، أو تعذّر التحقق من نسبته لهذه السيارة'}</div></div><div><small>هاتف البائع</small><b class="n">{e(phone) if phone else 'غير متوفر بوضوح'}</b><div class="sub">{'رابط اتصال أو بيانات بائع داخل الإعلان' if phone else 'لا تُستخدم أرقام خدمة المنصة أو الأرقام المخفية'}</div></div><a href="{e(l['url'])}">المصدر الأصلي ↗</a></div>
+</article>"""
 
     head = ("<thead><tr><th>#</th><th>السيارة</th><th>السعر</th><th>مقابل السوق</th><th>الممشى</th><th>الموقع</th>"
             "<th>البائع</th><th>المنصة والتاريخ</th><th>استعجال البائع</th><th>الهاتف</th><th>الرابط</th></tr></thead>")
@@ -228,11 +225,11 @@ def render_html(run, groups, drops, now, start, profile, platforms_used):
             for label, l in best_of(ver) if l.get("price"))
         body = ""
         if ver:
-            body += f"<h3>مطابقة لكل الشروط <span class='cnt'>{len(ver)}</span></h3><table>{head}<tbody>" + \
-                    "".join(row(i, l, req) for i, l in enumerate(ver, 1)) + "</tbody></table>"
+            body += f"<h3>مطابقة لكل الشروط <span class='cnt'>{len(ver)}</span></h3><div class='dossier-list'>" + \
+                    "".join(row(i, l, req) for i, l in enumerate(ver, 1)) + "</div>"
         if cand:
             body += (f"<h3 class='h-c'>تحتاج تأكيدًا <span class='cnt'>{len(cand)}</span><span class='hint'>لا تخالف شروطك، لكن بعض بياناتها غير ظاهرة</span></h3>"
-                     f"<table>{head}<tbody>" + "".join(row(i, l, req, True) for i, l in enumerate(cand, len(ver) + 1)) + "</tbody></table>")
+                     f"<div class='dossier-list'>" + "".join(row(i, l, req, True) for i, l in enumerate(cand, len(ver) + 1)) + "</div>")
         if not ver and not cand:
             body = "<p class='empty'>لا توجد عروض ضمن الشروط في هذه الجولة.</p>"
         sections.append(f"""<section><div class="sh"><div><h2>{e(req.get('name') or 'طلب')}</h2><div class="cr">{e(criteria_text(req))}</div></div>{stats}</div>
@@ -249,11 +246,11 @@ def render_html(run, groups, drops, now, start, profile, platforms_used):
     mode = {"scheduled": "جولة مجدولة", "manual": "بحث يدوي"}.get(run["mode"], run["mode"])
     return f"""<!doctype html><html dir="rtl" lang="ar"><head><meta charset="utf-8"><title>تقرير رادار سيارات الإمارات</title>
 <style>
-@page {{ size: A4 landscape; margin: 12mm 10mm 15mm;
+@page {{ size: A4 portrait; margin: 12mm 10mm 15mm;
   @bottom-left {{ content: "صفحة " counter(page) " من " counter(pages); font: 7.5pt "Noto Sans Arabic", "DejaVu Sans"; color: #6b7785; }}
   @bottom-right {{ content: "رادار سيارات الإمارات · {now:%d/%m/%Y %H:%M}"; font: 7.5pt "Noto Sans Arabic", "DejaVu Sans"; color: #6b7785; }} }}
 * {{ box-sizing: border-box; }}
-body {{ font-family: "Noto Sans Arabic", "Noto Sans", "DejaVu Sans", sans-serif; color: #17212b; font-size: 8.4pt; margin: 0; line-height: 1.45; }}
+body {{ font-family: "Noto Sans Arabic", "Noto Sans", "DejaVu Sans", sans-serif; color: #17212b; font-size: 9pt; margin: 0; line-height: 1.45; }}
 .n {{ direction: ltr; unicode-bidi: isolate; font-variant-numeric: tabular-nums; }}
 header {{ background: #0B1732; color: #fff; border-radius: 6px; padding: 12px 16px; display: flex; justify-content: space-between; gap: 16px; }}
 header h1 {{ margin: 0 0 3px; font-size: 16pt; }} header .m {{ font-size: 8.4pt; opacity: .92; }}
@@ -289,6 +286,14 @@ td.c {{ white-space: nowrap; }} .sub {{ color: #6b7785; font-size: 7pt; white-sp
 .na {{ color: #8793a0; }} a {{ color: #0B1732; font-weight: bold; text-decoration: none; }}
 .empty {{ color: #5b6876; padding: 8px 2px; margin: 0; }}
 .foot {{ margin-top: 12px; color: #6b7785; font-size: 7pt; line-height: 1.6; border-top: 1px solid #e3e8ec; padding-top: 5px; }}
+.dossier {{ border:1px solid #dce4ef; border-radius:9px; margin:9px 0; padding:12px; break-inside:avoid; }}
+.dossier-head {{ display:flex; justify-content:space-between; gap:12px; border-bottom:1px solid #edf1f6; padding-bottom:8px; }}
+.dossier-head b {{ font-size:12pt; color:#0B1732; }} .serial {{ display:inline-block; background:#0B1732; color:#36D5C1; border-radius:5px; padding:2px 6px; margin-left:7px; font:9pt sans-serif; }}
+.asking {{ white-space:nowrap; text-align:left; }} .asking b {{ font-size:17pt; }} .asking small {{ display:block; }}
+.dossier-facts {{ display:grid; grid-template-columns:repeat(3,1fr); gap:9px 12px; padding:10px 0; font-size:8pt; }}
+.dossier-facts small, .identity-strip small {{ display:block; margin:0 0 3px; color:#63718a; font-size:7pt; }}
+.identity-strip {{ background:#f1f5fa; border-right:3px solid #36D5C1; border-radius:5px; padding:8px 10px; display:grid; grid-template-columns:1.3fr 1fr auto; gap:10px; align-items:center; font-size:8pt; }}
+.identity-strip .sub {{ max-width:none; font-size:6.7pt; margin-top:3px; }} .identity-strip b {{ font-size:8.5pt; }}
 </style></head><body>
 <header><div><h1>{f'<img src="{logo}" alt="" style="width:35px;height:35px;vertical-align:middle;margin-left:9px">' if logo else ""}تقرير رادار سيارات الإمارات</h1>
 <div class="m">{AR_DAYS[now.weekday()]} {now:%d/%m/%Y} · {now:%H:%M} بتوقيت الإمارات · {mode} · الفترة <span class="n">{start:%d/%m/%Y}</span> – <span class="n">{now:%d/%m/%Y}</span></div>
@@ -300,7 +305,7 @@ td.c {{ white-space: nowrap; }} .sub {{ color: #6b7785; font-size: 7pt; white-sp
 <div class="kpi"><b class="n">{run['new']}</b><span>جديدة في هذه الجولة</span></div>
 <div class="kpi"><b class="n">{len(drops)}</b><span>تخفيضات أسعار</span></div></div>
 {warn}{drop_html}{''.join(sections)}
-<div class="foot">كل قيمة مأخوذة من صفحة الإعلان نفسها، والإعلان يُحفظ مرة واحدة ويُحدَّث سعره إن تغيّر. «مقابل السوق» يقارن السعر بالسعر المتوقع لنفس الطراز والسنة والممشى، محسوبًا من الإعلانات التي رصدها الرادار خلال 60 يومًا. «استعجال البائع» يجمع مدة عرض الإعلان وعدد مرات تخفيض سعره وعبارات مثل «مستعجل» و«مسافر». بجانب كل تاريخ مصدره: «نُشر» تاريخ النشر في المنصة، و«رصده الرادار» يعني أن المنصة لا تعرض تاريخًا.</div>
+<div class="foot">الشاصي والهاتف يُعرضان فقط عند نشرهما بوضوح ونسبتهما للإعلان نفسه؛ فحص الصيغة لا يثبت ملكية السيارة أو تاريخ حوادثها. اطلب صورة الشاصي وطابقها بالملكية قبل الشراء. البيانات من صفحة الإعلان، والإعلان يُحفظ مرة واحدة ويُحدَّث سعره إن تغيّر. «مقابل السوق» يقارن السعر بالسعر المتوقع لنفس الطراز والسنة والممشى، محسوبًا من الإعلانات التي رصدها الرادار خلال 60 يومًا. «استعجال البائع» يجمع مدة عرض الإعلان وعدد مرات تخفيض سعره وعبارات مثل «مستعجل» و«مسافر». بجانب كل تاريخ مصدره: «نُشر» تاريخ النشر في المنصة، و«رصده الرادار» يعني أن المنصة لا تعرض تاريخًا.</div>
 </body></html>"""
 
 

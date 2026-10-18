@@ -33,7 +33,7 @@ AD_PATTERNS = {
     "dubicars":   re.compile(r"^/(?:\d{4})-[a-z0-9-]+-(\d{5,})\.html$"),
     "carswitch":  re.compile(r"^/[a-z-]+/used-car/[^/]+/[^/]+/\d{4}/(\d{5,})/?$"),
     "opensooq":   re.compile(r"^/(?:en|ar)/search/(\d{6,})/?$"),
-    "mourjan":    re.compile(r"/(\d{7,})/?$"),
+    "mourjan":    re.compile(r"^/ae/(?:[a-z-]+/)?(?:toyota|nissan|honda|hyundai|kia|mitsubishi|lexus|chevrolet|ford|mazda|suzuki|mercedes|mercedes-benz|bmw|renault|geely|changan|mg|audi|volkswagen)/for-sale/(\d{7,})/?$"),
     "autoae":     re.compile(r"^/([a-z0-9-]+)/sale/car/[^/]+/[^/]+/id/(\d+)/?$"),
     "oneclickdrive": re.compile(r"^/details/index/search-usedcar-[a-z-]+/[^/]+/[^/]+/?$"),
 }

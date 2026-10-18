@@ -83,7 +83,15 @@ def search_urls(plat, req, market=False):
     if plat == "opensooq":
         return [f"https://ae.opensooq.com/en/cars/cars-for-sale/{path}"]
     if plat == "mourjan":
-        return [f"https://www.mourjan.com/ae/cars/for-sale/{make}/", "https://www.mourjan.com/ae/cars/for-sale/"]
+        if not make:
+            return []
+        # Public form values observed on the Toyota category, not guessed URL slugs.
+        toyota_models = {"yaris": 250, "camry": 205, "corolla": 209, "land-cruiser": 223, "prado": 2209, "fortuner": 2205}
+        q = {}
+        if make == "toyota" and model in toyota_models: q["cm"] = toyota_models[model]
+        for field, name in (("year_from", "mny"), ("year_to", "mxy"), ("price_max", "mxp")):
+            if req.get(field) and not market: q[name] = int(req[field])
+        return [f"https://www.mourjan.com/ae/{make}/for-sale/" + ("?" + urllib.parse.urlencode(q) if q else "")]
     return []
 
 
@@ -94,7 +102,7 @@ def search_queries(plat, req):
     years = []
     if req.get("year_from") and req.get("year_to") and int(req["year_to"]) - int(req["year_from"]) <= 4:
         years = [str(y) for y in range(int(req["year_from"]), int(req["year_to"]) + 1)]
-    site = {"dubizzle": f"uae.dubizzle.com/motors/used-cars/{make}/{model}", "yallamotor": f"uae.yallamotor.com/used-cars/{make}/{model}",
+    site = {"dubizzle": "dubizzle.com/motors/used-cars", "yallamotor": f"uae.yallamotor.com/used-cars/{make}/{model}",
             "dubicars": "dubicars.com", "carswitch": "carswitch.com", "autoae": "auto.ae", "oneclickdrive": "oneclickdrive.com",
             "opensooq": "ae.opensooq.com", "mourjan": "mourjan.com"}[plat]
     qs = [f"site:{site} {words}" + (" used" if plat in ("dubicars", "opensooq", "mourjan") else "")]
@@ -234,6 +242,7 @@ def read_ad(item, today, debug=None):
         "title": str(g("title") or item.get("title") or "")[:160], "price": price,
         "price_source": src.get("price"), "price_currency": "AED" if price else None, "price_version": 3, "year": year, "km": km,
         "color": color_of(str(g("color") or "")), "emirate": emirate_of(" ".join(str(x or "") for x in (loc, g("title"), item["url"]))),
+        **{k: g(k) for k in ("vin", "vin_source", "vin_status", "phone_source", "phone_status", "identity_version")},
         "location": loc[:120] if loc else None, "phone": phone, "seller_name": str(g("seller") or "")[:80] or None,
         "seller_type": seller_type, "specs": str(g("specs") or "")[:30] or None, "transmission": str(g("transmission") or "")[:30] or None,
         "image": image, "date": date, "date_kind": kind, "desc": None, "_src": src,
@@ -360,7 +369,7 @@ def run_round(a, key):
     plan = []  # (request, card)
     funnel = {}  # counts only, published as data/last_run.json to explain each round
     for req in reqs:
-        plats = [p for p in (req.get("platforms") or [p for p in PLATFORMS if p != "mourjan"]) if p in PLATFORMS]
+        plats = [p for p in (req.get("platforms") or list(PLATFORMS)) if p in PLATFORMS]
         cards, samples = discover(req, plats, diag)
         # Price estimates use opened ad evidence, never unverified result-card prices/years.
         model_key = slug(req.get("make")) + "/" + slug(req.get("model"))
@@ -410,7 +419,7 @@ def run_round(a, key):
             age = (now - dt.datetime.fromisoformat(l.get("last_checked") or l.get("first_seen"))).total_seconds() / 3600
         except (TypeError, ValueError):
             age = 1e9
-        if not l.get("price") or l.get("price_version", 0) < 3:
+        if not l.get("price") or l.get("price_version", 0) < 3 or l.get("identity_version", 0) < 1:
             age += 1e8
         if age >= RECHECK_HOURS:
             due.append((age, l))
@@ -478,7 +487,8 @@ def run_round(a, key):
             prev.setdefault("by_request", {})[req["id"]] = {"state": st, "note": note, "checks": checks}
             patch = {"last_seen": stamp, "last_checked": stamp, "state": st, "note": note, "checks": checks,
                      "price_source": v.get("price_source"), "price_currency": "AED", "price_version": 3}
-            for k in ("phone", "seller_name", "seller_type", "specs", "transmission", "image", "location", "mileage", "year"):
+            patch.update({k: v.get(k) for k in ("vin", "vin_source", "vin_status", "phone", "phone_source", "phone_status", "identity_version")})
+            for k in ("seller_name", "seller_type", "specs", "transmission", "image", "location", "mileage", "year"):
                 val = v.get("km" if k == "mileage" else k)
                 if val and not prev.get(k):
                     patch[k] = val
@@ -503,6 +513,7 @@ def run_round(a, key):
             "id": item["id"], "ad_id": item["ad_id"], "request_id": req["id"],
             "request_ids": [req["id"]], "by_request": {req["id"]: {"state": st, "note": note, "checks": checks}}, "platform": plat, "url": item["url"],
             "title": v["title"], "price": v["price"], "price_source": v.get("price_source"), "price_currency": "AED", "price_version": 3, "year": v["year"], "mileage": v["km"], **extra,
+            **{k: v.get(k) for k in ("vin", "vin_source", "vin_status", "phone_source", "phone_status", "identity_version")},
             "location": v["location"], "phone": v["phone"], "seller_name": v["seller_name"], "seller_type": v["seller_type"],
             "specs": v["specs"], "transmission": v["transmission"], "image": v["image"],
             "date": (v["date"] or today).isoformat(), "date_kind": v["date_kind"] or "first_seen",
@@ -594,6 +605,9 @@ def run_round(a, key):
             store.write_file(os.path.join(REPORTS_DIR, f"{run_id}.pdf.enc"), f.read(), key)
         eng["reports"].insert(0, {"id": run_id, "at": stamp, "mode": a.mode, "file": f"reports/{run_id}.pdf.enc",
                                   "current_offers": cur_ver, "candidates": cur_cand, "new": run["new"] + run["new_unverified"],
+                                  "identity_coverage": {"total": len({l["id"] for _,v,c in groups for l in v+c}),
+                                  "vin": len({l["id"] for _,v,c in groups for l in v+c if l.get("vin") and l.get("identity_version") == 1}),
+                                  "phone": len({l["id"] for _,v,c in groups for l in v+c if l.get("phone") and l.get("identity_version") == 1})},
                                   "price_drops": len(drops), "request_names": run["request_names"], "summary": full_text[:4000]})
     # 6) notify: scheduled rounds only (manual searches show in the dashboard)
     if a.mode == "scheduled" and reqs:
