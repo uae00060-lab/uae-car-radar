@@ -5,25 +5,21 @@
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <title>رادار سيارات الإمارات</title>
 <meta name="description" content="بحث مجدول في منصات السيارات المستعملة في الإمارات مع تقييم السعر ومتابعة الصفقات">
-<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%230d5c6b'/%3E%3Cpath d='M14 38l5-12c1-3 3-4 6-4h14c3 0 5 1 6 4l5 12v8h-5v-3H19v3h-5z' fill='%23fff'/%3E%3Ccircle cx='22' cy='38' r='3' fill='%230d5c6b'/%3E%3Ccircle cx='42' cy='38' r='3' fill='%230d5c6b'/%3E%3C/svg%3E">
+<link rel="icon" type="image/svg+xml" href="assets/logo-mark.svg">
+<meta name="theme-color" content="#0B1732">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Arabic:wght@400;500;600;700&family=Reem+Kufi:wght@600;700&display=swap">
 <style>
 /* A buyer's console: deal cards with a market verdict, side-by-side comparison, a follow-up pipeline. */
 :root {
-  --bg: #f2f4f6; --surface: #ffffff; --sunk: #e8ecf0; --line: #d4dbe2; --line-strong: #b9c3cc;
-  --fg: #15202a; --muted: #5a6876; --accent: #0d5c6b; --accent-fg: #ffffff; --accent-soft: #dcecef;
+  --bg: #F3F6FB; --surface: #ffffff; --sunk: #e8ecf0; --line: #d4dbe2; --line-strong: #b9c3cc;
+  --fg: #14233E; --muted: #63718A; --accent: #176C73; --accent-fg: #ffffff; --accent-soft: #E2F5F2;
   --good: #1d7a45; --good-soft: #dff2e6; --warn: #8a5a00; --warn-soft: #fbefd3; --bad: #a1271b; --bad-soft: #f8e1de;
   --gold: #b07d00; --shadow: 0 1px 2px rgba(20, 40, 50, .06), 0 4px 14px rgba(20, 40, 50, .05);
-  --display: "Reem Kufi", "IBM Plex Sans Arabic", system-ui, sans-serif;
+  --display: "IBM Plex Sans Arabic", "IBM Plex Sans Arabic", system-ui, sans-serif;
   --body: "IBM Plex Sans Arabic", system-ui, "Segoe UI", Tahoma, sans-serif;
   color-scheme: light;
 }
-@media (prefers-color-scheme: dark) { :root {
-  --bg: #0e1418; --surface: #151d23; --sunk: #1c262d; --line: #2a3841; --line-strong: #3a4b56;
-  --fg: #e3e9ee; --muted: #93a3b0; --accent: #4fb3c4; --accent-fg: #06262c; --accent-soft: #173a41;
-  --good: #6fd09a; --good-soft: #17352a; --warn: #e8b85a; --warn-soft: #3a2f17; --bad: #f08a7e; --bad-soft: #3d1f1b;
-  --gold: #e9b949; --shadow: none; color-scheme: dark } }
 * { box-sizing: border-box; }
 [hidden] { display: none !important; }
 html, body { margin: 0; }
@@ -184,6 +180,65 @@ section.tab { display: grid; gap: 14px; }
 .viewer canvas { max-width: 100%; height: auto; background: #fff; box-shadow: 0 2px 10px rgba(0,0,0,.4); }
 @media (max-width: 640px) { header { position: static; } .hbar { padding-block: 10px 6px; } }
 @media (prefers-reduced-motion: reduce) { * { transition: none !important; } }
+
+/* Car Radar identity: midnight navy, sea-glass mint and cool paper. */
+:root { --navy:#0B1732; --navy-mid:#14294B; --mint:#36D5C1; --blue:#3D70F4; --line:#E0E7F0; --line-strong:#C5D0DF; --shadow:0 8px 30px rgba(20,39,72,.045); }
+body { background:#F3F6FB; font-size:14px; }
+.wrap { max-width:1360px; padding-inline:28px; }
+header { background:var(--navy); border:0; color:#fff; box-shadow:0 5px 24px #0B17321A; }
+.hbar { min-height:98px; gap:24px; padding-block:16px; }
+.brand-lockup { display:flex; align-items:center; gap:13px; text-decoration:none; color:#fff; }
+.brand-lockup img { border:1px solid #ffffff1A; border-radius:17px; }
+.brand-lockup h1 { font-size:24px; font-weight:700; line-height:1.2; letter-spacing:-.5px; }
+.brand-lockup h1 span { font-family:var(--body); font-size:13px; font-weight:400; margin-inline-start:9px; color:#DBE4F5; letter-spacing:0; }
+.brand-en { font:9px/1.8 Arial,sans-serif; letter-spacing:3px; color:#91A6C8; text-align:right; margin-top:5px; }
+.header-state { display:flex; align-items:center; gap:8px; color:#C0D0E8; font-size:12px; padding:8px 13px; border:1px solid #ffffff14; border-radius:30px; }
+.status-dot { width:6px; height:6px; background:var(--mint); border-radius:50%; box-shadow:0 0 0 4px #36D5C110; }
+header select { background:#14294B; color:#fff; border-color:#2C405F; min-height:42px; font-size:12px; }
+.search-main { background:var(--mint); color:#062C34; border:0; border-radius:9px; min-height:42px; padding-inline:22px; }
+.search-main span { font-size:23px; line-height:1; }
+nav.tabs { border-top:1px solid #ffffff0F; gap:9px; padding-block:6px; }
+nav.tabs button { border:0; color:#9EB1D0; border-radius:7px; font-size:13px; padding:10px 17px; gap:7px; }
+nav.tabs button[aria-selected="true"] { background:#ffffff10; color:#fff; box-shadow:inset 0 -2px var(--mint); }
+nav.tabs .count { background:#ffffff10; color:#B9CAE4; border-radius:5px; font-size:10px; }
+nav.tabs button[aria-selected="true"] .count { color:var(--mint); background:#36D5C116; }
+main { padding-top:22px; }
+.workspace-top { display:flex; justify-content:space-between; gap:15px; color:#7D8CA5; font-size:11px; margin-bottom:22px; }
+.workspace-top .small { font-size:10px; }
+.workspace-sep { margin-inline:8px; color:#BBC6D5; }
+section.tab { gap:20px; }
+.radar-hero { min-height:260px; border-radius:20px; background:linear-gradient(110deg,#142E50 0%,#0B1732 75%); color:#fff; display:flex; justify-content:space-between; align-items:center; padding:34px 40px; overflow:hidden; position:relative; }
+.hero-copy { position:relative; z-index:1; max-width:610px; }
+.eyebrow { display:block; color:#78E3D3; font-size:11px; letter-spacing:.3px; margin-bottom:12px; font-weight:500; }
+.hero-copy h2 { font-size:36px; font-weight:600; line-height:1.5; letter-spacing:-1px; }
+.hero-copy h2 span { color:#A8C0DD; }
+.hero-copy p { font-size:13px; color:#A5B7D2; margin:12px 0 22px; line-height:1.9; }
+.hero-actions { display:flex; gap:12px; }
+.hero-primary { background:var(--mint); color:#073B43; border:0; min-height:41px; font-weight:600; padding:9px 19px; font-size:12px; }
+.hero-secondary { border-color:#4C617B; background:transparent; color:#D2DCEE; font-size:12px; padding:9px 17px; }
+.hero-art { position:relative; display:grid; place-content:center; height:255px; width:330px; flex-shrink:0; margin-block:-30px; direction:ltr; }
+.hero-art img { position:relative; z-index:2; border-radius:32px; box-shadow:0 12px 45px #0004; border:1px solid #2C466A; }
+.orbit { position:absolute; border:1px solid #B1CFEB17; border-radius:50%; width:235px; height:235px; left:48px; top:10px; }
+.orbit-two { width:320px; height:320px; left:5px; top:-32px; border-style:dashed; opacity:.7; }
+.radar-line { position:absolute; width:160px; height:160px; left:165px; top:-32px; background:linear-gradient(140deg,#36D5C10D,transparent); transform:rotate(-8deg); border-left:1px solid #36D5C133; transform-origin:bottom left; }
+.radar-ping { position:absolute; width:8px; height:8px; border-radius:50%; background:#36D5C1; box-shadow:0 0 0 6px #36D5C110; }
+.ping-one { left:52px; top:64px; }.ping-two { right:43px; bottom:57px; width:5px;height:5px;background:#759AFF;box-shadow:0 0 0 5px #759AFF10; }
+.art-label { position:absolute; bottom:21px; left:0; right:0; text-align:center; color:#A6BED9; font:9px Arial,sans-serif; letter-spacing:3px; }.art-label span { color:#4E7294; }
+.metrics { display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); gap:14px; }
+.metric { border:1px solid var(--line); background:#fff; padding:20px; border-radius:13px; display:grid; grid-template-columns:38px 1fr; gap:7px 12px; box-shadow:var(--shadow); }
+.metric-symbol { width:37px; height:37px; border-radius:10px; display:grid; place-content:center; font-size:20px; align-self:start; }.mint { background:#E3F7F2;color:#148578; }.blue { background:#EAF0FF;color:#416CD2; }.amber { background:#FFF4DF;color:#B77B1D; }.slate { background:#EEF2F8;color:#7186A6; }
+.metric>div { display:grid; gap:7px; }.metric>div>span { color:#74829A; font-size:11px; }.metric b { font:600 29px/1 var(--body);color:#14233E; text-align:right; }.metric small { grid-column:2;color:#8B98AD;font-size:10px; }
+.section-heading { display:flex; align-items:center; justify-content:space-between; margin-top:12px; }.section-heading h2 { font-size:21px;font-weight:600; }.eyebrow.light { color:#8090A8;font-size:10px;margin-bottom:4px; }.price-policy { color:#46796D; background:#E7F4EF; border:1px solid #D4E9E1; padding:5px 10px; border-radius:6px; font-size:10px; }
+.cover { background:#fff; padding:10px; border:1px solid var(--line);border-radius:12px;gap:8px; }.cover button { min-width:93px; border:0;background:transparent;padding:7px 13px; }.cover button b { color:#6C7E98;font:600 19px/1.4 var(--body); }.cover button span { font-size:10px; }.cover button[aria-pressed="true"] { background:#0B1732;color:#fff; }.cover button[aria-pressed="true"] b,.cover button[aria-pressed="true"] span { color:#fff; }
+.toolbar { background:#fff;border:1px solid var(--line);padding:12px;border-radius:12px;gap:9px; }.toolbar input,.toolbar select { font-size:12px;border-color:#E2E8F1;background:#FAFBFD;min-height:40px; }.toolbar input[type=search] { flex-basis:220px; }.toolbar button { min-height:39px; }
+.grid { gap:20px;grid-template-columns:repeat(auto-fill,minmax(min(100%,310px),1fr)); }.ad { border-radius:15px;box-shadow:0 5px 18px #20385A05;transition:transform .18s,box-shadow .18s;border-color:#DDE5EF; }.ad:hover { transform:translateY(-3px);box-shadow:0 12px 30px #10274A10; }.ph { aspect-ratio:16/9; }.ph img { transition:transform .3s; }.ad:hover .ph img { transform:scale(1.025); }.ph { overflow:hidden; }.ph .platf { background:#0B1732E0;padding:4px 10px;backdrop-filter:blur(5px);font-size:10px; }.ph .tags { top:12px;right:12px; }.pill { font-size:10px;padding:3px 9px; }.ph .star { top:10px;left:10px; }.bd { padding:18px;gap:12px; }.bd .title { font-size:17px;font-weight:600; }.var { font-size:11px;line-height:1.6; }.price { color:var(--navy);font-size:27px;letter-spacing:-.7px; }.price small { font-size:11px; }.plate { border:1px solid #E1E8F1;background:#F3F6FB;color:#60718B;border-radius:6px;font-size:12px;padding:2px 7px; }.plate::before { font-size:9px; }.verdict { font-size:11px;padding:9px 11px; }.verdict b { font-size:12px; }.facts { font-size:11px;gap:6px 12px; }.facts dt { color:#8592A8; }.facts dd { color:#344861; }.note { background:#FFF8E9;color:#9E762E;padding:8px 10px;border-radius:7px;font-size:10px; }.foot { padding-top:12px;gap:7px; }.foot select,.foot .btn,.cmp-toggle { font-size:10px; }.foot select { flex-basis:100px; }.foot .btn { background:#0B1732;color:#fff;border-color:#0B1732;padding:7px 10px; }
+.panel,.list,.ctable { border-radius:14px; }.panel h2 { font-size:18px; }.req .top { background:linear-gradient(125deg,#F7FAFF,#fff);padding:20px; }.spec div { padding:13px 20px; }.req .actions { padding:16px 20px; }.req .primary { background:var(--navy);border-color:var(--navy); }.item { padding:18px 20px; }.banner { border:1px solid #d3e8e4;font-size:12px; }.empty { border-style:solid;padding:55px 22px;background:linear-gradient(#fff,#FBFCFF); }.empty b { font-size:18px;margin-bottom:10px; }.gate { max-width:480px;margin:8vh auto; }.gate .panel { padding:34px;gap:19px; }.gate-logo { margin-bottom:16px; }.gate h1 { font-size:23px; }.gate .primary { background:var(--navy);border-color:var(--navy);min-height:44px; }
+@media(min-width:1450px) { .grid { grid-template-columns:repeat(3,minmax(0,1fr)); } }
+@media(max-width:1000px) { .header-state { display:none; }.metrics { grid-template-columns:repeat(2,minmax(0,1fr)); }.hero-art { width:260px;transform:scale(.85);margin-inline:-25px; }.hero-copy h2 { font-size:32px; } }
+@media(max-width:700px) { .wrap { padding-inline:16px; }.hbar { gap:14px;min-height:auto;padding-block:17px; }.brand-lockup { flex-basis:100%; }.brand-lockup h1 { font-size:23px; }.hbar>.row { width:100%; }.hbar>.row select { flex:1; }.search-main { padding-inline:18px; }nav.tabs { gap:1px; }nav.tabs button { padding:10px 12px;font-size:12px; }.workspace-top { flex-direction:column;gap:6px;font-size:10px;margin-bottom:16px; }.radar-hero { padding:26px 24px;min-height:245px; }.hero-copy h2 { font-size:30px; }.hero-copy p { max-width:290px;font-size:11px; }.hero-art { display:none; }.hero-actions { gap:8px; }.hero-primary,.hero-secondary { font-size:11px;padding:9px 12px; }.metrics { gap:10px; }.metric { padding:15px 12px;grid-template-columns:30px 1fr;gap:7px; }.metric-symbol { width:30px;height:30px;font-size:17px; }.metric>div>span { font-size:9px; }.metric b { font-size:25px; }.metric small { font-size:9px; }.section-heading { align-items:flex-end;gap:8px; }.section-heading h2 { font-size:19px; }.price-policy { font-size:9px;max-width:145px; }.toolbar { padding:10px; }.toolbar input[type=search] { flex-basis:100%; }.toolbar select { flex:1 1 40%;max-width:100%;font-size:11px; }.grid { grid-template-columns:1fr; }.bd { padding:17px; }.gate .panel { padding:25px; }.workspace-top #nextRun { line-height:1.8; } }
+@media(prefers-reduced-motion:reduce) { .ad,.ph img { transition:none; } }
+
+.nav-icon { width:16px;height:16px;flex-shrink:0; }
 </style>
 </head>
 <body>
@@ -191,20 +246,20 @@ section.tab { display: grid; gap: 14px; }
 <header id="hdr" hidden>
   <div class="wrap">
     <div class="hbar">
-      <div class="grow"><h1>رادار سيارات الإمارات</h1><div class="sub" id="nextRun"></div></div>
+      <a class="brand-lockup grow" href="./" aria-label="رادار سيارات الإمارات"><img src="assets/logo-mark.svg" width="56" height="56" alt="شعار رادار السيارات"><div><h1>رادار<span>سيارات الإمارات</span></h1><div class="brand-en" dir="ltr">CAR RADAR / UAE</div></div></a><div class="header-state"><span class="status-dot"></span><span id="headerState">لوحة الرصد</span></div>
       <div class="row">
         <select id="runScope" aria-label="نطاق البحث"><option value="all">كل الطلبات</option></select>
-        <button class="primary" id="searchNow" type="button">ابحث الآن</button>
+        <button class="primary search-main" id="searchNow" type="button"><span aria-hidden="true">⌕</span> ابحث الآن</button>
       </div>
     </div>
     <nav class="tabs" role="tablist">
-      <button role="tab" data-tab="ads" aria-selected="true">الإعلانات<span class="count" id="cAds">0</span></button>
-      <button role="tab" data-tab="compare" aria-selected="false">المقارنة<span class="count" id="cCmp">0</span></button>
-      <button role="tab" data-tab="deals" aria-selected="false">المتابعة<span class="count" id="cDeals">0</span></button>
-      <button role="tab" data-tab="reqs" aria-selected="false">طلبات البحث<span class="count" id="cReqs">0</span></button>
-      <button role="tab" data-tab="reports" aria-selected="false">التقارير<span class="count" id="cReports">0</span></button>
-      <button role="tab" data-tab="history" aria-selected="false">سجل الجولات</button>
-      <button role="tab" data-tab="settings" aria-selected="false">الإعدادات</button>
+      <button role="tab" data-tab="ads" aria-selected="true"><svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/></svg>الإعلانات<span class="count" id="cAds">0</span></button>
+      <button role="tab" data-tab="compare" aria-selected="false"><svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 3v18m6-18v18M3 7h6m6 10h6M3 17h6m6-10h6"/></svg>المقارنة<span class="count" id="cCmp">0</span></button>
+      <button role="tab" data-tab="deals" aria-selected="false"><svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m12 3 2.8 5.7 6.2.9-4.5 4.4 1.1 6.2-5.6-3-5.6 3 1.1-6.2L3 9.6l6.2-.9Z"/></svg>المتابعة<span class="count" id="cDeals">0</span></button>
+      <button role="tab" data-tab="reqs" aria-selected="false"><svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="10.5" cy="10.5" r="6.5"/><path d="m16 16 5 5M8 10.5h5m-2.5-2.5v5"/></svg>طلبات البحث<span class="count" id="cReqs">0</span></button>
+      <button role="tab" data-tab="reports" aria-selected="false"><svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 3H6a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9Z"/><path d="M14 3v6h6M8 13h8m-8 4h5"/></svg>التقارير<span class="count" id="cReports">0</span></button>
+      <button role="tab" data-tab="history" aria-selected="false"><svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>سجل الجولات</button>
+      <button role="tab" data-tab="settings" aria-selected="false"><svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 7h16M4 17h16"/><circle cx="9" cy="7" r="3"/><circle cx="15" cy="17" r="3"/></svg>الإعدادات</button>
     </nav>
   </div>
 </header>
@@ -212,7 +267,7 @@ section.tab { display: grid; gap: 14px; }
 <!-- ===== gate: password + GitHub token ===== -->
 <div class="wrap gate" id="gate">
   <form class="panel" id="gateForm" autocomplete="on">
-    <div><h1>رادار سيارات الإمارات</h1><div class="small">بياناتك محفوظة مشفّرة في مستودع GitHub. افتحها بكلمة السر نفسها المحفوظة في المستودع باسم RADAR_KEY.</div></div>
+    <div><img src="assets/logo-mark.svg" class="gate-logo" width="76" height="76" alt="شعار رادار السيارات"><h1>رادار سيارات الإمارات</h1><div class="small">بياناتك محفوظة مشفّرة في مستودع GitHub. افتحها بكلمة السر نفسها المحفوظة في المستودع باسم RADAR_KEY.</div></div>
     <label class="stack">كلمة سر البيانات<input id="gPass" type="password" autocomplete="current-password" required minlength="8"></label>
     <label class="stack" id="gPass2Wrap" hidden>أعد كتابة كلمة السر<input id="gPass2" type="password" autocomplete="new-password" minlength="8"></label>
     <label class="stack">مفتاح GitHub (للتعديل وزر «ابحث الآن»)<input id="gToken" type="password" dir="ltr" autocomplete="off" placeholder="github_pat_…"></label>
@@ -226,14 +281,26 @@ section.tab { display: grid; gap: 14px; }
   <div id="liveBox" class="banner" hidden></div>
   <div id="flashBox" class="banner" hidden></div>
 
+  <div class="workspace-top"><span>لوحة الرصد <span class="workspace-sep">/</span> سوق السيارات المستعملة</span><span id="nextRun" class="small"></span></div>
   <!-- ads -->
   <section class="tab" id="tab-ads">
+    <section class="radar-hero" aria-label="ملخص الرصد">
+      <div class="hero-copy"><span class="eyebrow">رصد أذكى. قرار أوضح.</span><h2>سيارتك القادمة،<br><span>تبدأ من هنا.</span></h2><p>عروض مسعّرة من منصات متعددة، ومتابعة منظمة لكل فرصة تستحق اهتمامك.</p><div class="hero-actions"><button type="button" class="hero-primary" id="heroNew">＋ طلب بحث جديد</button><button type="button" class="hero-secondary" id="heroReports">عرض التقارير <span aria-hidden="true">↗</span></button></div></div>
+      <div class="hero-art" aria-hidden="true"><div class="orbit orbit-one"></div><div class="orbit orbit-two"></div><div class="radar-line"></div><span class="radar-ping ping-one"></span><span class="radar-ping ping-two"></span><img src="assets/logo-mark.svg" width="126" height="126" alt=""><span class="art-label">CAR RADAR <span>/ UAE</span></span></div>
+    </section>
+    <div class="metrics" aria-label="ملخص الإعلانات">
+      <div class="metric"><span class="metric-symbol mint" aria-hidden="true">◈</span><div><span>إعلانات بسعر واضح</span><b id="statPriced" class="num">0</b></div><small>من نتائج البحث المحفوظة</small></div>
+      <div class="metric"><span class="metric-symbol blue" aria-hidden="true">✓</span><div><span>نشر حديث مؤكد</span><b id="statVerified" class="num">0</b></div><small>ضمن آخر شهر</small></div>
+      <div class="metric"><span class="metric-symbol amber" aria-hidden="true">◷</span><div><span>تحتاج تأكيد التفاصيل</span><b id="statPending" class="num">0</b></div><small>تاريخ النشر أو بيانات أخرى</small></div>
+      <div class="metric"><span class="metric-symbol slate" aria-hidden="true">▤</span><div><span>تقارير البحث</span><b id="statReports" class="num">0</b></div><small id="statLast">لم يُنفّذ بحث بعد</small></div>
+    </div>
+    <div class="section-heading"><div><span class="eyebrow light">اكتشف وقارن</span><h2>فرص السوق</h2></div><span class="price-policy"><span aria-hidden="true">✓</span> نعرض الإعلانات ذات السعر فقط</span></div>
     <div class="cover" id="cover" aria-label="حسب المنصة"></div>
     <div class="toolbar">
       <input type="search" id="fText" placeholder="ابحث في العناوين والمواقع…" aria-label="بحث نصي">
       <select id="fReq" aria-label="الطلب"><option value="">كل الطلبات</option></select>
       <select id="fState" aria-label="درجة التأكد">
-        <option value="match">مطابقة لشروطك</option><option value="unverified">تحتاج تأكيدًا</option><option value="all">الكل</option>
+        <option value="all">كل الإعلانات المسعّرة</option><option value="match">مطابقة لشروطك</option><option value="unverified">تحتاج تأكيدًا</option>
       </select>
       <select id="fRate" aria-label="تقييم السعر">
         <option value="">كل الأسعار</option><option value="deal">صفقات فقط (أقل من السوق)</option><option value="hot">بائع مستعجل</option>
@@ -523,7 +590,8 @@ section.tab { display: grid; gap: 14px; }
   }
 
   // ---------------------------------------------------------------- helpers over data
-  const L = () => Object.values(S.E.listings || {});
+  const hasPrice = (l) => Number.isFinite(Number(l.price)) && Number(l.price) >= 1500 && Number(l.price) <= 5000000;
+  const L = () => Object.values(S.E.listings || {}).filter(hasPrice);
   const mark = (id) => S.U.marks[id] || {};
   const isMatch = (l) => l.state === "verified" && dateKind(l) === "posted";
   const adDate = (l) => l.date || l.posted || (l.first_seen || "").slice(0, 10);
@@ -610,17 +678,27 @@ section.tab { display: grid; gap: 14px; }
   }
   function renderAds() {
     const base = baseAds();
+    const priced = L().filter(live);
+    $("statPriced").textContent = fmt(priced.length);
+    $("statVerified").textContent = fmt(priced.filter((l) => isMatch(l) && inWindow(l)).length);
+    $("statPending").textContent = fmt(priced.filter((l) => ["unverified", "approx"].includes(l.state)).length);
+    $("statReports").textContent = fmt((S.E.reports || []).length);
+    const last = (S.E.runs || []).find((r) => r.mode !== "watch");
+    $("statLast").textContent = last ? "آخر بحث: " + when(last.at) : "لم يُنفّذ بحث بعد";
+    $("headerState").textContent = S.live ? "البحث قيد التنفيذ" : "لوحة الرصد";
     const used = new Set(S.U.requests.flatMap((r) => r.platforms || Object.keys(PLATFORMS)));
     $("cover").innerHTML = `<button type="button" data-plat="" aria-pressed="${!S.plat}"><b>${base.length}</b><span>كل المنصات</span></button>` +
       Object.entries(PLATFORMS).filter(([k]) => used.has(k) || base.some((l) => l.platform === k))
         .map(([k, v]) => `<button type="button" data-plat="${k}" aria-pressed="${S.plat === k}"><b>${base.filter((l) => l.platform === k).length}</b><span>${v}</span></button>`).join("");
-    $("cAds").textContent = L().filter((l) => live(l) && isMatch(l) && inWindow(l)).length;
+    $("cAds").textContent = L().filter(live).length;
     $("windowNote").textContent = `الفترة: من ${dmy(windowStart())} حتى اليوم. «مقابل السوق» يقارن السعر بالمتوقع لنفس الطراز والسنة والممشى من إعلانات رصدها الرادار خلال 60 يومًا.`;
+    const lastMissing = last?.missing_price || 0;
+    if (lastMissing) $("windowNote").textContent += ` · استُبعد ${lastMissing} إعلانًا لعدم تأكيد السعر.`;
     const rows = visibleAds();
     if (!rows.length) { $("adsGrid").innerHTML = `<div class="empty"><b>لا توجد إعلانات هنا</b>${S.U.requests.length ? "غيّر التصفية، أو اضغط «ابحث الآن»." : "أضف أول طلب بحث من تبويب «طلبات البحث»."}</div>`; return; }
     $("adsGrid").innerHTML = rows.map((l) => `<article class="ad${S.pick.includes(l.id) ? " picked" : ""}">${photo(l)}<div class="bd">
       <div><a class="title" href="${esc(l.url)}" target="_blank" rel="noopener">${esc(carName(l))}</a><div class="var">${esc(l.title || "")}</div></div>
-      <div class="priceline"><span class="price">${l.price ? fmt(l.price) + " <small>درهم</small>" : "<small>السعر غير مذكور</small>"}</span>${l.price_prev && l.price_prev !== l.price ? `<span class="price-prev num">${fmt(l.price_prev)}</span>` : ""}${l.year ? `<span class="plate">${l.year}</span>` : ""}</div>
+      <div class="priceline"><span class="price">${l.price ? fmt(l.price) + " <small>درهم</small>" : ""}</span>${l.price_prev && l.price_prev !== l.price ? `<span class="price-prev num">${fmt(l.price_prev)}</span>` : ""}${l.year ? `<span class="plate">${l.year}</span>` : ""}</div>
       ${verdict(l)}${facts(l)}
       ${l.state === "unverified" && l.note ? `<div class="note">${esc(l.note)}</div>` : ""}
       ${(l.also_on || []).map((u) => `<div class="small">معروض أيضًا على <a href="${esc(u)}" target="_blank" rel="noopener">${esc(new URL(u).hostname.replace(/^www\./, ""))}</a></div>`).join("")}
@@ -739,6 +817,8 @@ section.tab { display: grid; gap: 14px; }
   const CONDS = ["make", "model", "keywords", "year_from", "year_to", "price_max", "mileage_max", "color", "emirate"];
   function openForm(t) { $("reqForm").hidden = false; $("formTitle").textContent = t; $("rMsg").textContent = ""; $("rName").focus(); }
   function resetForm() { S.editing = null; $("reqForm").reset(); Object.keys(PLATFORMS).forEach((p) => { $("p_" + p).checked = !DEFAULT_OFF.includes(p); }); $("rSave").textContent = "حفظ الطلب"; $("reqForm").hidden = true; }
+  $("heroNew").addEventListener("click", () => { showTab("reqs"); resetForm(); openForm("طلب بحث جديد"); });
+  $("heroReports").addEventListener("click", () => showTab("reports"));
   $("newReq").addEventListener("click", () => { resetForm(); openForm("طلب بحث جديد"); });
   $("rCancel").addEventListener("click", resetForm);
   $("reqForm").addEventListener("submit", async (e) => {

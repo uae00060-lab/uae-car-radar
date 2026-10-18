@@ -182,6 +182,25 @@ class Engine(unittest.TestCase):
         self.assertEqual(set(ad["request_ids"]), {"r1", "r2"})
         self.assertEqual(ad["by_request"]["r2"]["state"], "verified")
 
+    def test_unpriced_ads_never_become_offers(self):
+        PAGES["https://uae.dubizzle.com" + DZ1] = ld_ad("Toyota Yaris 2022", None, 2022, 132000, d(2))
+        radar.run_round(self.args(), KEY)
+        eng = store.read_json(radar.ENGINE_FILE, KEY, {})
+        self.assertNotIn("dubizzle-0e178fe896f34a32b34968b5266f36dd", eng["listings"])
+        self.assertTrue(all(l["price"] for l in eng["listings"].values()))
+
+    def test_missing_saved_price_is_repaired_without_waiting_ten_hours(self):
+        radar.run_round(self.args(), KEY)
+        eng = store.read_json(radar.ENGINE_FILE, KEY, {})
+        ad = eng["listings"]["dubizzle-0e178fe896f34a32b34968b5266f36dd"]
+        ad["price"] = None; ad["price_version"] = 1
+        store.write_json(radar.ENGINE_FILE, eng, KEY)
+        radar.run_round(self.args(), KEY)
+        ad = store.read_json(radar.ENGINE_FILE, KEY, {})["listings"][ad["id"]]
+        self.assertEqual(ad["price"], 26500)
+        self.assertEqual(ad["price_currency"], "AED")
+        self.assertEqual(ad["price_version"], 3)
+
     def test_wrong_key(self):
         with self.assertRaises(store.BadPassphrase):
             store.read_json(radar.USER_FILE, "wrong", {})
@@ -246,6 +265,28 @@ class Parts(unittest.TestCase):
             notify.telegram("details" * 1000, f.name)
             post.assert_called_once()
             self.assertTrue(post.call_args.args[0].endswith("/sendDocument"))
+
+    def test_recover_aed_metadata_from_foreign_schema(self):
+        html = ld_ad("Toyota Yaris 2019", 6807, 2019, 106000, d(2)).replace('"AED"', '"USD"')
+        html = html.replace("<head>", "<head><meta content='Buy this car for just AED 25000.' property='og:description'>")
+        found = extract.ad_page(html, "https://www.dubicars.com/2019-toyota-yaris-1035981.html", "1035981")
+        self.assertEqual(found["price"][0], 25000)
+        self.assertEqual(found["currency"][0], "AED")
+
+    def test_no_monthly_or_recommendation_price(self):
+        from extract import aed_amount
+        self.assertIsNone(aed_amount("AED 2,500/month"))
+        self.assertIsNone(aed_amount("Down payment AED 5,000"))
+        html = '<script type="application/ld+json">' + json.dumps({"@type":"Car", "url":"https://www.dubicars.com/2020-toyota-yaris-111111.html", "offers":{"price":25000,"priceCurrency":"AED"}}) + '</script>'
+        f = extract.ad_page(html, "https://www.dubicars.com/2019-toyota-yaris-1035981.html", "1035981")
+        self.assertNotIn("price", f)
+
+    def test_conflicting_aed_prices_are_not_guessed(self):
+        html = ld_ad("Toyota Yaris", 25000, 2020, 100000, d(2))
+        html = html.replace("<head>", '<head><meta name="description" content="AED 31000">')
+        f = extract.ad_page(html, "u", "1")
+        self.assertNotIn("price", f)
+        self.assertIn("conflicting", f["_price_reason"])
 
     def test_crypto_roundtrip(self):
         t = store.encrypt_bytes(b'{"a":1}', "k")

@@ -1,6 +1,7 @@
 """PDF report and notification texts."""
 
 import html
+import base64
 import os
 import re
 import shutil
@@ -166,6 +167,11 @@ def drop_alert_text(drops, link):
 
 def render_html(run, groups, drops, now, start, profile, platforms_used):
     e = html.escape
+    mark_path = os.path.join(os.path.dirname(os.path.dirname(__file__)), "assets", "logo-mark.svg")
+    logo = ""
+    if os.path.exists(mark_path):
+        with open(mark_path, "rb") as f:
+            logo = "data:image/svg+xml;base64," + base64.b64encode(f.read()).decode()
 
     def row(i, l, req, cand=False):
         tags = ""
@@ -249,22 +255,22 @@ def render_html(run, groups, drops, now, start, profile, platforms_used):
 * {{ box-sizing: border-box; }}
 body {{ font-family: "Noto Sans Arabic", "Noto Sans", "DejaVu Sans", sans-serif; color: #17212b; font-size: 8.4pt; margin: 0; line-height: 1.45; }}
 .n {{ direction: ltr; unicode-bidi: isolate; font-variant-numeric: tabular-nums; }}
-header {{ background: #0d5c6b; color: #fff; border-radius: 6px; padding: 12px 16px; display: flex; justify-content: space-between; gap: 16px; }}
+header {{ background: #0B1732; color: #fff; border-radius: 6px; padding: 12px 16px; display: flex; justify-content: space-between; gap: 16px; }}
 header h1 {{ margin: 0 0 3px; font-size: 16pt; }} header .m {{ font-size: 8.4pt; opacity: .92; }}
 header .who {{ text-align: left; font-size: 8.4pt; opacity: .92; align-self: flex-end; }}
 .kpis {{ display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; margin: 9px 0 2px; }}
 .kpi {{ border: 1px solid #d3dbe2; border-radius: 6px; padding: 6px 10px; }}
-.kpi b {{ display: block; font-size: 14pt; color: #0d5c6b; line-height: 1.2; }} .kpi span {{ color: #5b6876; font-size: 8pt; }}
+.kpi b {{ display: block; font-size: 14pt; color: #0B1732; line-height: 1.2; }} .kpi span {{ color: #5b6876; font-size: 8pt; }}
 .warn {{ background: #fbe9e6; color: #8f2216; border: 1px solid #f1c6bf; padding: 6px 10px; border-radius: 6px; margin-top: 8px; }}
 section {{ margin-top: 12px; }}
-.sh {{ display: flex; justify-content: space-between; align-items: flex-end; border-bottom: 2px solid #0d5c6b; padding-bottom: 4px; break-after: avoid; }}
+.sh {{ display: flex; justify-content: space-between; align-items: flex-end; border-bottom: 2px solid #0B1732; padding-bottom: 4px; break-after: avoid; }}
 h2 {{ margin: 0; font-size: 12.5pt; }} .cr {{ color: #5b6876; font-size: 8pt; margin-top: 1px; }}
 .st {{ display: flex; gap: 14px; color: #5b6876; font-size: 8pt; }} .st b {{ color: #17212b; font-size: 9.5pt; }}
 .mk {{ color: #45525f; font-size: 7.8pt; margin-top: 4px; }}
 .picks {{ display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin: 7px 0 4px; break-inside: avoid; }}
-.pick {{ background: #f1f6f7; border-radius: 6px; padding: 6px 10px; }} .pick .pl {{ color: #0d5c6b; font-size: 7.5pt; font-weight: bold; }}
-h3 {{ font-size: 9.5pt; margin: 10px 0 4px; color: #0d5c6b; break-after: avoid; }} h3.h-c {{ color: #7c5100; }}
-.cnt {{ background: #e3edf0; color: #0d5c6b; border-radius: 8px; padding: 0 7px; font-size: 8pt; margin-inline-start: 4px; }}
+.pick {{ background: #f1f6f7; border-radius: 6px; padding: 6px 10px; }} .pick .pl {{ color: #0B1732; font-size: 7.5pt; font-weight: bold; }}
+h3 {{ font-size: 9.5pt; margin: 10px 0 4px; color: #0B1732; break-after: avoid; }} h3.h-c {{ color: #7c5100; }}
+.cnt {{ background: #E6EEF8; color: #0B1732; border-radius: 8px; padding: 0 7px; font-size: 8pt; margin-inline-start: 4px; }}
 .h-c .cnt {{ background: #fbefd2; color: #7c5100; }} .hint {{ color: #6b7785; font-weight: normal; font-size: 7.5pt; margin-inline-start: 8px; }}
 table {{ width: 100%; border-collapse: collapse; }} thead {{ display: table-header-group; }} tr {{ break-inside: avoid; }}
 th {{ background: #edf2f5; color: #45525f; font-size: 7.4pt; padding: 5px 4px; text-align: right; white-space: nowrap; }}
@@ -274,17 +280,17 @@ td.i {{ color: #8793a0; width: 16px; }} td.car {{ width: 21%; }} td.car b {{ fon
 .tags {{ margin-top: 1px; }} .tag {{ display: inline-block; font-size: 6.8pt; padding: 0 6px; border-radius: 8px; margin-left: 3px; background: #edf2f5; color: #45525f; }}
 .tag.new {{ background: #dcf1e3; color: #17663a; }} .tag.down {{ background: #dcf1e3; color: #17663a; }} .tag.up {{ background: #fbe9e6; color: #8f2216; }}
 .rate {{ font-size: 7.4pt; padding: 1px 6px; border-radius: 8px; background: #edf2f5; color: #45525f; }}
-.r-excellent {{ background: #cfeedb; color: #0f5a2f; font-weight: bold; }} .r-good {{ background: #dcf1e3; color: #17663a; }}
-.r-fair {{ background: #e3edf0; color: #0d5c6b; }} .r-high {{ background: #fbe9e6; color: #8f2216; }} .r-suspicious {{ background: #fbefd2; color: #7c5100; }}
+.r-excellent {{ background: #cfeedb; color: #086D63; font-weight: bold; }} .r-good {{ background: #dcf1e3; color: #17663a; }}
+.r-fair {{ background: #E6EEF8; color: #0B1732; }} .r-high {{ background: #fbe9e6; color: #8f2216; }} .r-suspicious {{ background: #fbefd2; color: #7c5100; }}
 .u-high {{ color: #8f2216; font-weight: bold; }} .u-medium {{ color: #7c5100; }} .u-low {{ color: #6b7785; }}
 .miss {{ color: #7c5100; font-size: 7.2pt; margin-top: 1px; }}
 td.pr {{ white-space: nowrap; }} td.pr b {{ font-size: 9.8pt; }} small {{ color: #6b7785; font-size: 7pt; margin-right: 3px; }}
 td.c {{ white-space: nowrap; }} .sub {{ color: #6b7785; font-size: 7pt; white-space: normal; max-width: 32mm; }}
-.na {{ color: #8793a0; }} a {{ color: #0d5c6b; font-weight: bold; text-decoration: none; }}
+.na {{ color: #8793a0; }} a {{ color: #0B1732; font-weight: bold; text-decoration: none; }}
 .empty {{ color: #5b6876; padding: 8px 2px; margin: 0; }}
 .foot {{ margin-top: 12px; color: #6b7785; font-size: 7pt; line-height: 1.6; border-top: 1px solid #e3e8ec; padding-top: 5px; }}
 </style></head><body>
-<header><div><h1>تقرير رادار سيارات الإمارات</h1>
+<header><div><h1>{f'<img src="{logo}" alt="" style="width:35px;height:35px;vertical-align:middle;margin-left:9px">' if logo else ""}تقرير رادار سيارات الإمارات</h1>
 <div class="m">{AR_DAYS[now.weekday()]} {now:%d/%m/%Y} · {now:%H:%M} بتوقيت الإمارات · {mode} · الفترة <span class="n">{start:%d/%m/%Y}</span> – <span class="n">{now:%d/%m/%Y}</span></div>
 <div class="m">المنصات: {e(plats) or '—'}</div></div>
 {f'<div class="who">{who}</div>' if who else ''}</header>

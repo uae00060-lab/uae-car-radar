@@ -9,6 +9,7 @@ carries the name of the source it came from so a run can report what each platfo
 import json
 import re
 from html import unescape
+from html.parser import HTMLParser
 
 from common import AR_DIGITS, ad_identity, clean_url, to_num
 
@@ -236,6 +237,99 @@ def color_ok(v):
     return bool(color_of(str(v)))
 
 
+class MetaReader(HTMLParser):
+    def __init__(self, html):
+        super().__init__(convert_charrefs=True)
+        self.values = {}
+        self.feed(html)
+
+    def handle_starttag(self, tag, attrs):
+        attrs = dict(attrs)
+        if tag.lower() == "meta":
+            key = (attrs.get("property") or attrs.get("name") or "").lower()
+            self.values[key] = attrs.get("content", "")
+
+
+def primary_schema(blobs, url, ad_id):
+    """Scope offers to this ad; recommendations must never supply its asking price."""
+    exact, anonymous = [], []
+    for blob in blobs:
+        for obj in walk(blob):
+            types = obj.get("@type", [])
+            types = types if isinstance(types, list) else [types]
+            if not any(t in ("Car", "Vehicle", "Product", "Offer", "IndividualProduct") for t in types):
+                continue
+            identities = [str(obj[k]) for k in ("@id", "url", "sku", "productID") if obj.get(k)]
+            if any(value == str(ad_id) or value.split("#")[0].rstrip("/") == url.rstrip("/") for value in identities):
+                exact.append(obj)
+            elif not identities:
+                anonymous.append(obj)
+    if exact:
+        return exact
+    # An anonymous Offer nested under a different identified car is not this ad.
+    anonymous_cars = [obj for obj in anonymous if obj.get("@type") in ("Car", "Vehicle", "Product", "IndividualProduct")]
+    return anonymous_cars[:1]
+
+
+def aed_amount(text):
+    """An explicit AED asking price, never a monthly installment or a finance example."""
+    text = unescape(str(text)).translate(AR_DIGITS)
+    pattern = r"(?:AED|درهم|د\.إ)\s*([0-9][0-9,٬]*(?:\.[0-9]{1,2})?)|([0-9][0-9,٬]*(?:\.[0-9]{1,2})?)\s*(?:AED|درهم|د\.إ)"
+    for m in re.finditer(pattern, text, re.I):
+        amount = to_num(m[1] or m[2])
+        around = text[max(0, m.start()-25):m.end()+35]
+        if re.search(r"/\s*(?:mo|month)|per month|monthly|شهري|قسط|installment|down payment|دفعة أولى", around, re.I):
+            continue
+        if amount and 1500 <= amount <= 5_000_000:
+            return amount
+    return None
+
+
+def resolve_price(html, url, ad_id, blobs):
+    meta = MetaReader(html).values
+    primary = primary_schema(blobs, url, ad_id)
+    structured, descriptions = [], []
+    for obj in primary:
+        offers = obj.get("offers")
+        offers = offers if isinstance(offers, list) else [offers] if isinstance(offers, dict) else []
+        for offer in [obj] + offers:
+            amount = to_num(offer.get("price"))
+            currency = str(offer.get("priceCurrency") or "").strip().upper()
+            if amount and currency == "AED" and 1500 <= amount <= 5_000_000:
+                structured.append(amount)
+        if obj.get("description"):
+            descriptions.append(str(obj["description"]))
+    # Meta descriptions describe this page, unlike arbitrary AED values elsewhere in the body.
+    for key in ("og:description", "description", "twitter:description", "og:title"):
+        if meta.get(key):
+            descriptions.append(meta[key])
+    body = re.split(r"similar cars|related cars|recommended cars|you may also like|سيارات مشابهة", text_of(html), maxsplit=1, flags=re.I)[0]
+    for line in body.splitlines():
+        if re.search(r"(?:\bprice|cash price|السعر)\s*[:：]|convenience fee", line, re.I) and not re.search(r"minimum|maximum|loan|interest|finance example", line, re.I):
+            descriptions.append(line)
+    explicit = [(aed_amount(desc), desc) for desc in descriptions]
+    explicit = [(n, desc) for n, desc in explicit if n]
+    if explicit:
+        amount, desc = explicit[0]
+        desc = next((d for n, d in explicit if n == amount and re.search(r"\+\s*(?:AED|درهم)\s*[\d,]+\s*(?:convenience fee|fee|رسوم)", d, re.I)), desc)
+        fee = re.search(r"\+\s*(?:AED|درهم)\s*([\d,]+)\s*(?:convenience fee|fee|رسوم)", desc, re.I)
+        total = amount + (to_num(fee[1]) if fee else 0)
+        # A converted schema value can be ignored; conflicting AED asking prices cannot.
+        if structured and any(abs(n - amount) > max(1, amount * .01) for n in structured):
+            return None, "conflicting AED asking prices"
+        return int(total), "ad:AED-description-total" if fee else "ad:AED-description"
+    if structured:
+        if max(structured) - min(structured) > 1:
+            return None, "conflicting AED offers"
+        return int(structured[0]), "ad:AED-offer"
+    for key in ("product:price:amount", "og:price:amount"):
+        currency = meta.get(key.replace("amount", "currency"), "").upper()
+        amount = to_num(meta.get(key))
+        if currency == "AED" and amount and 1500 <= amount <= 5_000_000:
+            return int(amount), "ad:AED-meta"
+    return None, "AED asking price unavailable"
+
+
 def ad_page(html, url, ad_id):
     """Values for one ad page, each as (value, source). Also 'sold' and 'single'."""
     found = {}
@@ -285,23 +379,14 @@ def ad_page(html, url, ad_id):
             m = re.search(rx, text, re.I)
             if m:
                 found[f] = (m[1].strip(), "text")
-    # Structured prices may be converted currencies; compare with an explicit AED cash price.
-    amounts = re.findall(r"(?:AED|درهم)\s*([\d,]+(?:\.\d{1,2})?)([^\n]{0,65})", text, re.I)
-    cash = []
-    for amount, tail in amounts:
-        n = to_num(amount)
-        if n and 1500 <= n <= 5_000_000 and not re.match(r"\s*(?:/|per\s*)?(?:month|mo\b|شهري|شهر)", tail, re.I):
-            # Only explicit cash/total lines or fee-bearing asking price lines are authoritative.
-            if re.search(r"convenience fee|رسوم|cash price|سعر نقدي", tail, re.I):
-                fee = re.search(r"\+\s*(?:AED|درهم)\s*([\d,]+)", tail, re.I)
-                cash.append(n + (to_num(fee[1]) if fee else 0))
-    currency = str(found.get("currency", ("",))[0]).upper()
-    if cash:
-        found["price"] = (max(cash), "text:AED-total")
-        found["currency"] = ("AED", "text:AED")
-    elif currency and currency not in ("AED", "درهم", "د.إ"):
-        found.pop("price", None)
+    amount, source = resolve_price(html, url, ad_id, blobs)
+    found.pop("price", None)
+    if amount is not None:
+        found["price"] = (amount, source)
+        found["currency"] = ("AED", source)
+    else:
         found["_price_uncertain"] = True
+        found["_price_reason"] = source
     if "color" in found and not color_ok(found["color"][0]):
         del found["color"]
     if "phone" not in found:

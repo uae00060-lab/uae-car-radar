@@ -198,7 +198,8 @@ def read_ad(item, today, debug=None):
     src = {k: v[1] for k, v in f.items() if isinstance(v, tuple)}
     # Each value must be plausible; otherwise the next source is used (title, then the results card).
     card = item if item.get("src") == "json" else {}
-    price = next((int(x) for x in (to_num(g("price")), None if f.get("_price_uncertain") else to_num(card.get("price"))) if x and 1500 <= x <= 5_000_000), None)
+    price = to_num(g("price"))
+    price = int(price) if price and 1500 <= price <= 5_000_000 else None
     title_year = re.search(r"\b(19[89]\d|20[0-3]\d)\b", str(g("title") or ""))
     year = next((int(x) for x in (to_num(g("year")), float(title_year[1]) if title_year else None, to_num(card.get("year")))
                  if x and 1980 <= x <= today.year + 1), None)
@@ -230,7 +231,8 @@ def read_ad(item, today, debug=None):
     if phone and (re.sub(r"\D", "", phone)[-7:] in PLACEHOLDER_PHONES or re.sub(r"\D", "", phone).endswith(PLATFORM_PHONES)):
         phone = None  # a sample number in the page template, or the platform's own office line
     return "ok", {
-        "title": str(g("title") or item.get("title") or "")[:160], "price": price, "year": year, "km": km,
+        "title": str(g("title") or item.get("title") or "")[:160], "price": price,
+        "price_source": src.get("price"), "price_currency": "AED" if price else None, "price_version": 3, "year": year, "km": km,
         "color": color_of(str(g("color") or "")), "emirate": emirate_of(" ".join(str(x or "") for x in (loc, g("title"), item["url"]))),
         "location": loc[:120] if loc else None, "phone": phone, "seller_name": str(g("seller") or "")[:80] or None,
         "seller_type": seller_type, "specs": str(g("specs") or "")[:30] or None, "transmission": str(g("transmission") or "")[:30] or None,
@@ -408,6 +410,8 @@ def run_round(a, key):
             age = (now - dt.datetime.fromisoformat(l.get("last_checked") or l.get("first_seen"))).total_seconds() / 3600
         except (TypeError, ValueError):
             age = 1e9
+        if not l.get("price") or l.get("price_version", 0) < 3:
+            age += 1e8
         if age >= RECHECK_HOURS:
             due.append((age, l))
     due.sort(key=lambda x: -x[0])
@@ -434,7 +438,7 @@ def run_round(a, key):
             ps["read_failed"] += 1
             if prev:
                 continue  # keep it; try again next round
-            v = {"title": item.get("title") or "", "price": item.get("price"), "year": item.get("year"), "km": item.get("km"),
+            v = {"title": item.get("title") or "", "price": None, "year": item.get("year"), "km": item.get("km"),
                  "color": None, "emirate": emirate_of(item.get("title")), "location": None, "phone": None,
                  "seller_name": None, "seller_type": None, "specs": None, "transmission": None,
                  "image": item.get("image"), "date": None, "date_kind": None, "desc": None, "_src": {}}
@@ -444,6 +448,13 @@ def run_round(a, key):
             for f, s in v["_src"].items():
                 ps["fields"][f] = ps["fields"].get(f, 0) + 1
             fetched = True
+        if not v.get("price"):
+            fs = funnel.setdefault(plat, {"cards": 0, "known": 0, "skipped_recently": 0, "card_rejected": 0, "planned": 0, "states": {}, "excluded_by": {}})
+            fs["missing_price"] = fs.get("missing_price", 0) + 1
+            if prev:
+                prev.update({"price": None, "price_source": None, "price_currency": None, "price_version": 3, "last_checked": stamp})
+            # Keep no-price evidence only in diagnostics, never as a user-facing offer.
+            continue
         if fetched and v["price"] and v["year"] and has_terms(v["title"] + " " + item["url"].replace("-", " "), model_terms(req)):
             analytics.add_samples(eng["market"], req["id"], [{"id": item["id"], "price": v["price"], "year": v["year"], "km": v["km"]}], today)
         v["_url"] = item["url"]
@@ -465,7 +476,8 @@ def run_round(a, key):
         if prev:
             prev["request_ids"] = sorted(set(prev.get("request_ids", [prev["request_id"]])) | {req["id"]})
             prev.setdefault("by_request", {})[req["id"]] = {"state": st, "note": note, "checks": checks}
-            patch = {"last_seen": stamp, "last_checked": stamp, "state": st, "note": note, "checks": checks}
+            patch = {"last_seen": stamp, "last_checked": stamp, "state": st, "note": note, "checks": checks,
+                     "price_source": v.get("price_source"), "price_currency": "AED", "price_version": 3}
             for k in ("phone", "seller_name", "seller_type", "specs", "transmission", "image", "location", "mileage", "year"):
                 val = v.get("km" if k == "mileage" else k)
                 if val and not prev.get(k):
@@ -490,7 +502,7 @@ def run_round(a, key):
         doc = {
             "id": item["id"], "ad_id": item["ad_id"], "request_id": req["id"],
             "request_ids": [req["id"]], "by_request": {req["id"]: {"state": st, "note": note, "checks": checks}}, "platform": plat, "url": item["url"],
-            "title": v["title"], "price": v["price"], "year": v["year"], "mileage": v["km"], **extra,
+            "title": v["title"], "price": v["price"], "price_source": v.get("price_source"), "price_currency": "AED", "price_version": 3, "year": v["year"], "mileage": v["km"], **extra,
             "location": v["location"], "phone": v["phone"], "seller_name": v["seller_name"], "seller_type": v["seller_type"],
             "specs": v["specs"], "transmission": v["transmission"], "image": v["image"],
             "date": (v["date"] or today).isoformat(), "date_kind": v["date_kind"] or "first_seen",
@@ -527,7 +539,7 @@ def run_round(a, key):
                   "urgency": {"score": score, "level": level, "why": why}})
 
     # 5) report
-    live = lambda l: l.get("state") in ("verified", "approx", "unverified") and (marks.get(l["id"]) or {}).get("status") not in ("dismissed", "purchased")
+    live = lambda l: bool(l.get("price")) and l.get("state") in ("verified", "approx", "unverified") and (marks.get(l["id"]) or {}).get("status") not in ("dismissed", "purchased")
     full = a.mode == "manual"
     groups, cur_ver, cur_cand = [], 0, 0
     for req in reqs:
@@ -557,7 +569,7 @@ def run_round(a, key):
            "opened": len(order), "new": len([i for i in new_ids if listings[i]["state"] == "verified"]),
            "new_unverified": len([i for i in new_ids if listings[i]["state"] == "unverified"]),
            "price_drops": len(drops), "sold": len(sold), "current_offers": cur_ver, "candidates": cur_cand,
-           "deferred": deferred, "market": market_info,
+           "deferred": deferred, "market": market_info, "missing_price": sum(d.get("missing_price", 0) for d in funnel.values()),
            "warning": "؛ ".join(invalid + ([("تعذّر الوصول إلى: " + "، ".join(blocked))] if blocked else [])),
            "platforms": {p: {**diag.get(p, {}), **opened_stats.get(p, {})} for p in set(diag) | set(opened_stats)}}
     if reqs and not sum(d.get("ok", 0) for d in diag.values()) and not run["found"]:
