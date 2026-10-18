@@ -83,7 +83,7 @@ def search_urls(plat, req, market=False):
     if plat == "opensooq":
         return [f"https://ae.opensooq.com/en/cars/cars-for-sale/{path}"]
     if plat == "mourjan":
-        return [f"https://www.mourjan.com/ae/cars/{path}/"]
+        return [f"https://www.mourjan.com/ae/cars/for-sale/{make}/", "https://www.mourjan.com/ae/cars/for-sale/"]
     return []
 
 
