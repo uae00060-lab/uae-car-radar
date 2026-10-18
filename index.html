@@ -501,7 +501,8 @@ section.tab { display: grid; gap: 14px; }
     if (S.E) renderCmpBar();
   }
   document.querySelectorAll("nav.tabs button").forEach((b) => b.addEventListener("click", () => showTab(b.dataset.tab)));
-  $("rPlats").innerHTML = Object.entries(PLATFORMS).map(([k, v]) => `<label><input type="checkbox" id="p_${k}" value="${k}" checked> ${v}</label>`).join("");
+  const DEFAULT_OFF = ["mourjan"]; // no UAE car section at the moment
+  $("rPlats").innerHTML = Object.entries(PLATFORMS).map(([k, v]) => `<label title="${k === "mourjan" ? "لا يوجد في مرجان قسم سيارات للإمارات حاليًا" : ""}"><input type="checkbox" id="p_${k}" value="${k}"${DEFAULT_OFF.includes(k) ? "" : " checked"}> ${v}</label>`).join("");
 
   // ---------------------------------------------------------------- pieces
   function photo(l) {
@@ -682,7 +683,7 @@ section.tab { display: grid; gap: 14px; }
   const formIds = { name: "rName", make: "rMake", model: "rModel", keywords: "rKeys", year_from: "rYf", year_to: "rYt", price_max: "rPmax", mileage_max: "rKmax", color: "rColor", emirate: "rEmirate" };
   const CONDS = ["make", "model", "keywords", "year_from", "year_to", "price_max", "mileage_max", "color", "emirate"];
   function openForm(t) { $("reqForm").hidden = false; $("formTitle").textContent = t; $("rMsg").textContent = ""; $("rName").focus(); }
-  function resetForm() { S.editing = null; $("reqForm").reset(); Object.keys(PLATFORMS).forEach((p) => { $("p_" + p).checked = true; }); $("rSave").textContent = "حفظ الطلب"; $("reqForm").hidden = true; }
+  function resetForm() { S.editing = null; $("reqForm").reset(); Object.keys(PLATFORMS).forEach((p) => { $("p_" + p).checked = !DEFAULT_OFF.includes(p); }); $("rSave").textContent = "حفظ الطلب"; $("reqForm").hidden = true; }
   $("newReq").addEventListener("click", () => { resetForm(); openForm("طلب بحث جديد"); });
   $("rCancel").addEventListener("click", resetForm);
   $("reqForm").addEventListener("submit", async (e) => {

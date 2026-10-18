@@ -319,7 +319,7 @@ def run_round(a, key):
     # 1) find ads
     plan = []  # (request, card)
     for req in reqs:
-        plats = [p for p in (req.get("platforms") or list(PLATFORMS)) if p in PLATFORMS]
+        plats = [p for p in (req.get("platforms") or [p for p in PLATFORMS if p != "mourjan"]) if p in PLATFORMS]
         cards, samples = discover(req, plats, diag)
         analytics.add_samples(eng["market"], req["id"], samples, today)
         for k, c in cards.items():
