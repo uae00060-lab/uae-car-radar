@@ -87,6 +87,14 @@ jobs:
         if: startsWith(steps.task.outputs.args, 'run')
         run: python engine/tests/pdf_smoke.py
 
+      - name: Read dashboard activity
+        if: github.event_name == 'schedule'
+        run: |
+          mkdir -p .work
+          if git fetch --quiet --depth=1 origin radar-presence; then
+            git show FETCH_HEAD:data/presence.json > .work/presence.json || rm -f .work/presence.json
+          fi
+
       - name: Search the platforms
         if: steps.task.outputs.args != 'notify-test'
         run: python engine/radar.py ${{ steps.task.outputs.args }}

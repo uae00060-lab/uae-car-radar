@@ -317,7 +317,10 @@ def reassess_saved(listings, reqs, start, today):
 
 def load_presence():
     try:
-        with open(os.path.join(ROOT, "data", "presence.json")) as f:
+        path = os.path.join(WORK, "presence.json")
+        if not os.path.exists(path):
+            path = os.path.join(ROOT, "data", "presence.json")
+        with open(path) as f:
             at = dt.datetime.fromisoformat(json.load(f)["at"])
         age = (now_uae() - at).total_seconds()
         return 0 <= age < 180
