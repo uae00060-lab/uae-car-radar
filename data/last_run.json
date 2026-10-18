@@ -1,10 +1,10 @@
 {
- "at": "2026-10-18T23:06:06+04:00",
+ "at": "2026-10-18T23:08:02+04:00",
  "mode": "manual",
  "requests": 1,
- "seconds": 68,
- "opened": 35,
- "saved_new": 32,
+ "seconds": 52,
+ "opened": 1,
+ "saved_new": 0,
  "drops": 0,
  "sold": 0,
  "listings_total": 32,
@@ -25,38 +25,6 @@
    "states": {},
    "excluded_by": {}
   },
-  "carswitch": {
-   "pages": 1,
-   "ok": 1,
-   "blocked": 0,
-   "cards": 18,
-   "via_search": 0,
-   "http": [
-    200
-   ],
-   "opened": 5,
-   "read_ok": 5,
-   "read_failed": 0,
-   "known": 0,
-   "skipped_recently": 0,
-   "card_rejected": 13,
-   "planned": 5,
-   "states": {
-    "unverified": 5
-   },
-   "excluded_by": {}
-  },
-  "dubizzle": {
-   "pages": 2,
-   "ok": 0,
-   "blocked": 2,
-   "cards": 0,
-   "via_search": 0,
-   "http": [
-    200,
-    200
-   ]
-  },
   "mourjan": {
    "pages": 2,
    "ok": 0,
@@ -68,27 +36,6 @@
     404
    ]
   },
-  "autoae": {
-   "pages": 1,
-   "ok": 1,
-   "blocked": 0,
-   "cards": 8,
-   "via_search": 0,
-   "http": [
-    200
-   ],
-   "opened": 1,
-   "read_ok": 1,
-   "read_failed": 0,
-   "known": 0,
-   "skipped_recently": 0,
-   "card_rejected": 7,
-   "planned": 1,
-   "states": {
-    "unverified": 1
-   },
-   "excluded_by": {}
-  },
   "dubicars": {
    "pages": 1,
    "ok": 1,
@@ -98,40 +45,56 @@
    "http": [
     200
    ],
-   "opened": 22,
-   "read_ok": 21,
+   "opened": 1,
+   "read_ok": 0,
    "read_failed": 0,
-   "known": 0,
-   "skipped_recently": 0,
+   "known": 19,
+   "skipped_recently": 2,
    "card_rejected": 8,
-   "planned": 22,
-   "states": {
-    "unverified": 19,
-    "excluded": 2
-   },
-   "excluded_by": {
-    "price": 2
-   }
+   "planned": 1,
+   "states": {},
+   "excluded_by": {}
   },
   "yallamotor": {
    "pages": 1,
+   "ok": 0,
+   "blocked": 1,
+   "cards": 0,
+   "via_search": 0,
+   "http": [
+    403
+   ]
+  },
+  "autoae": {
+   "pages": 1,
    "ok": 1,
    "blocked": 0,
-   "cards": 22,
+   "cards": 8,
    "via_search": 0,
    "http": [
     200
    ],
-   "opened": 3,
-   "read_ok": 3,
-   "read_failed": 0,
-   "known": 0,
+   "known": 1,
    "skipped_recently": 0,
-   "card_rejected": 19,
-   "planned": 3,
-   "states": {
-    "unverified": 3
-   },
+   "card_rejected": 7,
+   "planned": 0,
+   "states": {},
+   "excluded_by": {}
+  },
+  "carswitch": {
+   "pages": 1,
+   "ok": 1,
+   "blocked": 0,
+   "cards": 18,
+   "via_search": 0,
+   "http": [
+    200
+   ],
+   "known": 5,
+   "skipped_recently": 0,
+   "card_rejected": 13,
+   "planned": 0,
+   "states": {},
    "excluded_by": {}
   },
   "oneclickdrive": {
@@ -145,17 +108,23 @@
     200,
     200
    ],
-   "opened": 4,
-   "read_ok": 4,
-   "read_failed": 0,
-   "known": 0,
+   "known": 4,
    "skipped_recently": 0,
    "card_rejected": 28,
-   "planned": 4,
-   "states": {
-    "unverified": 4
-   },
+   "planned": 0,
+   "states": {},
    "excluded_by": {}
+  },
+  "dubizzle": {
+   "pages": 2,
+   "ok": 0,
+   "blocked": 2,
+   "cards": 0,
+   "via_search": 0,
+   "http": [
+    200,
+    200
+   ]
   }
  }
 }
