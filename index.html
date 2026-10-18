@@ -787,7 +787,7 @@ section.tab { gap:20px; }
           <label>مكان المعاينة<input name="area" value="${esc(d.area || "")}"></label>
           <label>موعد المعاينة<input name="appointment" type="datetime-local" value="${esc(d.appointment || "")}"></label>
           <label>اسم البائع<input name="contact_name" value="${esc(d.contact_name || l.seller_name || "")}"></label>
-          <label>رقم البائع<input name="contact_phone" type="tel" dir="ltr" value="${esc(d.contact_phone || l.phone || "")}"></label>
+          <label>رقم البائع<input name="contact_phone" type="tel" dir="ltr" value="${esc(d.contact_phone || (l.identity_version === 1 ? l.phone : "") || "")}"></label>
           <label>حالة الفحص<select name="inspection"><option value="">—</option>${["لم يُفحص", "فحص مبدئي جيد", "فحص شامل ناجح", "توجد ملاحظات"].map((x) => `<option${d.inspection === x ? " selected" : ""}>${x}</option>`).join("")}</select></label>
           <label class="full">ملاحظات<textarea name="note" rows="2">${esc(d.note || "")}</textarea></label>
           <div class="full row"><button type="submit" class="primary sm">حفظ التفاصيل</button>${diff > 0 ? `<span class="pill good">وفّرت <span class="num">${fmt(diff)}</span> درهم عن المعروض</span>` : ""}</div>
@@ -974,7 +974,7 @@ section.tab { gap:20px; }
   $("exportCsv").addEventListener("click", () => {
     const cols = [["title", "الإعلان"], ["price", "السعر"], ["price_prev", "السعر السابق"], ["rating", "مقابل السوق"], ["dev", "الفرق عن المتوقع"], ["year", "الموديل"], ["mileage", "الممشى"], ["color", "اللون"], ["emirate", "الإمارة"], ["platform", "المنصة"], ["date", "التاريخ"], ["seller_name", "البائع"], ["phone", "الهاتف"], ["vin", "رقم الشاصي VIN"], ["url", "الرابط"]];
     const q = (v) => `"${String(v ?? "").replace(/"/g, '""')}"`;
-    const val = (l, c) => c === "rating" ? RATING[l.rating || "unknown"] : c === "dev" ? (l.dev != null ? pct(l.dev) : "") : c === "platform" ? PLATFORMS[l.platform] : c === "date" ? adDate(l) : l[c];
+    const val = (l, c) => c === "rating" ? RATING[l.rating || "unknown"] : c === "dev" ? (l.dev != null ? pct(l.dev) : "") : c === "platform" ? PLATFORMS[l.platform] : c === "date" ? adDate(l) : (["phone", "vin"].includes(c) && l.identity_version !== 1 ? "" : l[c]);
     const csv = "﻿" + [cols.map((c) => q(c[1])).join(","), ...visibleAds().map((l) => cols.map(([c]) => q(val(l, c))).join(","))].join("\n");
     const a = Object.assign(document.createElement("a"), { href: URL.createObjectURL(new Blob([csv], { type: "text/csv" })), download: `car-listings-${ymd(uaeNow())}.csv` });
     a.click();

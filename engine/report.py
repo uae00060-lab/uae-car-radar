@@ -130,7 +130,7 @@ def summary_text(run, groups, drops, now, start, link, short=False):
         lines.append("")
     for req, ver, cand in groups:
         lines += ["━━━━━━━━━━━━━━━━", f"▌ {req.get('name') or 'طلب'}", f"   {criteria_text(req)}"]
-        rows = sorted(ver, key=deal_score)[:3] if short else ver
+        rows = sorted(ver, key=deal_score)[:3] if short else ver + cand
         if not rows:
             lines += ["   لا عروض مطابقة الآن.", ""]
             continue
@@ -139,7 +139,7 @@ def summary_text(run, groups, drops, now, start, link, short=False):
         for i, l in enumerate(rows, 1):
             em, area = place(l)
             kind, name = seller(l)
-            lines.append(f"{i}) {car_name(l, req)}{' 🆕' if l.get('_new') else ''} — {fmt_price(l.get('price'))}")
+            lines.append(f"{i}) {'[تحتاج تأكيدًا] ' if l in cand else ''}{car_name(l, req)}{' 🆕' if l.get('_new') else ''} — {fmt_price(l.get('price'))}")
             lines.append(f"   ⚖️ {rating_text(l)}"
                          + (f" · 🔥 استعجال {URGENCY_AR[l['urgency']['level']]}" if (l.get("urgency") or {}).get("level") in ("high", "medium") else ""))
             lines.append(f"   🛣 {(format(l['mileage'], ',') + ' كم') if l.get('mileage') else 'الممشى غير مذكور'} · 📍 {em}"

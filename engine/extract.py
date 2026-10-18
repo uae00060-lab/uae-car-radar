@@ -157,7 +157,9 @@ def results(html, base, plat):
     for m in HREF.finditer(html):
         href = unescape(m[1])
         gt = html.find(">", m.end())
-        chunk = text_of(html[gt + 1: gt + 2500])[:600] if gt != -1 else ""
+        end = html.find("</a>", gt + 1)
+        end = min(end, gt + 2500) if end != -1 else gt + 2500
+        chunk = text_of(html[gt + 1: end])[:600] if gt != -1 else ""
         price = CARD_PRICE_PRE.search(chunk) or CARD_PRICE.search(chunk)
         km = CARD_KM.search(chunk)
         year = CARD_YEAR.search(chunk)

@@ -653,6 +653,7 @@ def watch(a, key):
         if status != "ok":
             continue
         l["last_checked"] = stamp
+        l.update({k: v.get(k) for k in ("vin", "vin_source", "vin_status", "phone", "phone_source", "phone_status", "identity_version")})
         if v["price"] and l.get("price") and v["price"] != l["price"]:
             hist = list(l.get("price_history") or []) + [{"at": stamp, "price": v["price"]}]
             d = analytics.price_drop(l["price"], v["price"])
