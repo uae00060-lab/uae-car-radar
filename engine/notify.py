@@ -8,6 +8,7 @@ Secrets (GitHub → Settings → Secrets and variables → Actions):
 
 import json
 import os
+import time
 import smtplib
 import ssl
 import urllib.parse
@@ -42,20 +43,20 @@ def telegram(text, pdf=None, pdf_name="report.pdf"):
         return "غير مفعّل"
     base = f"https://api.telegram.org/bot{token}"
     try:
+        # The whole report as text first, so every offer is readable without opening a file.
+        for part in chunks(text, 3900):
+            _post(base + "/sendMessage", urllib.parse.urlencode(
+                {"chat_id": chat, "text": part, "disable_web_page_preview": "true"}).encode())
         if pdf and os.path.exists(pdf):
             boundary = uuid.uuid4().hex
             with open(pdf, "rb") as f:
                 blob = f.read()
-            # One document message, with its summary in the caption; details are in the PDF.
-            caption = text[:850] + ("\nالتفاصيل الكاملة داخل التقرير المرفق." if len(text) > 850 else "")
+            caption = "التقرير الكامل بصيغة PDF"
             body = (f"--{boundary}\r\nContent-Disposition: form-data; name=\"chat_id\"\r\n\r\n{chat}\r\n"
                     f"--{boundary}\r\nContent-Disposition: form-data; name=\"caption\"\r\n\r\n{caption}\r\n"
                     f"--{boundary}\r\nContent-Disposition: form-data; name=\"document\"; filename=\"{pdf_name}\"\r\n"
                     f"Content-Type: application/pdf\r\n\r\n").encode() + blob + f"\r\n--{boundary}--\r\n".encode()
             _post(base + "/sendDocument", body, {"Content-Type": f"multipart/form-data; boundary={boundary}"}, timeout=120)
-        else:
-            caption = text if len(text) <= 3900 else text[:3400] + "\nالتفاصيل في لوحة الرادار."
-            _post(base + "/sendMessage", urllib.parse.urlencode({"chat_id": chat, "text": caption, "disable_web_page_preview": "true"}).encode())
         return "أُرسل"
     except Exception as e:  # noqa: BLE001 - report, never crash the run over a notification
         return f"فشل ({type(e).__name__})"
@@ -99,20 +100,38 @@ def email(subject, text, pdf=None, pdf_name="report.pdf"):
         return f"فشل ({type(e).__name__})"
 
 
-def send_all(subject, full_text, short_text, pdf=None, pdf_name="report.pdf"):
-    """Telegram and email get the full text + PDF; WhatsApp gets the short text."""
-    # Exactly one configured destination per round: email can contain every offer inline.
-    result = {"telegram": "غير مختار", "whatsapp": "غير مختار", "email": "غير مختار"}
-    if env("SMTP_USER") and env("SMTP_PASSWORD"):
-        result["email"] = email(subject, full_text, pdf, pdf_name)
-    elif env("TELEGRAM_BOT_TOKEN") and env("TELEGRAM_CHAT_ID"):
-        result["telegram"] = telegram(full_text, pdf, pdf_name)
-    elif env("CALLMEBOT_PHONE") and env("CALLMEBOT_APIKEY"):
-        result["whatsapp"] = whatsapp(full_text)
-    else:
-        result = {k: "غير مفعّل" for k in result}
+SENT = "أُرسل"
+OFF = "غير مفعّل"
+
+
+def _with_retry(send):
+    """One retry after a short pause: a brief network hiccup should not cost a report."""
+    result = send()
+    if result not in (SENT, OFF):
+        time.sleep(8)
+        result = send()
     return result
 
+
+def send_all(subject, full_text, short_text, pdf=None, pdf_name="report.pdf"):
+    """Every configured channel gets the report: Telegram and email the full text and the PDF,
+    WhatsApp the short text with the dashboard link (CallMeBot accepts short messages only)."""
+    return {
+        "telegram": _with_retry(lambda: telegram(full_text, pdf, pdf_name)),
+        "whatsapp": _with_retry(lambda: whatsapp(short_text)),
+        "email": _with_retry(lambda: email(subject, full_text, pdf, pdf_name)),
+    }
+
+
+def delivery_problem(result):
+    """A sentence for the dashboard when the report did not reach every configured channel, else ''."""
+    names = {"telegram": "تيليجرام", "whatsapp": "واتساب", "email": "البريد"}
+    if not result:
+        return ""
+    if all(v == OFF for v in result.values()):
+        return "لم يُرسل التقرير: لا توجد قناة إشعار مفعّلة (أضف أسرار تيليجرام أو واتساب أو البريد في GitHub)"
+    failed = [f"{names[k]} {v}" for k, v in result.items() if v not in (SENT, OFF)]
+    return ("تعذّر إرسال التقرير عبر: " + "، ".join(failed)) if failed else ""
 
 
 if __name__ == "__main__":  # python notify.py test  -> sends a test message on every configured channel

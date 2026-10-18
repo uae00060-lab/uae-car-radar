@@ -118,6 +118,11 @@ section.tab { display: grid; gap: 14px; }
 .facts { display: grid; grid-template-columns: auto 1fr; gap: 3px 12px; margin: 0; font-size: .86rem; }
 .facts dt { color: var(--muted); } .facts dd { margin: 0; min-width: 0; overflow-wrap: anywhere; }
 .note { font-size: .8rem; color: var(--warn); }
+.card-lines { display: grid; gap: 4px; font-size: .86rem; min-width: 0; }
+.card-lines .where b { font-weight: 600; }
+.card-lines .meta { color: var(--muted); overflow-wrap: anywhere; }
+.card-lines .meta .btn { padding: 0 6px; }
+.dup { border-top: 1px dashed var(--line); padding-top: 6px; }
 .foot { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; border-top: 1px solid var(--line); padding-top: 9px; }
 .foot select { flex: 1 1 130px; }
 .cmp-toggle { display: inline-flex; gap: 6px; align-items: center; font-size: .82rem; color: var(--muted); cursor: pointer; }
@@ -316,6 +321,7 @@ nav.tabs .count { font-size:10px; padding:1px 6px; min-width:20px; margin:0; bac
 <main class="wrap" id="app" hidden>
   <div id="liveBox" class="banner" hidden></div>
   <div id="flashBox" class="banner" hidden></div>
+  <div id="problemBox" class="banner bad" hidden role="alert"></div>
 
   <div class="workspace-top"><span>لوحة الرصد <span class="workspace-sep">/</span> سوق السيارات المستعملة</span><span id="nextRun" class="small"></span></div>
   <!-- ads -->
@@ -572,7 +578,7 @@ nav.tabs .count { font-size:10px; padding:1px 6px; min-width:20px; margin:0; bac
       const body = await encrypt(new TextEncoder().encode(JSON.stringify(S.U)), S.pass);
       for (let attempt = 0; attempt < 3; attempt++) {
         try {
-          const r = await gh("/contents/data/user.enc", { method: "PUT", body: JSON.stringify({ message: "dashboard: " + (msg || "update"), content: btoa(body), sha: S.userSha || undefined, branch: "main" }) });
+          const r = await gh("/contents/data/user.enc", { method: "PUT", body: JSON.stringify({ message: "dashboard: sync", content: btoa(body), sha: S.userSha || undefined, branch: "main" }) });
           const j = await r.json(); S.userSha = j.content?.sha; return true;
         } catch (e) {
           if (e.status === 409 || e.status === 422) { flash("تغيّرت البيانات من جهاز آخر. أعد تحميل الصفحة قبل التعديل حتى لا تُستبدل التغييرات الأحدث.", "bad"); return false; }
@@ -627,14 +633,15 @@ nav.tabs .count { font-size:10px; padding:1px 6px; min-width:20px; margin:0; bac
     try { const t = store.get("tab"); if (t && $("tab-" + t)) showTab(t); } catch {}
     renderAll();
     resumeLiveRun();
-    heartbeat();
+    checkActions();
   }
 
   // ---------------------------------------------------------------- helpers over data
   const hasPrice = (l) => Number.isFinite(Number(l.price)) && Number(l.price) >= 1500 && Number(l.price) <= 5000000 && l.price_version === 3 && l.price_currency === "AED";
-  const L = () => Object.values(S.E.listings || {}).filter(hasPrice);
+  const L = () => Object.values(S.E.listings || {}).filter((l) => hasPrice(l) && !l.dup_of);
   const mark = (id) => S.U.marks[id] || {};
   const isMatch = (l) => l.state === "verified" && dateKind(l) === "posted";
+  const isNoDate = (l) => l.state === "approx";  // every condition matched; the platform publishes no posting date
   const adDate = (l) => l.date || l.posted || (l.first_seen || "").slice(0, 10);
   const dateKind = (l) => l.date_kind || (l.posted ? "posted" : "first_seen");
   function windowStart() { const n = uaeNow(); const y = n.getUTCFullYear(), m = n.getUTCMonth(), d = n.getUTCDate(); const last = new Date(Date.UTC(y, m, 0)).getUTCDate(); return ymd(new Date(Date.UTC(y, m - 1, Math.min(d, last)))); }
@@ -670,6 +677,7 @@ nav.tabs .count { font-size:10px; padding:1px 6px; min-width:20px; margin:0; bac
     if (l.run_id && l.run_id === lastRunId()) tags.push('<span class="pill good">جديد</span>');
     if (l.price_prev && l.price < l.price_prev) tags.push(`<span class="pill good">انخفض <span class="num">${pct((l.price - l.price_prev) / l.price_prev)}</span></span>`);
     if (l.state === "unverified") tags.push('<span class="pill bad">يحتاج تأكيدًا</span>');
+    if (isNoDate(l)) tags.push('<span class="pill">بلا تاريخ نشر</span>');
     if (availabilityOf(l) !== "available") tags.push(`<span class="pill">${availabilityLabel(l)}</span>`);
     const img = l.image ? `<img src="${esc(l.image)}" alt="" loading="lazy" referrerpolicy="no-referrer" onerror="this.replaceWith(Object.assign(document.createElement('div'),{className:'noimg',textContent:'${esc(PLATFORMS[l.platform] || "")}'}))">`
       : `<div class="noimg">${esc(PLATFORMS[l.platform] || "")}</div>`;
@@ -692,6 +700,24 @@ nav.tabs .count { font-size:10px; padding:1px 6px; min-width:20px; margin:0; bac
   function vinHtml(l) { return l.identity_version === 1 && l.vin ? `<span class="num identity-value" dir="ltr">${esc(l.vin)}</span><small class="identity-note">${l.vin_status === "checksum" ? "فحص الصيغة وخانة التحقق؛ منشور في الإعلان" : "صيغة 17 خانة؛ منشور في الإعلان"}</small>` : `<span class="small">${l.vin_status === "conflict" ? "بيانات متعارضة؛ يحتاج تأكيدًا" : "لم يتوفر رقم كامل موثوق من الإعلان"}</span>`; }
   function sellerPhone(l) { return l.identity_version === 1 ? phoneHtml(l.phone) : '<span class="small">بانتظار إعادة فحص بيانات البائع</span>'; }
   function stageSelect(l) { const st = mark(l.id).status || "new"; return `<select data-stage="${esc(l.id)}" aria-label="مرحلة المتابعة">${STAGES.map((s) => `<option value="${s.k}"${st === s.k ? " selected" : ""}>${s.t}</option>`).join("")}</select>`; }
+  const EMIRATE_FROM_TEXT = [["dubai", "دبي"], ["abu-dhabi", "أبوظبي"], ["abu dhabi", "أبوظبي"], ["abudhabi", "أبوظبي"], ["al ain", "أبوظبي"], ["sharjah", "الشارقة"],
+    ["ajman", "عجمان"], ["ras al khaimah", "رأس الخيمة"], ["fujairah", "الفجيرة"], ["umm al quwain", "أم القيوين"]];
+  function emirateOf(l) {
+    if (l.emirate) return l.emirate;
+    const t = `${l.location || ""} ${l.url || ""}`.toLowerCase();
+    return (EMIRATE_FROM_TEXT.find(([k]) => t.includes(k)) || [])[1] || "";
+  }
+  function cardLines(l) {
+    const em = emirateOf(l);
+    const bits = [l.mileage ? `<span class="num">${fmt(l.mileage)}</span> كم` : "", l.color ? esc(l.color) : "",
+      `${DATE_KIND[dateKind(l)]} <span class="num">${dmy(adDate(l))}</span>`].filter(Boolean);
+    const seller = [SELLER[l.seller_type], l.seller_name].filter(Boolean).join(" · ");
+    const phone = l.identity_version === 1 && l.phone ? phoneHtml(l.phone) : "";
+    return `<div class="card-lines"><div class="where">📍 <b>${esc(em || "الإمارة غير مذكورة")}</b></div>
+      <div class="meta">${bits.join(" · ")}</div>
+      ${seller || phone ? `<div class="meta">${esc(seller)}${seller && phone ? " · " : ""}${phone}</div>` : ""}
+      ${["high", "medium"].includes(l.urgency?.level) ? `<div class="meta">استعجال البائع: <span class="urg-${l.urgency.level}">${URG[l.urgency.level]}</span></div>` : ""}</div>`;
+  }
   function facts(l) {
     const seller = [SELLER[l.seller_type], l.seller_name].filter(Boolean).join(" · ");
     const rows = [["الممشى", l.mileage ? `<span class="num">${fmt(l.mileage)}</span> كم` : "—"], ["اللون", esc(l.color || "—")],
@@ -714,8 +740,8 @@ nav.tabs .count { font-size:10px; padding:1px 6px; min-width:20px; margin:0; bac
       if (q && !`${l.title} ${l.location} ${l.seller_name}`.toLowerCase().includes(q)) return false;
       if (rt === "deal" && !["excellent", "good"].includes(l.rating)) return false;
       if (rt === "hot" && !["high", "medium"].includes(l.urgency?.level)) return false;
-      if (st === "match") return isMatch(l) && inWindow(l);
-      if (st === "unverified") return ["unverified", "approx"].includes(l.state);
+      if (st === "match") return (isMatch(l) && inWindow(l)) || isNoDate(l);
+      if (st === "unverified") return l.state === "unverified";
       return true;
     });
   }
@@ -730,8 +756,8 @@ nav.tabs .count { font-size:10px; padding:1px 6px; min-width:20px; margin:0; bac
     const base = baseAds();
     const priced = L().filter(live);
     $("statPriced").textContent = fmt(priced.length);
-    $("statVerified").textContent = fmt(priced.filter((l) => isMatch(l) && inWindow(l)).length);
-    $("statPending").textContent = fmt(priced.filter((l) => ["unverified", "approx"].includes(l.state)).length);
+    $("statVerified").textContent = fmt(priced.filter((l) => (isMatch(l) && inWindow(l)) || isNoDate(l)).length);
+    $("statPending").textContent = fmt(priced.filter((l) => l.state === "unverified").length);
     $("statReports").textContent = fmt((S.E.reports || []).length);
     const last = (S.E.runs || []).find((r) => r.mode !== "watch");
     $("statLast").textContent = last ? "آخر بحث: " + when(last.at) : "لم يُنفّذ بحث بعد";
@@ -749,9 +775,9 @@ nav.tabs .count { font-size:10px; padding:1px 6px; min-width:20px; margin:0; bac
     $("adsGrid").innerHTML = rows.map((l) => `<article data-car-id="${esc(l.id)}" class="ad availability-${availabilityOf(l)}${S.pick.includes(l.id) ? " picked" : ""}">${photo(l)}<div class="bd">
       <div><a class="title" href="${esc(l.url)}" target="_blank" rel="noopener">${esc(carName(l))}</a><div class="var">${esc(l.title || "")}</div></div>
       <div class="priceline"><span class="price">${l.price ? fmt(l.price) + " <small>درهم</small>" : ""}</span>${l.price_prev && l.price_prev !== l.price ? `<span class="price-prev num">${fmt(l.price_prev)}</span>` : ""}${l.year ? `<span class="plate">${l.year}</span>` : ""}</div>
-      ${statusHtml(l)}${verdict(l)}${facts(l)}
-      ${l.state === "unverified" && l.note ? `<div class="note">${esc(l.note)}</div>` : ""}
-      ${(l.also_on || []).map((u) => `<div class="small">معروض أيضًا على <a href="${esc(u)}" target="_blank" rel="noopener">${esc(new URL(u).hostname.replace(/^www\./, ""))}</a></div>`).join("")}
+      ${statusHtml(l)}${verdict(l)}${cardLines(l)}
+      ${(l.state === "unverified" || isNoDate(l)) && l.note ? `<div class="note">${esc(l.note)}</div>` : ""}
+      ${(l.duplicates || []).map((d) => `<div class="small dup">نفس السيارة على ${esc(PLATFORMS[d.platform] || d.platform)} بسعر <span class="num">${fmt(d.price)}</span> درهم · <a href="${esc(d.url)}" target="_blank" rel="noopener">فتح</a></div>`).join("")}
       <div class="foot">${stageSelect(l)}<label class="cmp-toggle"><input type="checkbox" data-pick="${esc(l.id)}"${S.pick.includes(l.id) ? " checked" : ""}> قارن</label><a class="btn sm" href="${esc(l.url)}" target="_blank" rel="noopener">فتح الإعلان ↗</a></div>
     </div></article>`).join("");
   }
@@ -792,7 +818,7 @@ nav.tabs .count { font-size:10px; padding:1px 6px; min-width:20px; margin:0; bac
         ${line("التاريخ", (l) => `${DATE_KIND[dateKind(l)]} <span class="num">${dmy(adDate(l))}</span>`)}
         ${line("استعجال البائع", (l) => urgencyHtml(l))}
         ${line("تغيّر السعر", (l) => (l.price_history || []).length > 1 ? (l.price_history || []).map((h) => fmt(h.price)).join(" ← ") : "لم يتغيّر")}
-        ${line("درجة التأكد", (l) => isMatch(l) ? '<span class="pill good">مطابقة</span>' : `<span class="pill warn">تحتاج تأكيدًا</span><div class="small">${esc(l.note || "")}</div>`)}
+        ${line("درجة التأكد", (l) => isMatch(l) ? '<span class="pill good">مطابقة</span>' : isNoDate(l) ? '<span class="pill">مطابقة · بلا تاريخ نشر</span>' : `<span class="pill warn">تحتاج تأكيدًا</span><div class="small">${esc(l.note || "")}</div>`)}
         ${line("رقم الشاصي VIN", (l) => vinHtml(l))}
         ${line("هاتف البائع", (l) => sellerPhone(l))}
         ${line("", (l) => `<a class="btn sm" href="${esc(l.url)}" target="_blank" rel="noopener">فتح الإعلان ↗</a> <button type="button" class="sm ghost" data-unpick="${esc(l.id)}">إزالة</button>`)}
@@ -852,7 +878,7 @@ nav.tabs .count { font-size:10px; padding:1px 6px; min-width:20px; margin:0; bac
         <div class="small">${esc([r.make, r.model, r.keywords].filter(Boolean).join(" "))} ${r.year_from || r.year_to ? `<span class="plate">${r.year_from || "…"}–${r.year_to || "…"}</span>` : ""}</div></div>
         <dl class="spec"><div><dt>أقصى سعر</dt><dd>${r.price_max ? fmt(r.price_max) + " درهم" : "بلا حد"}</dd></div><div><dt>أقصى ممشى</dt><dd>${r.mileage_max ? fmt(r.mileage_max) + " كم" : "بلا حد"}</dd></div>
         <div><dt>اللون</dt><dd>${esc(r.color || "أي لون")}</dd></div><div><dt>الإمارة</dt><dd>${esc(r.emirate || "كل الإمارات")}</dd></div>
-        <div><dt>مطابقة</dt><dd>${mine.filter((l) => isMatch(l) && inWindow(l)).length}</dd></div><div><dt>تحتاج تأكيدًا</dt><dd>${mine.filter((l) => l.state === "unverified").length}</dd></div></dl>
+        <div><dt>مطابقة</dt><dd>${mine.filter((l) => (isMatch(l) && inWindow(l)) || isNoDate(l)).length}</dd></div><div><dt>تحتاج تأكيدًا</dt><dd>${mine.filter((l) => l.state === "unverified").length}</dd></div></dl>
         <div class="mk">${marketTable(r.id)}</div>
         <div class="actions"><button type="button" class="primary sm" data-runreq="${esc(r.id)}">ابحث الآن</button><button type="button" class="sm" data-edit="${esc(r.id)}">تعديل</button><button type="button" class="sm" data-sched="${esc(r.id)}">${r.scheduled ? "إلغاء الجدولة" : "جدولة يومية"}</button><button type="button" class="sm" data-toggle="${esc(r.id)}">${on ? "إيقاف" : "تشغيل"}</button><button type="button" class="sm ghost" data-del="${esc(r.id)}">حذف</button></div></article>`;
     }).join("");
@@ -975,7 +1001,7 @@ nav.tabs .count { font-size:10px; padding:1px 6px; min-width:20px; margin:0; bac
   $("readAlerts").addEventListener("click", async () => { S.U.alerts_seen_at = (S.E.alerts || [])[0]?.at || new Date().toISOString(); renderUpdates(); await saveUser("read updates"); });
   function renderAll() {
     $("nextRun").textContent = nextRunText();
-    renderReqs(); renderAds(); renderDeals(); renderUpdates(); renderReports(); renderHistory(); renderSettings(); renderCmpBar();
+    renderReqs(); renderAds(); renderDeals(); renderUpdates(); renderReports(); renderHistory(); renderSettings(); renderCmpBar(); renderProblems();
     if (S.tab === "compare") renderCompare();
     $("searchNow").disabled = !S.token || !!S.live;
     if (!S.live) $("searchNow").innerHTML = '<span aria-hidden="true">⌕</span> ابحث الآن';
@@ -1067,7 +1093,15 @@ nav.tabs .count { font-size:10px; padding:1px 6px; min-width:20px; margin:0; bac
         const secs = Math.round((Date.now() - Date.parse(run.created_at)) / 1000);
         let progress = null;
         if (S.live.run_id) {
-          try { const response = await gh("/contents/data/search-progress.json?ref=radar-presence"); if (response.ok) { const file = await response.json(); const data = JSON.parse(new TextDecoder().decode(b64.dec((file.content || "").replace(/\n/g,"")))); if (data.run_id === S.live.run_id) progress=data; } } catch {}
+          try {
+            const response = await gh("/contents/data/search-progress.json?ref=radar-live");
+            if (response.ok) {
+              const file = await response.json();
+              const sealed = new TextDecoder().decode(b64.dec((file.content || "").replace(/\n/g, "")));
+              const data = JSON.parse(new TextDecoder().decode(await decrypt(sealed, S.pass)));
+              if (data.run_id === S.live.run_id) progress = data;
+            }
+          } catch {}
         }
         const active = steps.find(s=>s.status === "in_progress");
         const reached = name => steps.some(s=>s.name === name && ["in_progress","completed"].includes(s.status));
@@ -1082,6 +1116,7 @@ nav.tabs .count { font-size:10px; padding:1px 6px; min-width:20px; margin:0; bac
         if (run.status === "completed") {
           const ok = run.conclusion === "success", label = S.live.label;
           S.live = null; store.set("live", null);
+          checkActions();
           if (ok) { await loadAll(); renderAll(); box.className = "banner good"; const latest = (S.E.runs || [])[0];
             box.className = latest?.warning ? "banner warn" : "banner good";
             box.className="search-progress finished"; box.innerHTML=`<div class="progress-orbit" style="--p:100" role="progressbar" aria-label="اكتمل البحث" aria-valuemin="0" aria-valuemax="100" aria-valuenow="100"><div><b class="num">100<small>%</small></b><span>اكتمل</span></div></div><div class="progress-copy"><span class="progress-kicker">✓ اكتملت المهمة</span><h3>النتائج محدّثة في لوحتك</h3><p>${esc(latest?.warning || "يمكنك تصفّح النتائج ومتابعة السيارات التي تهمك.")}</p><small>البحث اليدوي يحدّث النتائج دون إنشاء تقرير.</small></div>`; if (label === "فحص المنصات") showDiag(); }
@@ -1094,36 +1129,52 @@ nav.tabs .count { font-size:10px; padding:1px 6px; min-width:20px; margin:0; bac
   }
   async function showDiag() {
     try {
-      const f = await readFile("data/diagnose.json"); if (!f.text) return;
-      const d = JSON.parse(f.text);
-      $("diagBox").innerHTML = `<div class="small">فحص ${esc(when(d.at))} على «${esc(d.probe)}»</div><dl class="kv">${Object.entries(d.platforms).filter(([k]) => PLATFORMS[k]).map(([k, v]) => {
+      const d = S.E.diagnose; if (!d) return;
+      $("diagBox").innerHTML = `<div class="small">فحص ${esc(when(d.at))}</div><dl class="kv">${Object.entries(d.platforms).filter(([k]) => PLATFORMS[k]).map(([k, v]) => {
                 const st = v.ok ? `صفحة النتائج تعمل · ${v.cards} إعلان` : v.via_search ? `محجوبة؛ وُجد ${v.cards} عبر البحث البديل` : `لا يمكن الوصول (${(v.status || []).join("، ")})`;
         return `<dt>${PLATFORMS[k]}</dt><dd>${st}</dd>`; }).join("")}</dl>`;
       showTab("settings");
     } catch {}
   }
 
-  let presenceBusy = false;
-  async function heartbeat() {
-    if (!S.E || !S.token || document.visibilityState !== "visible" || presenceBusy) return;
-    presenceBusy = true;
+  // ---------------------------------------------------------------- problems
+  // Every failure stays visible until a later round succeeds: the round's own record (engine
+  // errors, blocked platforms, reports not delivered), or a GitHub task that failed before the
+  // engine could record anything.
+  S.actionsProblem = null;
+  async function checkActions() {
+    if (!S.token) return;
     try {
-      const path = "/contents/data/presence.json";
-      const branch = "radar-presence";
-      let ref = await gh("/git/ref/heads/" + branch);
-      if (!ref.ok) {
-        const main = await (await gh("/git/ref/heads/main")).json();
-        try { await gh("/git/refs", { method: "POST", body: JSON.stringify({ ref: "refs/heads/" + branch, sha: main.object.sha }) }); }
-        catch (e) { if (e.status !== 422) throw e; }
+      const r = await (await gh(`/actions/workflows/radar.yml/runs?status=completed&per_page=5&t=${Date.now()}`)).json();
+      const latest = (r.workflow_runs || [])[0];
+      S.actionsProblem = null;
+      if (latest && !["success", "skipped", "cancelled"].includes(latest.conclusion)) {
+        const jobs = await (await gh(`/actions/runs/${latest.id}/jobs`)).json();
+        const step = (jobs.jobs?.[0]?.steps || []).find((x) => x.conclusion === "failure");
+        S.actionsProblem = { at: latest.updated_at, url: latest.html_url,
+          text: `فشلت مهمة على GitHub (${latest.event === "schedule" ? "جولة مجدولة" : "تشغيل يدوي"})` +
+                (step ? ` في خطوة «${STEP_AR[step.name] || step.name}»` : "") };
       }
-      const r = await gh(path + "?ref=" + branch); const old = r.ok ? await r.json() : {};
-      const content = btoa(JSON.stringify({ at: new Date().toISOString() }));
-      await gh(path, { method: "PUT", body: JSON.stringify({ message: "dashboard: presence [skip ci]", content, sha: old.sha, branch }) });
-    } catch { /* A failed lease cannot suppress a scheduled round. */ }
-    finally { presenceBusy = false; }
+    } catch { /* the panel still shows problems recorded by the engine */ }
+    renderProblems();
   }
-  document.addEventListener("visibilitychange", () => { if (document.visibilityState === "visible") heartbeat(); });
-  setInterval(heartbeat, 120000);
+  function renderProblems() {
+    const box = $("problemBox"); if (!box || !S.E) return;
+    const items = [];
+    const lastRound = (S.E.runs || []).find((r) => r.mode !== "watch");
+    if (lastRound && (lastRound.status === "failed" || lastRound.warning)) {
+      items.push(`<li><b>${lastRound.status === "failed" ? "لم تكتمل" : "تنبيه"} — ${{ scheduled: "جولة مجدولة", manual: "بحث يدوي" }[lastRound.mode] || "جولة"} ${esc(when(lastRound.at))}:</b> ${esc(lastRound.warning || "سبب غير معروف")}</li>`);
+    }
+    const p = S.actionsProblem;
+    if (p && (!lastRound || Date.parse(p.at) > Date.parse(lastRound.at))) {
+      items.push(`<li><b>${esc(p.text)}</b> — ${esc(when(new Date(Date.parse(p.at) + 4 * 3600e3).toISOString()))} <a href="${esc(p.url)}" target="_blank" rel="noopener">التفاصيل ↗</a></li>`);
+    }
+    box.hidden = !items.length;
+    box.className = "banner " + (items.some((x) => x.includes("لم تكتمل") || x.includes("فشلت")) ? "bad" : "warn");
+    box.innerHTML = items.length ? `<ul style="margin:0;padding-inline-start:18px;display:grid;gap:4px">${items.join("")}</ul>` : "";
+  }
+  setInterval(() => { if (S.E) checkActions(); }, 300000);
+
   // ---------------------------------------------------------------- boot
   (async () => {
     let credentials;

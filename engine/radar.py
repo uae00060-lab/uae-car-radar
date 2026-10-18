@@ -220,12 +220,16 @@ def read_ad(item, today, debug=None):
     card = item if item.get("src") == "json" else {}
     price = to_num(g("price"))
     price = int(price) if price and 1500 <= price <= 5_000_000 else None
+    card_price = to_num(card.get("price"))
+    if not price and card_price and 5000 <= card_price <= 5_000_000:
+        # Some platforms (OneClickDrive) render the asking price only in their results data.
+        # 5,000 AED floor keeps monthly-instalment figures out.
+        price = int(card_price)
+        src["price"] = "card:json"
     title_year = re.search(r"\b(19[89]\d|20[0-3]\d)\b", str(g("title") or ""))
     year = next((int(x) for x in (to_num(g("year")), float(title_year[1]) if title_year else None, to_num(card.get("year")))
                  if x and 1980 <= x <= today.year + 1), None)
     km = next((int(x) for x in (to_num(g("km")), to_num(card.get("km"))) if x is not None and 0 <= x <= 1_500_000), None)
-    if price and not to_num(g("price")):
-        src["price"] = "card"
     image = g("image")
     image = image if isinstance(image, str) and image.startswith("http") else None
     st = str(g("seller_type") or "").lower()
@@ -302,10 +306,10 @@ def state_of(checks, plat, known):
         return "excluded", "لا يطابق: " + "، ".join(FIELD_AR[f] for f in bad)
     if unknown:
         if unknown == ["posted"] and plat in NO_DATE_PLATFORMS:
-            return "unverified", "كل شروطك مطابقة؛ المنصة لا تعرض تاريخ النشر"
+            return "approx", "كل شروطك مطابقة؛ المنصة لا تعرض تاريخ النشر"
         return "unverified", "غير ظاهر في الإعلان: " + "، ".join(FIELD_AR[f] for f in unknown)
     if checks.get("posted") == "approx":
-        return "unverified", "تاريخ النشر غير مؤكد؛ التاريخ المتاح تحديث أو صور أو فحص"
+        return "approx", "كل شروطك مطابقة؛ التاريخ المعروض تحديث أو صور أو فحص وليس تاريخ النشر"
     return "verified", ""
 
 
@@ -321,6 +325,49 @@ def load_all(key):
 
 def marks_of(user):
     return user.get("marks") or {}
+
+
+DUP_KM_MIN = 3000      # identical mileage below this is too common to identify a car
+DUP_PRICE_SPREAD = 0.15  # a dealer may price the same car a little differently per platform
+
+
+def mark_duplicates(listings):
+    """Group the same car listed on different platforms; the cheapest copy is the one shown.
+
+    Same car = same VIN, or same model year and exactly the same mileage with prices within 15%.
+    Other copies get dup_of (hidden from results and reports) and the cheapest lists them in
+    duplicates, so the dashboard can show "also on <platform> for <price>".
+    """
+    for l in listings.values():
+        l.pop("dup_of", None)
+        l.pop("duplicates", None)
+    live = [l for l in listings.values() if l.get("price") and l.get("state") not in ("sold", "excluded")]
+    groups, seen = [], set()
+    for a in live:
+        if a["id"] in seen:
+            continue
+        group = [a]
+        for b in live:
+            if b["id"] in seen or b is a or b["platform"] in {x["platform"] for x in group}:
+                continue
+            same_vin = a.get("vin") and a.get("vin") == b.get("vin")
+            same_car = (a.get("year") and a.get("year") == b.get("year") and (a.get("mileage") or 0) >= DUP_KM_MIN
+                        and a.get("mileage") == b.get("mileage")
+                        and abs(a["price"] - b["price"]) <= DUP_PRICE_SPREAD * min(a["price"], b["price"]))
+            shared_request = set(a.get("request_ids", [a.get("request_id")])) & set(b.get("request_ids", [b.get("request_id")]))
+            if (same_vin or same_car) and shared_request:
+                group.append(b)
+        if len(group) > 1:
+            seen.update(x["id"] for x in group)
+            groups.append(group)
+    for group in groups:
+        best = min(group, key=lambda x: (x["price"], x.get("state") != "verified"))
+        best["duplicates"] = [{"id": x["id"], "platform": x["platform"], "url": x["url"], "price": x["price"]}
+                              for x in sorted(group, key=lambda x: x["price"]) if x is not best]
+        for x in group:
+            if x is not best:
+                x["dup_of"] = best["id"]
+    return len(groups)
 
 
 def reassess_saved(listings, reqs, start, today):
@@ -339,19 +386,6 @@ def reassess_saved(listings, reqs, start, today):
             listing.setdefault("by_request", {})[req["id"]] = {"state": state, "note": note, "checks": checks}
 
 
-def load_presence():
-    try:
-        path = os.path.join(WORK, "presence.json")
-        if not os.path.exists(path):
-            path = os.path.join(ROOT, "data", "presence.json")
-        with open(path) as f:
-            at = dt.datetime.fromisoformat(json.load(f)["at"])
-        age = (now_uae() - at).total_seconds()
-        return 0 <= age < 180
-    except (OSError, ValueError, KeyError, TypeError):
-        return False
-
-
 def run_round(a, key):
     t0 = time.time()
     now = now_uae()
@@ -365,11 +399,6 @@ def run_round(a, key):
         reqs = [r for r in reqs if r.get("id") == a.request]
     if a.mode == "scheduled":
         reqs = [r for r in reqs if r.get("scheduled")]
-    if a.mode == "scheduled":
-        presence = load_presence()
-        if presence:
-            log("scheduled_skipped", why="dashboard active")
-            return
     invalid = [validate_request(r) for r in reqs if validate_request(r)]
     reqs = [r for r in reqs if not validate_request(r)]
     progress=Progress(run_id)
@@ -383,7 +412,7 @@ def run_round(a, key):
 
     # 1) find ads
     plan = []  # (request, card)
-    funnel = {}  # counts only, published as data/last_run.json to explain each round
+    funnel = {}  # counts per platform, saved with the run (encrypted) to explain each round
     for req in reqs:
         plats = [p for p in (req.get("platforms") or list(PLATFORMS)) if p in PLATFORMS]
         cards, samples = discover(req, plats, diag, progress)
@@ -554,6 +583,8 @@ def run_round(a, key):
             best = min(assessments, key=lambda x: {"verified": 0, "unverified": 1, "approx": 1, "excluded": 2}.get(x["state"], 3))
             listing.update(best)
 
+    mark_duplicates(listings)
+
     # 4) analytics for every live listing of the round's requests
     market_info = {}
     for req in reqs:
@@ -571,7 +602,7 @@ def run_round(a, key):
 
     progress.update("save", len(order), len(order), force=True)
     # 5) report
-    live = lambda l: bool(l.get("price")) and l.get("price_version") == 3 and l.get("price_currency") == "AED" and l.get("availability", "available") == "available" and l.get("state") in ("verified", "approx", "unverified") and (marks.get(l["id"]) or {}).get("status") not in ("dismissed", "purchased")
+    live = lambda l: not l.get("dup_of") and bool(l.get("price")) and l.get("price_version") == 3 and l.get("price_currency") == "AED" and l.get("availability", "available") == "available" and l.get("state") in ("verified", "approx", "unverified") and (marks.get(l["id"]) or {}).get("status") not in ("dismissed", "purchased")
     full = a.mode == "manual"
     groups, cur_ver, cur_cand = [], 0, 0
     for req in reqs:
@@ -588,8 +619,8 @@ def run_round(a, key):
         if not (full or first):  # later scheduled rounds: what is new or changed price
             fresh = set(new_ids) | {d["id"] for d in drops} | {e["listing_id"] for e in eng.get("alerts",[]) if e["at"]==stamp}
             rows = [l for l in rows if l["id"] in fresh]
-        ver = [l for l in rows if l["state"] == "verified"]
-        cand = [l for l in rows if l["state"] in ("unverified", "approx")]
+        ver = [l for l in rows if l["state"] in ("verified", "approx")]
+        cand = [l for l in rows if l["state"] == "unverified"]
         cur_ver += len(ver)
         cur_cand += len(cand)
         groups.append((req, ver, cand))
@@ -598,7 +629,7 @@ def run_round(a, key):
     blocked = [PLATFORMS[p]["name"] for p, d in diag.items() if d["pages"] and not d["ok"] and not d["via_search"]]
     run = {"id": run_id, "at": stamp, "mode": a.mode, "status": "done", "requests": [r["id"] for r in reqs],
            "request_names": [r.get("name") for r in reqs], "found": sum(d["cards"] for d in diag.values()),
-           "opened": len(order), "new": len([i for i in new_ids if listings[i]["state"] == "verified"]),
+           "opened": len(order), "new": len([i for i in new_ids if listings[i]["state"] in ("verified", "approx")]),
            "new_unverified": len([i for i in new_ids if listings[i]["state"] == "unverified"]),
            "price_drops": len(drops), "sold": len(sold), "current_offers": cur_ver, "candidates": cur_cand,
            "deferred": deferred, "market": market_info, "missing_price": sum(d.get("missing_price", 0) for d in funnel.values()),
@@ -618,6 +649,8 @@ def run_round(a, key):
                                             os.path.join(WORK, f"{run_id}.html"), pdf_plain)
     if wants_pdf and not have_pdf:
         run["warning"] = (run.get("warning", "") + "؛ تعذّر إنشاء PDF").strip("؛ ")
+    for problem in quality_warnings():
+        run["warning"] = (run.get("warning", "") + "؛ " + problem).strip("؛ ")
     morning = now.hour < 15
     full_text = report.summary_text(run, groups, drops, now, start, SITE, short=False)
     short_text = report.summary_text(run, groups, drops, now, start, SITE, short=True)
@@ -641,15 +674,15 @@ def run_round(a, key):
         subject = f"رادار السيارات — {'ملخص الصباح' if morning else 'تقرير المساء'} {now:%d/%m/%Y}"
         run["notify"] = notify.send_all(subject, full_text, short_text, pdf_plain if have_pdf else None,
                                         f"car-report-{now:%Y-%m-%d-%H%M}.pdf")
+        problem = notify.delivery_problem(run["notify"])
+        if problem:
+            run["warning"] = (run.get("warning", "") + "؛ " + problem).strip("؛ ")
     run["seconds"] = round(time.time() - t0)
+    run["funnel"] = {p: {**{k: v for k, v in diag.get(p, {}).items() if k != "status"}, "http": diag.get(p, {}).get("status"),
+                         **{k: v for k, v in opened_stats.get(p, {}).items() if k != "fields"}, **funnel.get(p, {})}
+                     for p in set(diag) | set(opened_stats) | set(funnel)}
     eng["runs"].insert(0, run)
     finish(eng, key)
-    with open(os.path.join(ROOT, "data", "last_run.json"), "w") as f:  # public: numbers only, no criteria or ads
-        json.dump({"at": stamp, "mode": a.mode, "requests": len(reqs), "seconds": run["seconds"], "opened": run["opened"],
-                   "saved_new": len(new_ids), "drops": len(drops), "sold": len(sold), "listings_total": len(listings),
-                   "platforms": {p: {**{k: v for k, v in diag.get(p, {}).items() if k != "status"}, "http": diag.get(p, {}).get("status"),
-                                     **{k: v for k, v in opened_stats.get(p, {}).items() if k != "fields"}, **funnel.get(p, {})}
-                                 for p in set(diag) | set(opened_stats) | set(funnel)}}, f, ensure_ascii=False, indent=1)
     log("round", id=run_id, mode=a.mode, requests=len(reqs), found=run["found"], opened=run["opened"], new=run["new"],
         new_unverified=run["new_unverified"], drops=len(drops), sold=len(sold), seconds=run["seconds"],
         platforms={p: {k: v for k, v in d.items() if k != "fields"} for p, d in run["platforms"].items()},
@@ -704,6 +737,16 @@ def watch(a, key):
     finish(eng,key);log('watch',reviewed=len(targets),changes=len(events),failed=failed,notify=sent)
 
 
+def quality_warnings():
+    """Checks that ran before the search (see the workflow) and failed. They never stop a round."""
+    out = []
+    if os.environ.get("RADAR_TESTS") == "failure":
+        out.append("فشلت اختبارات الجودة قبل هذه الجولة؛ راجع النتائج بحذر")
+    if os.environ.get("RADAR_PDF_CHECK") == "failure":
+        out.append("فشل فحص مولّد التقارير قبل هذه الجولة")
+    return out
+
+
 def finish(eng, key):
     eng["runs"] = eng["runs"][:KEEP_RUNS]
     keep = eng["reports"][:KEEP_REPORTS]
@@ -718,8 +761,8 @@ def finish(eng, key):
     store.write_json(ENGINE_FILE, eng, key)
 
 
-def diagnose(a):
-    """Public, data-free check of what each platform returns from GitHub's servers."""
+def diagnose(a, key):
+    """What each platform returns from GitHub's servers; saved inside the encrypted data."""
     req = {"id": "probe", "make": a.make, "model": a.model, "year_from": a.year_from, "year_to": a.year_to}
     today = now_uae().date()
     diag = {}
@@ -750,9 +793,27 @@ def diagnose(a):
                              "head": re.sub(r"\s+", " ", extract.text_of(bp.html))[:300]}
     out = {p: {k: v for k, v in d.items() if k in ("pages", "ok", "blocked", "cards", "via_search", "status", "cards_with_price")}
            for p, d in out.items() if p in PLATFORMS}
-    log("diagnose", platforms=out)
-    with open(os.path.join(ROOT, "data", "diagnose.json"), "w") as f:
-        json.dump({"at": now_uae().isoformat(timespec="seconds"), "probe": "platform availability", "platforms": out}, f, ensure_ascii=False, indent=1)
+    log("diagnose", platforms=len(out))
+    user, eng = load_all(key)
+    eng["diagnose"] = {"at": now_uae().isoformat(timespec="seconds"), "platforms": out}
+    finish(eng, key)
+
+
+def record_crash(a, key, error):
+    """Save a failed run with the error type and place, without ad or personal data."""
+    import traceback
+    frame = traceback.extract_tb(error.__traceback__)[-1] if error.__traceback__ else None
+    where = f"{os.path.basename(frame.filename)}:{frame.lineno}" if frame else "?"
+    try:
+        _, eng = load_all(key)
+        now = now_uae()
+        eng["runs"].insert(0, {"id": "e" + now.strftime("%Y%m%d%H%M"), "at": now.isoformat(timespec="seconds"),
+                               "mode": getattr(a, "mode", a.cmd) if a.cmd == "run" else a.cmd, "status": "failed",
+                               "warning": f"توقفت الجولة بسبب خطأ برمجي ({type(error).__name__} في {where}). "
+                                          "الجولات التالية ستعمل كالمعتاد."})
+        finish(eng, key)
+    except Exception:  # noqa: BLE001 - nothing more can be saved
+        pass
 
 
 def main():
@@ -767,17 +828,19 @@ def main():
     ap.add_argument("--year-from", type=int, default=None)
     ap.add_argument("--year-to", type=int, default=None)
     a = ap.parse_args()
-    if a.cmd == "diagnose":
-        return diagnose(a)
     key = os.environ.get("RADAR_KEY", "")
     if not key:
         log("error", why="RADAR_KEY secret is missing")
         sys.exit(2)
     try:
-        (watch if a.cmd == "watch" else run_round)(a, key)
+        {"watch": watch, "diagnose": diagnose}.get(a.cmd, run_round)(a, key)
     except store.BadPassphrase:
         log("error", why="RADAR_KEY does not match the dashboard password")
         sys.exit(3)
+    except Exception as e:  # noqa: BLE001 - record any crash so the dashboard can show it
+        log("error", why=type(e).__name__)
+        record_crash(a, key, e)
+        sys.exit(1)
 
 
 if __name__ == "__main__":

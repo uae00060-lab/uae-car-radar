@@ -82,24 +82,23 @@ jobs:
             sudo apt-get install -y --no-install-recommends fonts-noto-core >/dev/null 2>&1 || true
           fi
 
+      # Quality checks never stop a round: a failure is recorded in the round and shown in the dashboard.
       - name: Offline regression tests
+        id: tests
+        continue-on-error: true
         run: python -m unittest discover engine/tests
 
       - name: Verify PDF renderer
+        id: pdfcheck
+        continue-on-error: true
         if: startsWith(steps.task.outputs.args, 'run --mode scheduled')
         run: python engine/tests/pdf_smoke.py
-
-      - name: Read dashboard activity
-        if: github.event_name == 'schedule'
-        run: |
-          mkdir -p .work
-          if git fetch --quiet --depth=1 origin radar-presence; then
-            git show FETCH_HEAD:data/presence.json > .work/presence.json || rm -f .work/presence.json
-          fi
 
       - name: Search the platforms
         env:
           RADAR_PROGRESS_TOKEN: ${{ github.token }}
+          RADAR_TESTS: ${{ steps.tests.outcome }}
+          RADAR_PDF_CHECK: ${{ steps.pdfcheck.outcome }}
         if: steps.task.outputs.args != 'notify-test'
         run: python engine/radar.py ${{ steps.task.outputs.args }}
 
@@ -107,14 +106,15 @@ jobs:
         if: steps.task.outputs.args == 'notify-test'
         run: python engine/notify.py
 
+      # Runs even after an engine error, so the recorded failure reaches the dashboard.
       - name: Save results
-        if: steps.task.outputs.args != 'notify-test'
+        if: ${{ !cancelled() && steps.task.outputs.args != 'notify-test' }}
         run: |
           git config user.name "car-radar"
           git config user.email "car-radar@users.noreply.github.com"
           git add data reports
           if git diff --cached --quiet; then echo "nothing to save"; exit 0; fi
-          git commit -q -m "radar: ${{ steps.task.outputs.args }}"
+          git commit -q -m "radar: update data"
           for i in 1 2 3 4; do
             git pull -q --rebase origin "${GITHUB_REF_NAME}" && git push -q origin "HEAD:${GITHUB_REF_NAME}" && exit 0
             sleep $((i * 3))

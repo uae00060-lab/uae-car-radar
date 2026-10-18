@@ -162,13 +162,15 @@ class Engine(unittest.TestCase):
         self.assertEqual(eng["runs"][0]["status"], "failed")
         self.assertIn("الماركة", eng["runs"][0]["warning"])
 
-    def test_presence_suppresses_scheduled_only(self):
+    def test_scheduled_round_always_runs_and_notifies(self):
+        # An open dashboard must never cancel a scheduled round or its report.
         with open(os.path.join(self.tmp, "data", "presence.json"), "w") as f:
             json.dump({"at": now_uae().isoformat()}, f)
+        sent = []
+        radar.notify.send_all = lambda *a, **k: sent.append(a) or {"telegram": radar.notify.SENT}
         radar.run_round(self.args("scheduled"), KEY)
-        self.assertFalse(os.path.exists(radar.ENGINE_FILE))
-        radar.run_round(self.args(), KEY)
         self.assertTrue(os.path.exists(radar.ENGINE_FILE))
+        self.assertEqual(len(sent), 1)
 
     def test_one_ad_matches_two_requests(self):
         user = store.read_json(radar.USER_FILE, KEY, {})
@@ -212,8 +214,7 @@ class Engine(unittest.TestCase):
         self.assertEqual(store.read_json(radar.ENGINE_FILE,KEY,{})["reports"],[])
 
     def test_scheduled_report_is_created_only_when_absent(self):
-        with patch.object(radar,"load_presence",return_value=False):
-            radar.run_round(self.args("scheduled"),KEY)
+        radar.run_round(self.args("scheduled"),KEY)
         eng=store.read_json(radar.ENGINE_FILE,KEY,{})
         self.assertEqual(len(eng["reports"]),1)
         self.assertEqual(eng["reports"][0]["mode"],"scheduled")
@@ -233,6 +234,60 @@ class Engine(unittest.TestCase):
         self.assertEqual(updated["runs"][0]["opened"],len(eng["listings"]))
         self.assertTrue(updated["last_weekly_review"])
         self.assertEqual(len(updated["reports"]),0)
+
+
+class Additions(unittest.TestCase):
+    def ad(self, i, plat, price, km=88000, year=2021, vin=None):
+        return {"id": f"{plat}-{i}", "platform": plat, "url": f"https://x/{plat}/{i}", "price": price, "year": year,
+                "mileage": km, "vin": vin, "state": "verified", "request_ids": ["r1"]}
+
+    def test_same_car_on_two_platforms_shows_cheapest(self):
+        L = {a["id"]: a for a in (self.ad(1, "dubicars", 29500), self.ad(2, "yallamotor", 28900),
+                                  self.ad(3, "carswitch", 29500, km=91000))}
+        self.assertEqual(radar.mark_duplicates(L), 1)
+        self.assertEqual(L["dubicars-1"]["dup_of"], "yallamotor-2")
+        self.assertEqual([d["price"] for d in L["yallamotor-2"]["duplicates"]], [29500])
+        self.assertNotIn("dup_of", L["carswitch-3"])          # different mileage: a different car
+        # Same mileage but very different price: not merged.
+        L2 = {a["id"]: a for a in (self.ad(1, "dubicars", 29500), self.ad(2, "yallamotor", 21000))}
+        self.assertEqual(radar.mark_duplicates(L2), 0)
+        # Same VIN always merges; a later round recomputes from scratch.
+        L3 = {a["id"]: a for a in (self.ad(1, "dubicars", 30000, km=1, vin="JTDBT923X71000000"),
+                                   self.ad(2, "autoae", 31000, km=2, vin="JTDBT923X71000000"))}
+        self.assertEqual(radar.mark_duplicates(L3), 1)
+        L3["dubicars-1"]["vin"] = None
+        self.assertEqual(radar.mark_duplicates(L3), 0)
+        self.assertNotIn("dup_of", L3["autoae-2"])
+
+    def test_price_from_structured_results_when_ad_page_has_none(self):
+        page = fetch.Page("https://www.oneclickdrive.com/details/index/search-usedcar-dubai/Toyota/Yaris/?id=855142")
+        page.status, page.html = 200, "<html><title>Toyota Yaris 2021 in Dubai</title><body>Model year: 2021</body></html>"
+        item = {"url": page.url, "ad_id": "855142", "platform": "oneclickdrive", "src": "json", "price": 31000, "year": 2021}
+        with patch.object(fetch, "get", return_value=page):
+            status, v = radar.read_ad(item, TODAY)
+            self.assertEqual((status, v["price"], v["_src"]["price"]), ("ok", 31000, "card:json"))
+            # An instalment-sized figure is never taken as the asking price.
+            status, v = radar.read_ad({**item, "price": 1999}, TODAY)
+            self.assertIsNone(v["price"])
+
+    def test_crash_and_failed_checks_are_recorded_not_fatal(self):
+        tmp = tempfile.mkdtemp()
+        try:
+            radar.ROOT, radar.ENGINE_FILE = tmp, os.path.join(tmp, "data", "engine.enc")
+            radar.USER_FILE = os.path.join(tmp, "data", "user.enc")
+            os.makedirs(os.path.join(tmp, "data"))
+            args = type("A", (), {"cmd": "run", "mode": "scheduled"})()
+            try:
+                raise KeyError("boom")
+            except KeyError as e:
+                radar.record_crash(args, KEY, e)
+            run = store.read_json(radar.ENGINE_FILE, KEY, {})["runs"][0]
+            self.assertEqual(run["status"], "failed")
+            self.assertIn("KeyError", run["warning"])
+            with patch.dict(os.environ, {"RADAR_TESTS": "failure"}):
+                self.assertEqual(len(radar.quality_warnings()), 1)
+        finally:
+            shutil.rmtree(tmp)
 
 
 class Parts(unittest.TestCase):
@@ -270,8 +325,9 @@ class Parts(unittest.TestCase):
         self.assertEqual(radar.state_of(c, "yallamotor", False)[0], "excluded")
         for year in (2022, 2026):
             self.assertEqual(radar.assess(req, {**v, "year": year}, window_start(TODAY), "yallamotor")["year"], "matched")
+        # Every condition matched but the date is a photo date: shown, labelled as "no posting date".
         c = radar.assess(req, {**v, "date_kind": "photos"}, window_start(TODAY), "yallamotor")
-        self.assertEqual(radar.state_of(c, "yallamotor", False)[0], "unverified")
+        self.assertEqual(radar.state_of(c, "yallamotor", False)[0], "approx")
         c = radar.assess(req, {**v, "date": TODAY - dt.timedelta(days=90)}, window_start(TODAY), "yallamotor")
         self.assertEqual(radar.state_of(c, "yallamotor", True)[0], "excluded")
 
@@ -285,15 +341,27 @@ class Parts(unittest.TestCase):
         self.assertNotIn("price", f)
         self.assertTrue(f["_price_uncertain"])
 
-    def test_single_notification_channel_and_message(self):
+    def test_report_goes_to_every_configured_channel(self):
         import notify
-        with patch.dict(os.environ, {"SMTP_USER": "a", "SMTP_PASSWORD": "b", "TELEGRAM_BOT_TOKEN": "t", "TELEGRAM_CHAT_ID": "c"}, clear=True), patch.object(notify, "email", return_value="sent") as mail, patch.object(notify, "telegram") as tg:
-            notify.send_all("subject", "all offers", "short")
-            mail.assert_called_once(); tg.assert_not_called()
+        env = {"SMTP_USER": "a", "SMTP_PASSWORD": "b", "TELEGRAM_BOT_TOKEN": "t", "TELEGRAM_CHAT_ID": "c"}
+        with patch.dict(os.environ, env, clear=True), patch.object(notify, "email", return_value=notify.SENT) as mail, \
+                patch.object(notify, "telegram", return_value=notify.SENT) as tg, patch.object(notify, "whatsapp", return_value=notify.OFF) as wa:
+            result = notify.send_all("subject", "all offers", "short")
+            mail.assert_called_once(); tg.assert_called_once(); wa.assert_called_once_with("short")
+            self.assertEqual(notify.delivery_problem(result), "")
+        # A failed channel is retried once and then reported.
+        with patch.object(notify, "email", return_value="فشل (timeout)") as mail, patch.object(notify, "telegram", return_value=notify.OFF), \
+                patch.object(notify, "whatsapp", return_value=notify.OFF), patch.object(notify.time, "sleep"):
+            result = notify.send_all("subject", "all offers", "short")
+            self.assertEqual(mail.call_count, 2)
+            self.assertIn("البريد", notify.delivery_problem(result))
+        self.assertIn("لا توجد قناة", notify.delivery_problem({"telegram": notify.OFF, "whatsapp": notify.OFF, "email": notify.OFF}))
+        # Telegram: the whole text as messages, then the PDF.
         with tempfile.NamedTemporaryFile() as f, patch.dict(os.environ, {"TELEGRAM_BOT_TOKEN": "t", "TELEGRAM_CHAT_ID": "c"}, clear=True), patch.object(notify, "_post", return_value=(200, b"{}")) as post:
-            notify.telegram("details" * 1000, f.name)
-            post.assert_called_once()
-            self.assertTrue(post.call_args.args[0].endswith("/sendDocument"))
+            notify.telegram("details\n" * 1000, f.name)
+            urls = [c.args[0] for c in post.call_args_list]
+            self.assertTrue(all(u.endswith("/sendMessage") for u in urls[:-1]) and len(urls) > 2)
+            self.assertTrue(urls[-1].endswith("/sendDocument"))
 
     def test_recover_aed_metadata_from_foreign_schema(self):
         html = ld_ad("Toyota Yaris 2019", 6807, 2019, 106000, d(2)).replace('"AED"', '"USD"')

@@ -139,7 +139,7 @@ def summary_text(run, groups, drops, now, start, link, short=False):
         for i, l in enumerate(rows, 1):
             em, area = place(l)
             kind, name = seller(l)
-            lines.append(f"{i}) {'[تحتاج تأكيدًا] ' if l in cand else ''}{car_name(l, req)}{' 🆕' if l.get('_new') else ''} — {fmt_price(l.get('price'))}")
+            lines.append(f"{i}) {'[تحتاج تأكيدًا] ' if l in cand else '[بلا تاريخ نشر من المنصة] ' if l.get('state') == 'approx' else ''}{car_name(l, req)}{' 🆕' if l.get('_new') else ''} — {fmt_price(l.get('price'))}")
             lines.append(f"   ⚖️ {rating_text(l)}"
                          + (f" · 🔥 استعجال {URGENCY_AR[l['urgency']['level']]}" if (l.get("urgency") or {}).get("level") in ("high", "medium") else ""))
             lines.append(f"   🛣 {(format(l['mileage'], ',') + ' كم') if l.get('mileage') else 'الممشى غير مذكور'} · 📍 {em}"
@@ -148,6 +148,8 @@ def summary_text(run, groups, drops, now, start, link, short=False):
                 lines.append(f"   VIN: {l.get('vin') if l.get('identity_version') == 1 and l.get('vin') else 'غير متوفر كاملًا'}")
                 lines.append(f"   👤 {kind}{' – ' + name if name else ''} · 📞 {(l.get('phone') if l.get('identity_version') == 1 else None) or 'غير منشور بوضوح'}")
             lines.append(f"   🔗 {l['url']}")
+            for d in l.get("duplicates") or []:
+                lines.append(f"   ↔ نفس السيارة على {PLATFORMS[d['platform']]['name']} بسعر {d['price']:,} درهم: {d['url']}")
         if not short and cand:
             lines.append(f"   + {len(cand)} عروض تحتاج تأكيدًا (في التقرير واللوحة)")
         lines.append("")
@@ -182,8 +184,8 @@ def render_html(run, groups, drops, now, start, profile, platforms_used):
             tags += f"<span class='tag down'>انخفض من {l['price_prev']:,}</span>"
         elif l.get("price_prev") and l.get("price") and l["price"] > l["price_prev"]:
             tags += f"<span class='tag up'>ارتفع من {l['price_prev']:,}</span>"
-        if l.get("also_on"):
-            tags += "<span class='tag'>على أكثر من منصة</span>"
+        for d in l.get("duplicates") or []:
+            tags += f"<span class='tag'>أيضًا على {e(PLATFORMS[d['platform']]['name'])} بسعر {d['price']:,}</span>"
         em, area = place(l)
         kind, name = seller(l)
         variant = ad_variant(l, req)
@@ -192,7 +194,8 @@ def render_html(run, groups, drops, now, start, profile, platforms_used):
                      + (f"<div class='sub n'>{l['dev']:+.0%} · متوقع {int(l['fair']['expected']):,}</div>" if l.get("dev") is not None else ""))
         u = l.get("urgency") or {}
         urg = f"<span class='u-{u.get('level', 'low')}'>{URGENCY_AR.get(u.get('level'), '—')}</span>" if u else "—"
-        miss = f"<div class='miss'>{e(l['note'])}</div>" if cand and l.get("note") else ""
+        # Matched offers without a published posting date say where their date comes from.
+        miss = f"<div class='miss'>{e(l['note'])}</div>" if (cand or l.get("state") == "approx") and l.get("note") else ""
         vin = l.get("vin") if l.get("identity_version") == 1 else None
         phone = l.get("phone") if l.get("identity_version") == 1 else None
         vin_note = "فحص الصيغة وخانة التحقق" if l.get("vin_status") == "checksum" else "صيغة 17 خانة؛ كما نشره المعلن"
