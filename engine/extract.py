@@ -171,6 +171,10 @@ def results(html, base, plat):
     for m in QUOTED_PATH.finditer(html):
         add(m[1].replace("\\/", "/"), {}, "script")
     out = list(cards.values())
+    for c in out:
+        # A card often starts with its posting date; that year is not the car model year.
+        title_year = CARD_YEAR.search(str(c.get("title") or "").translate(AR_DIGITS))
+        if title_year: c["year"] = int(title_year[1])
     for c in out:  # sanity: card numbers outside plausible ranges are dropped, not trusted
         if c.get("price") and not (1500 <= c["price"] <= 5_000_000):
             c["price"] = None
@@ -262,7 +266,7 @@ def primary_schema(blobs, url, ad_id):
             if not any(t in ("Car", "Vehicle", "Product", "Offer", "IndividualProduct") for t in types):
                 continue
             identities = [str(obj[k]) for k in ("@id", "url", "sku", "productID") if obj.get(k)]
-            if any(value == str(ad_id) or value.split("#")[0].rstrip("/") == url.rstrip("/") for value in identities):
+            if any(value == str(ad_id) or re.sub(r"^http:", "https:", value.split("#")[0]).rstrip("/") == re.sub(r"^http:", "https:", url.split("#")[0]).rstrip("/") for value in identities):
                 exact.append(obj)
             elif not identities:
                 anonymous.append(obj)

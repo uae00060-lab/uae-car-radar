@@ -8,7 +8,7 @@
 <link rel="icon" type="image/svg+xml" href="assets/logo-mark.svg">
 <meta name="theme-color" content="#0B1732">
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Arabic:wght@400;500;600;700&family=Reem+Kufi:wght@600;700&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;500;600;700;800&family=Inter:wght@400;500;600;700&display=swap">
 <style>
 /* A buyer's console: deal cards with a market verdict, side-by-side comparison, a follow-up pipeline. */
 :root {
@@ -16,8 +16,8 @@
   --fg: #14233E; --muted: #63718A; --accent: #176C73; --accent-fg: #ffffff; --accent-soft: #E2F5F2;
   --good: #1d7a45; --good-soft: #dff2e6; --warn: #8a5a00; --warn-soft: #fbefd3; --bad: #a1271b; --bad-soft: #f8e1de;
   --gold: #b07d00; --shadow: 0 1px 2px rgba(20, 40, 50, .06), 0 4px 14px rgba(20, 40, 50, .05);
-  --display: "IBM Plex Sans Arabic", "IBM Plex Sans Arabic", system-ui, sans-serif;
-  --body: "IBM Plex Sans Arabic", system-ui, "Segoe UI", Tahoma, sans-serif;
+  --display: "Cairo", "Inter", system-ui, sans-serif;
+  --body: "Cairo", "Inter", system-ui, "Segoe UI", Tahoma, sans-serif;
   color-scheme: light;
 }
 * { box-sizing: border-box; }
@@ -118,11 +118,6 @@ section.tab { display: grid; gap: 14px; }
 .facts { display: grid; grid-template-columns: auto 1fr; gap: 3px 12px; margin: 0; font-size: .86rem; }
 .facts dt { color: var(--muted); } .facts dd { margin: 0; min-width: 0; overflow-wrap: anywhere; }
 .note { font-size: .8rem; color: var(--warn); }
-.card-lines { display: grid; gap: 4px; font-size: .86rem; min-width: 0; }
-.card-lines .where b { font-weight: 600; }
-.card-lines .meta { color: var(--muted); overflow-wrap: anywhere; }
-.card-lines .meta .btn { padding: 0 6px; }
-.dup { border-top: 1px dashed var(--line); padding-top: 6px; }
 .foot { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; border-top: 1px solid var(--line); padding-top: 9px; }
 .foot select { flex: 1 1 130px; }
 .cmp-toggle { display: inline-flex; gap: 6px; align-items: center; font-size: .82rem; color: var(--muted); cursor: pointer; }
@@ -278,6 +273,26 @@ nav.tabs .count { font-size:10px; padding:1px 6px; min-width:20px; margin:0; bac
 @media(max-width:700px) { nav.tabs { grid-template-columns:repeat(4,minmax(0,1fr)); border-radius:15px; gap:4px; padding:5px; margin-bottom:12px; } nav.tabs button { flex-direction:column; gap:5px; font-size:10px; padding:10px 2px; min-height:61px; }.tabs .count { position:absolute; top:5px; left:6px; font-size:8px; } .search-progress { padding:18px; gap:15px; flex-wrap:wrap; }.progress-orbit { width:76px; height:76px; }.progress-orbit b { font-size:22px; }.progress-copy { flex-basis:calc(100% - 100px); min-width:0; }.progress-copy h3 { font-size:14px; }.progress-copy p { font-size:10px; gap:8px; }.progress-milestones { font-size:8px; }.progress-details { width:100%; max-width:none; }.progress-copy>small { font-size:8px; }.review-summary { align-items:flex-start; flex-direction:column; }.change-card { padding:15px; gap:10px; }.change-heading { flex-direction:column; gap:4px; } }
 @media(prefers-reduced-motion:reduce) { .search-progress::before,.search-spinner,.progress-kicker i { animation:none; }.progress-track i { transition:none; } }
 
+
+.grid .facts { font-size:12.5px; line-height:1.75; } .bd .var { font-size:12px; } .bd .title { font-size:18px; }
+/* Compact 64px command bar; the content keeps the available viewport. */
+body { font-family:"Cairo","Inter",sans-serif; font-weight:500; text-rendering:optimizeLegibility; }
+.num,[dir="ltr"],input[type="number"],input[type="tel"],.brand-en { font-family:"Inter","Cairo",sans-serif; font-variant-numeric:tabular-nums; }
+#hdr { position:sticky; top:0; z-index:12; transition:transform .3s cubic-bezier(.22,.8,.3,1),box-shadow .3s; will-change:transform; }
+#hdr.scroll-hidden { transform:translateY(calc(-100% - 12px)); pointer-events:none; }
+#hdr>.wrap { max-width:none; padding-inline:18px; display:grid; grid-template-columns:110px minmax(0,1fr) auto; align-items:center; gap:12px; min-height:64px; }
+#hdr .hbar { display:contents; } #hdr .brand-lockup { grid-column:1; grid-row:1; gap:7px; flex-basis:auto; }
+#hdr .brand-lockup img { width:36px; height:36px; border-radius:11px; } #hdr .brand-lockup h1 { font-family:"Cairo",sans-serif; font-size:19px; letter-spacing:0; } #hdr .brand-lockup h1>span { display:none; } #hdr .brand-en { font-size:6px; letter-spacing:1.5px; margin-top:3px; } #hdr .header-state { display:none; }
+#hdr .header-actions { grid-column:3; grid-row:1; gap:6px; flex-wrap:nowrap; width:auto; } #hdr .header-actions select { width:106px; min-height:34px; font-size:10px; padding:5px 8px; } #hdr .header-actions button { min-height:34px; font-size:11px; padding:6px 9px; white-space:nowrap; } #hdr .nav-toggle { display:none; }
+#hdr nav.tabs { grid-column:2; grid-row:1; display:flex; justify-content:center; gap:2px; padding:0; margin:0; background:transparent; border:0; border-radius:0; box-shadow:none; overflow:visible; }
+#hdr nav.tabs button { flex:0 1 auto; min-height:40px; gap:5px; padding:8px 6px; font-family:"Cairo",sans-serif; font-size:12px; font-weight:700; color:#C6D3E7; border-radius:8px; background:transparent; box-shadow:none; }
+#hdr nav.tabs button:hover { color:#fff; background:#ffffff0B; } #hdr nav.tabs button[aria-selected="true"] { background:#ffffff0D; color:#fff; box-shadow:inset 0 -2px #36D5C1; } #hdr nav.tabs .nav-icon { width:16px; height:16px; } #hdr nav.tabs .count { min-width:14px; padding:0 3px; font:8px/17px "Inter",sans-serif; color:#ACBED8; background:#ffffff0A; position:static; } #hdr nav.tabs button[aria-selected="true"] .count { color:#75E8D8; background:#36D5C112; }
+.floating-tools { position:fixed; z-index:13; top:12px; left:50%; display:flex; align-items:center; gap:9px; padding:5px 8px; border:1px solid #ffffffCC; border-radius:50px; color:#14233E; background:#F7FAFFD9; backdrop-filter:blur(18px); -webkit-backdrop-filter:blur(18px); box-shadow:0 5px 25px #0B17321A; opacity:0; pointer-events:none; transform:translate(-50%,-14px); transition:opacity .25s,transform .3s; }
+.floating-tools.visible { opacity:1; pointer-events:auto; transform:translate(-50%,0); } .floating-tools>span { white-space:nowrap; font-size:12px; font-weight:700; } .floating-tools button { display:grid; place-items:center; width:32px; height:32px; min-height:0; border:0; padding:0; border-radius:50%; background:transparent; color:#14233E; font-size:21px; } .floating-tools button:hover { background:#E0EAF6; } .floating-tools .float-divider { height:20px; width:1px; background:#CEDAE9; margin-inline:3px; }
+@media(max-width:1250px) and (min-width:701px) { #hdr nav.tabs .nav-label { display:none; } #hdr nav.tabs button { padding:8px; } #hdr nav.tabs .nav-icon { width:19px; height:19px; } }
+@media(max-width:700px) { #hdr>.wrap { grid-template-columns:80px minmax(0,1fr); min-height:60px; padding-inline:12px; gap:7px; } #hdr .brand-lockup img { width:30px; height:30px; } #hdr .brand-lockup h1 { font-size:17px; } #hdr .brand-en { font-size:5px; letter-spacing:1px; } #hdr .header-actions { grid-column:2; justify-content:flex-end; } #hdr .header-actions select { display:none; } #hdr .header-actions button { font-size:10px; padding:6px 8px; } #hdr .nav-toggle { display:block; color:#fff; background:#ffffff0D; border-color:#ffffff18; width:32px; } #hdr nav.tabs { display:none; } #hdr.nav-open nav.tabs { display:grid; position:absolute; top:calc(100% + 7px); right:12px; left:12px; grid-template-columns:repeat(4,minmax(0,1fr)); padding:8px; border:1px solid #263E61; border-radius:14px; background:#0B1732F2; backdrop-filter:blur(18px); box-shadow:0 12px 35px #0B173230; } #hdr.nav-open nav.tabs button { flex-direction:column; min-height:64px; font-size:10px; padding:9px 3px; } #hdr.nav-open nav.tabs .count { position:absolute; left:6px; top:4px; } .floating-tools { top:9px; gap:6px; } }
+@media(prefers-reduced-motion:reduce) { #hdr,.floating-tools { transition:none; } }
+
 </style>
 </head>
 <body>
@@ -286,21 +301,22 @@ nav.tabs .count { font-size:10px; padding:1px 6px; min-width:20px; margin:0; bac
   <div class="wrap">
     <div class="hbar">
       <a class="brand-lockup grow" href="./" aria-label="رادار سيارات الإمارات"><img src="assets/logo-mark.svg" width="56" height="56" alt="شعار رادار السيارات"><div><h1>رادار<span>سيارات الإمارات</span></h1><div class="brand-en" dir="ltr">CAR RADAR / UAE</div></div></a><div class="header-state"><span class="status-dot"></span><span id="headerState">لوحة الرصد</span></div>
-      <div class="row">
+      <div class="row header-actions">
+        <button type="button" id="navToggle" class="nav-toggle" aria-label="فتح قائمة الأقسام" aria-expanded="false" aria-controls="mainNav">☰</button>
         <select id="runScope" aria-label="نطاق البحث"><option value="all">كل الطلبات</option></select>
         <button class="btn" id="headerNew" type="button">＋ طلب جديد</button>
         <button class="primary search-main" id="searchNow" type="button"><span aria-hidden="true">⌕</span> ابحث الآن</button>
       </div>
     </div>
-    <nav class="tabs" role="tablist">
-      <button role="tab" data-tab="ads" aria-selected="true"><svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/></svg>الإعلانات<span class="count" id="cAds">0</span></button>
-      <button role="tab" data-tab="compare" aria-selected="false"><svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 3v18m6-18v18M3 7h6m6 10h6M3 17h6m6-10h6"/></svg>المقارنة<span class="count" id="cCmp">0</span></button>
-      <button role="tab" data-tab="deals" aria-selected="false"><svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m12 3 2.8 5.7 6.2.9-4.5 4.4 1.1 6.2-5.6-3-5.6 3 1.1-6.2L3 9.6l6.2-.9Z"/></svg>المتابعة<span class="count" id="cDeals">0</span></button>
-      <button role="tab" data-tab="reqs" aria-selected="false"><svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="10.5" cy="10.5" r="6.5"/><path d="m16 16 5 5M8 10.5h5m-2.5-2.5v5"/></svg>طلبات البحث<span class="count" id="cReqs">0</span></button>
-      <button role="tab" data-tab="updates" aria-selected="false"><svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9M10 21h4"/></svg>التحديثات<span class="count" id="cAlerts">0</span></button>
-      <button role="tab" data-tab="reports" aria-selected="false"><svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 3H6a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9Z"/><path d="M14 3v6h6M8 13h8m-8 4h5"/></svg>التقارير<span class="count" id="cReports">0</span></button>
-      <button role="tab" data-tab="history" aria-selected="false"><svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>سجل الجولات</button>
-      <button role="tab" data-tab="settings" aria-selected="false"><svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 7h16M4 17h16"/><circle cx="9" cy="7" r="3"/><circle cx="15" cy="17" r="3"/></svg>الإعدادات</button>
+    <nav class="tabs" id="mainNav" role="tablist" aria-label="الأقسام الرئيسية">
+      <button role="tab" data-tab="ads" aria-selected="true" aria-label="الإعلانات" title="الإعلانات"><svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/></svg><span class="nav-label">الإعلانات</span><span class="count" id="cAds">0</span></button>
+      <button role="tab" data-tab="compare" aria-selected="false" aria-label="المقارنة" title="المقارنة"><svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 3v18m6-18v18M3 7h6m6 10h6M3 17h6m6-10h6"/></svg><span class="nav-label">المقارنة</span><span class="count" id="cCmp">0</span></button>
+      <button role="tab" data-tab="deals" aria-selected="false" aria-label="المتابعة" title="المتابعة"><svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m12 3 2.8 5.7 6.2.9-4.5 4.4 1.1 6.2-5.6-3-5.6 3 1.1-6.2L3 9.6l6.2-.9Z"/></svg><span class="nav-label">المتابعة</span><span class="count" id="cDeals">0</span></button>
+      <button role="tab" data-tab="reqs" aria-selected="false" aria-label="طلبات البحث" title="طلبات البحث"><svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="10.5" cy="10.5" r="6.5"/><path d="m16 16 5 5M8 10.5h5m-2.5-2.5v5"/></svg><span class="nav-label">طلبات البحث</span><span class="count" id="cReqs">0</span></button>
+      <button role="tab" data-tab="updates" aria-selected="false" aria-label="التحديثات" title="التحديثات"><svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9M10 21h4"/></svg><span class="nav-label">التحديثات</span><span class="count" id="cAlerts">0</span></button>
+      <button role="tab" data-tab="reports" aria-selected="false" aria-label="التقارير" title="التقارير"><svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 3H6a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9Z"/><path d="M14 3v6h6M8 13h8m-8 4h5"/></svg><span class="nav-label">التقارير</span><span class="count" id="cReports">0</span></button>
+      <button role="tab" data-tab="history" aria-selected="false" aria-label="سجل الجولات" title="سجل الجولات"><svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg><span class="nav-label">سجل الجولات</span></button>
+      <button role="tab" data-tab="settings" aria-selected="false" aria-label="الإعدادات" title="الإعدادات"><svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 7h16M4 17h16"/><circle cx="9" cy="7" r="3"/><circle cx="15" cy="17" r="3"/></svg><span class="nav-label">الإعدادات</span></button>
     </nav>
   </div>
 </header>
@@ -318,10 +334,10 @@ nav.tabs .count { font-size:10px; padding:1px 6px; min-width:20px; margin:0; bac
   </form>
 </div>
 
+<div class="floating-tools" id="floatingTools" aria-hidden="true" inert><button type="button" id="floatTop" class="float-brand" aria-label="العودة لأعلى الصفحة"><img src="assets/logo-mark.svg" width="25" height="25" alt=""></button><span id="floatSection">الإعلانات</span><span class="float-divider"></span><button type="button" id="floatSearch" aria-label="ابدأ البحث" title="ابدأ البحث">⌕</button><button type="button" id="floatMenu" aria-label="إظهار الأقسام" title="إظهار الأقسام">☰</button></div>
 <main class="wrap" id="app" hidden>
   <div id="liveBox" class="banner" hidden></div>
   <div id="flashBox" class="banner" hidden></div>
-  <div id="problemBox" class="banner bad" hidden role="alert"></div>
 
   <div class="workspace-top"><span>لوحة الرصد <span class="workspace-sep">/</span> سوق السيارات المستعملة</span><span id="nextRun" class="small"></span></div>
   <!-- ads -->
@@ -578,7 +594,7 @@ nav.tabs .count { font-size:10px; padding:1px 6px; min-width:20px; margin:0; bac
       const body = await encrypt(new TextEncoder().encode(JSON.stringify(S.U)), S.pass);
       for (let attempt = 0; attempt < 3; attempt++) {
         try {
-          const r = await gh("/contents/data/user.enc", { method: "PUT", body: JSON.stringify({ message: "dashboard: sync", content: btoa(body), sha: S.userSha || undefined, branch: "main" }) });
+          const r = await gh("/contents/data/user.enc", { method: "PUT", body: JSON.stringify({ message: "dashboard: " + (msg || "update"), content: btoa(body), sha: S.userSha || undefined, branch: "main" }) });
           const j = await r.json(); S.userSha = j.content?.sha; return true;
         } catch (e) {
           if (e.status === 409 || e.status === 422) { flash("تغيّرت البيانات من جهاز آخر. أعد تحميل الصفحة قبل التعديل حتى لا تُستبدل التغييرات الأحدث.", "bad"); return false; }
@@ -633,15 +649,14 @@ nav.tabs .count { font-size:10px; padding:1px 6px; min-width:20px; margin:0; bac
     try { const t = store.get("tab"); if (t && $("tab-" + t)) showTab(t); } catch {}
     renderAll();
     resumeLiveRun();
-    checkActions();
+    heartbeat();
   }
 
   // ---------------------------------------------------------------- helpers over data
   const hasPrice = (l) => Number.isFinite(Number(l.price)) && Number(l.price) >= 1500 && Number(l.price) <= 5000000 && l.price_version === 3 && l.price_currency === "AED";
-  const L = () => Object.values(S.E.listings || {}).filter((l) => hasPrice(l) && !l.dup_of);
+  const L = () => Object.values(S.E.listings || {}).filter(hasPrice);
   const mark = (id) => S.U.marks[id] || {};
   const isMatch = (l) => l.state === "verified" && dateKind(l) === "posted";
-  const isNoDate = (l) => l.state === "approx";  // every condition matched; the platform publishes no posting date
   const adDate = (l) => l.date || l.posted || (l.first_seen || "").slice(0, 10);
   const dateKind = (l) => l.date_kind || (l.posted ? "posted" : "first_seen");
   function windowStart() { const n = uaeNow(); const y = n.getUTCFullYear(), m = n.getUTCMonth(), d = n.getUTCDate(); const last = new Date(Date.UTC(y, m, 0)).getUTCDate(); return ymd(new Date(Date.UTC(y, m - 1, Math.min(d, last)))); }
@@ -661,6 +676,9 @@ nav.tabs .count { font-size:10px; padding:1px 6px; min-width:20px; margin:0; bac
   // ---------------------------------------------------------------- tabs
   function showTab(name) {
     S.tab = name;
+    $("hdr").classList.remove("nav-open"); $("navToggle").setAttribute("aria-expanded","false");
+    const selected=document.querySelector(`nav.tabs button[data-tab="${CSS.escape(name)}"]`);
+    $("floatSection").textContent=selected?.getAttribute("aria-label") || "الإعلانات";
     document.querySelectorAll("nav.tabs button").forEach((x) => x.setAttribute("aria-selected", String(x.dataset.tab === name)));
     document.querySelectorAll("section.tab").forEach((s) => { s.hidden = s.id !== "tab-" + name; });
     store.set("tab", name);
@@ -677,7 +695,6 @@ nav.tabs .count { font-size:10px; padding:1px 6px; min-width:20px; margin:0; bac
     if (l.run_id && l.run_id === lastRunId()) tags.push('<span class="pill good">جديد</span>');
     if (l.price_prev && l.price < l.price_prev) tags.push(`<span class="pill good">انخفض <span class="num">${pct((l.price - l.price_prev) / l.price_prev)}</span></span>`);
     if (l.state === "unverified") tags.push('<span class="pill bad">يحتاج تأكيدًا</span>');
-    if (isNoDate(l)) tags.push('<span class="pill">بلا تاريخ نشر</span>');
     if (availabilityOf(l) !== "available") tags.push(`<span class="pill">${availabilityLabel(l)}</span>`);
     const img = l.image ? `<img src="${esc(l.image)}" alt="" loading="lazy" referrerpolicy="no-referrer" onerror="this.replaceWith(Object.assign(document.createElement('div'),{className:'noimg',textContent:'${esc(PLATFORMS[l.platform] || "")}'}))">`
       : `<div class="noimg">${esc(PLATFORMS[l.platform] || "")}</div>`;
@@ -700,24 +717,6 @@ nav.tabs .count { font-size:10px; padding:1px 6px; min-width:20px; margin:0; bac
   function vinHtml(l) { return l.identity_version === 1 && l.vin ? `<span class="num identity-value" dir="ltr">${esc(l.vin)}</span><small class="identity-note">${l.vin_status === "checksum" ? "فحص الصيغة وخانة التحقق؛ منشور في الإعلان" : "صيغة 17 خانة؛ منشور في الإعلان"}</small>` : `<span class="small">${l.vin_status === "conflict" ? "بيانات متعارضة؛ يحتاج تأكيدًا" : "لم يتوفر رقم كامل موثوق من الإعلان"}</span>`; }
   function sellerPhone(l) { return l.identity_version === 1 ? phoneHtml(l.phone) : '<span class="small">بانتظار إعادة فحص بيانات البائع</span>'; }
   function stageSelect(l) { const st = mark(l.id).status || "new"; return `<select data-stage="${esc(l.id)}" aria-label="مرحلة المتابعة">${STAGES.map((s) => `<option value="${s.k}"${st === s.k ? " selected" : ""}>${s.t}</option>`).join("")}</select>`; }
-  const EMIRATE_FROM_TEXT = [["dubai", "دبي"], ["abu-dhabi", "أبوظبي"], ["abu dhabi", "أبوظبي"], ["abudhabi", "أبوظبي"], ["al ain", "أبوظبي"], ["sharjah", "الشارقة"],
-    ["ajman", "عجمان"], ["ras al khaimah", "رأس الخيمة"], ["fujairah", "الفجيرة"], ["umm al quwain", "أم القيوين"]];
-  function emirateOf(l) {
-    if (l.emirate) return l.emirate;
-    const t = `${l.location || ""} ${l.url || ""}`.toLowerCase();
-    return (EMIRATE_FROM_TEXT.find(([k]) => t.includes(k)) || [])[1] || "";
-  }
-  function cardLines(l) {
-    const em = emirateOf(l);
-    const bits = [l.mileage ? `<span class="num">${fmt(l.mileage)}</span> كم` : "", l.color ? esc(l.color) : "",
-      `${DATE_KIND[dateKind(l)]} <span class="num">${dmy(adDate(l))}</span>`].filter(Boolean);
-    const seller = [SELLER[l.seller_type], l.seller_name].filter(Boolean).join(" · ");
-    const phone = l.identity_version === 1 && l.phone ? phoneHtml(l.phone) : "";
-    return `<div class="card-lines"><div class="where">📍 <b>${esc(em || "الإمارة غير مذكورة")}</b></div>
-      <div class="meta">${bits.join(" · ")}</div>
-      ${seller || phone ? `<div class="meta">${esc(seller)}${seller && phone ? " · " : ""}${phone}</div>` : ""}
-      ${["high", "medium"].includes(l.urgency?.level) ? `<div class="meta">استعجال البائع: <span class="urg-${l.urgency.level}">${URG[l.urgency.level]}</span></div>` : ""}</div>`;
-  }
   function facts(l) {
     const seller = [SELLER[l.seller_type], l.seller_name].filter(Boolean).join(" · ");
     const rows = [["الممشى", l.mileage ? `<span class="num">${fmt(l.mileage)}</span> كم` : "—"], ["اللون", esc(l.color || "—")],
@@ -740,8 +739,8 @@ nav.tabs .count { font-size:10px; padding:1px 6px; min-width:20px; margin:0; bac
       if (q && !`${l.title} ${l.location} ${l.seller_name}`.toLowerCase().includes(q)) return false;
       if (rt === "deal" && !["excellent", "good"].includes(l.rating)) return false;
       if (rt === "hot" && !["high", "medium"].includes(l.urgency?.level)) return false;
-      if (st === "match") return (isMatch(l) && inWindow(l)) || isNoDate(l);
-      if (st === "unverified") return l.state === "unverified";
+      if (st === "match") return isMatch(l) && inWindow(l);
+      if (st === "unverified") return ["unverified", "approx"].includes(l.state);
       return true;
     });
   }
@@ -756,8 +755,8 @@ nav.tabs .count { font-size:10px; padding:1px 6px; min-width:20px; margin:0; bac
     const base = baseAds();
     const priced = L().filter(live);
     $("statPriced").textContent = fmt(priced.length);
-    $("statVerified").textContent = fmt(priced.filter((l) => (isMatch(l) && inWindow(l)) || isNoDate(l)).length);
-    $("statPending").textContent = fmt(priced.filter((l) => l.state === "unverified").length);
+    $("statVerified").textContent = fmt(priced.filter((l) => isMatch(l) && inWindow(l)).length);
+    $("statPending").textContent = fmt(priced.filter((l) => ["unverified", "approx"].includes(l.state)).length);
     $("statReports").textContent = fmt((S.E.reports || []).length);
     const last = (S.E.runs || []).find((r) => r.mode !== "watch");
     $("statLast").textContent = last ? "آخر بحث: " + when(last.at) : "لم يُنفّذ بحث بعد";
@@ -775,9 +774,9 @@ nav.tabs .count { font-size:10px; padding:1px 6px; min-width:20px; margin:0; bac
     $("adsGrid").innerHTML = rows.map((l) => `<article data-car-id="${esc(l.id)}" class="ad availability-${availabilityOf(l)}${S.pick.includes(l.id) ? " picked" : ""}">${photo(l)}<div class="bd">
       <div><a class="title" href="${esc(l.url)}" target="_blank" rel="noopener">${esc(carName(l))}</a><div class="var">${esc(l.title || "")}</div></div>
       <div class="priceline"><span class="price">${l.price ? fmt(l.price) + " <small>درهم</small>" : ""}</span>${l.price_prev && l.price_prev !== l.price ? `<span class="price-prev num">${fmt(l.price_prev)}</span>` : ""}${l.year ? `<span class="plate">${l.year}</span>` : ""}</div>
-      ${statusHtml(l)}${verdict(l)}${cardLines(l)}
-      ${(l.state === "unverified" || isNoDate(l)) && l.note ? `<div class="note">${esc(l.note)}</div>` : ""}
-      ${(l.duplicates || []).map((d) => `<div class="small dup">نفس السيارة على ${esc(PLATFORMS[d.platform] || d.platform)} بسعر <span class="num">${fmt(d.price)}</span> درهم · <a href="${esc(d.url)}" target="_blank" rel="noopener">فتح</a></div>`).join("")}
+      ${statusHtml(l)}${verdict(l)}${facts(l)}
+      ${l.state === "unverified" && l.note ? `<div class="note">${esc(l.note)}</div>` : ""}
+      ${(l.also_on || []).map((u) => `<div class="small">معروض أيضًا على <a href="${esc(u)}" target="_blank" rel="noopener">${esc(new URL(u).hostname.replace(/^www\./, ""))}</a></div>`).join("")}
       <div class="foot">${stageSelect(l)}<label class="cmp-toggle"><input type="checkbox" data-pick="${esc(l.id)}"${S.pick.includes(l.id) ? " checked" : ""}> قارن</label><a class="btn sm" href="${esc(l.url)}" target="_blank" rel="noopener">فتح الإعلان ↗</a></div>
     </div></article>`).join("");
   }
@@ -818,7 +817,7 @@ nav.tabs .count { font-size:10px; padding:1px 6px; min-width:20px; margin:0; bac
         ${line("التاريخ", (l) => `${DATE_KIND[dateKind(l)]} <span class="num">${dmy(adDate(l))}</span>`)}
         ${line("استعجال البائع", (l) => urgencyHtml(l))}
         ${line("تغيّر السعر", (l) => (l.price_history || []).length > 1 ? (l.price_history || []).map((h) => fmt(h.price)).join(" ← ") : "لم يتغيّر")}
-        ${line("درجة التأكد", (l) => isMatch(l) ? '<span class="pill good">مطابقة</span>' : isNoDate(l) ? '<span class="pill">مطابقة · بلا تاريخ نشر</span>' : `<span class="pill warn">تحتاج تأكيدًا</span><div class="small">${esc(l.note || "")}</div>`)}
+        ${line("درجة التأكد", (l) => isMatch(l) ? '<span class="pill good">مطابقة</span>' : `<span class="pill warn">تحتاج تأكيدًا</span><div class="small">${esc(l.note || "")}</div>`)}
         ${line("رقم الشاصي VIN", (l) => vinHtml(l))}
         ${line("هاتف البائع", (l) => sellerPhone(l))}
         ${line("", (l) => `<a class="btn sm" href="${esc(l.url)}" target="_blank" rel="noopener">فتح الإعلان ↗</a> <button type="button" class="sm ghost" data-unpick="${esc(l.id)}">إزالة</button>`)}
@@ -878,7 +877,7 @@ nav.tabs .count { font-size:10px; padding:1px 6px; min-width:20px; margin:0; bac
         <div class="small">${esc([r.make, r.model, r.keywords].filter(Boolean).join(" "))} ${r.year_from || r.year_to ? `<span class="plate">${r.year_from || "…"}–${r.year_to || "…"}</span>` : ""}</div></div>
         <dl class="spec"><div><dt>أقصى سعر</dt><dd>${r.price_max ? fmt(r.price_max) + " درهم" : "بلا حد"}</dd></div><div><dt>أقصى ممشى</dt><dd>${r.mileage_max ? fmt(r.mileage_max) + " كم" : "بلا حد"}</dd></div>
         <div><dt>اللون</dt><dd>${esc(r.color || "أي لون")}</dd></div><div><dt>الإمارة</dt><dd>${esc(r.emirate || "كل الإمارات")}</dd></div>
-        <div><dt>مطابقة</dt><dd>${mine.filter((l) => (isMatch(l) && inWindow(l)) || isNoDate(l)).length}</dd></div><div><dt>تحتاج تأكيدًا</dt><dd>${mine.filter((l) => l.state === "unverified").length}</dd></div></dl>
+        <div><dt>مطابقة</dt><dd>${mine.filter((l) => isMatch(l) && inWindow(l)).length}</dd></div><div><dt>تحتاج تأكيدًا</dt><dd>${mine.filter((l) => l.state === "unverified").length}</dd></div></dl>
         <div class="mk">${marketTable(r.id)}</div>
         <div class="actions"><button type="button" class="primary sm" data-runreq="${esc(r.id)}">ابحث الآن</button><button type="button" class="sm" data-edit="${esc(r.id)}">تعديل</button><button type="button" class="sm" data-sched="${esc(r.id)}">${r.scheduled ? "إلغاء الجدولة" : "جدولة يومية"}</button><button type="button" class="sm" data-toggle="${esc(r.id)}">${on ? "إيقاف" : "تشغيل"}</button><button type="button" class="sm ghost" data-del="${esc(r.id)}">حذف</button></div></article>`;
     }).join("");
@@ -1001,7 +1000,7 @@ nav.tabs .count { font-size:10px; padding:1px 6px; min-width:20px; margin:0; bac
   $("readAlerts").addEventListener("click", async () => { S.U.alerts_seen_at = (S.E.alerts || [])[0]?.at || new Date().toISOString(); renderUpdates(); await saveUser("read updates"); });
   function renderAll() {
     $("nextRun").textContent = nextRunText();
-    renderReqs(); renderAds(); renderDeals(); renderUpdates(); renderReports(); renderHistory(); renderSettings(); renderCmpBar(); renderProblems();
+    renderReqs(); renderAds(); renderDeals(); renderUpdates(); renderReports(); renderHistory(); renderSettings(); renderCmpBar();
     if (S.tab === "compare") renderCompare();
     $("searchNow").disabled = !S.token || !!S.live;
     if (!S.live) $("searchNow").innerHTML = '<span aria-hidden="true">⌕</span> ابحث الآن';
@@ -1093,15 +1092,7 @@ nav.tabs .count { font-size:10px; padding:1px 6px; min-width:20px; margin:0; bac
         const secs = Math.round((Date.now() - Date.parse(run.created_at)) / 1000);
         let progress = null;
         if (S.live.run_id) {
-          try {
-            const response = await gh("/contents/data/search-progress.json?ref=radar-live");
-            if (response.ok) {
-              const file = await response.json();
-              const sealed = new TextDecoder().decode(b64.dec((file.content || "").replace(/\n/g, "")));
-              const data = JSON.parse(new TextDecoder().decode(await decrypt(sealed, S.pass)));
-              if (data.run_id === S.live.run_id) progress = data;
-            }
-          } catch {}
+          try { const response = await gh("/contents/data/search-progress.json?ref=radar-presence"); if (response.ok) { const file = await response.json(); const data = JSON.parse(new TextDecoder().decode(b64.dec((file.content || "").replace(/\n/g,"")))); if (data.run_id === S.live.run_id) progress=data; } } catch {}
         }
         const active = steps.find(s=>s.status === "in_progress");
         const reached = name => steps.some(s=>s.name === name && ["in_progress","completed"].includes(s.status));
@@ -1116,7 +1107,6 @@ nav.tabs .count { font-size:10px; padding:1px 6px; min-width:20px; margin:0; bac
         if (run.status === "completed") {
           const ok = run.conclusion === "success", label = S.live.label;
           S.live = null; store.set("live", null);
-          checkActions();
           if (ok) { await loadAll(); renderAll(); box.className = "banner good"; const latest = (S.E.runs || [])[0];
             box.className = latest?.warning ? "banner warn" : "banner good";
             box.className="search-progress finished"; box.innerHTML=`<div class="progress-orbit" style="--p:100" role="progressbar" aria-label="اكتمل البحث" aria-valuemin="0" aria-valuemax="100" aria-valuenow="100"><div><b class="num">100<small>%</small></b><span>اكتمل</span></div></div><div class="progress-copy"><span class="progress-kicker">✓ اكتملت المهمة</span><h3>النتائج محدّثة في لوحتك</h3><p>${esc(latest?.warning || "يمكنك تصفّح النتائج ومتابعة السيارات التي تهمك.")}</p><small>البحث اليدوي يحدّث النتائج دون إنشاء تقرير.</small></div>`; if (label === "فحص المنصات") showDiag(); }
@@ -1129,52 +1119,62 @@ nav.tabs .count { font-size:10px; padding:1px 6px; min-width:20px; margin:0; bac
   }
   async function showDiag() {
     try {
-      const d = S.E.diagnose; if (!d) return;
-      $("diagBox").innerHTML = `<div class="small">فحص ${esc(when(d.at))}</div><dl class="kv">${Object.entries(d.platforms).filter(([k]) => PLATFORMS[k]).map(([k, v]) => {
+      const f = await readFile("data/diagnose.json"); if (!f.text) return;
+      const d = JSON.parse(f.text);
+      $("diagBox").innerHTML = `<div class="small">فحص ${esc(when(d.at))} على «${esc(d.probe)}»</div><dl class="kv">${Object.entries(d.platforms).filter(([k]) => PLATFORMS[k]).map(([k, v]) => {
                 const st = v.ok ? `صفحة النتائج تعمل · ${v.cards} إعلان` : v.via_search ? `محجوبة؛ وُجد ${v.cards} عبر البحث البديل` : `لا يمكن الوصول (${(v.status || []).join("، ")})`;
         return `<dt>${PLATFORMS[k]}</dt><dd>${st}</dd>`; }).join("")}</dl>`;
       showTab("settings");
     } catch {}
   }
 
-  // ---------------------------------------------------------------- problems
-  // Every failure stays visible until a later round succeeds: the round's own record (engine
-  // errors, blocked platforms, reports not delivered), or a GitHub task that failed before the
-  // engine could record anything.
-  S.actionsProblem = null;
-  async function checkActions() {
-    if (!S.token) return;
+  function openNavigation() {
+    const header=$("hdr"), open=header.classList.toggle("nav-open");
+    header.classList.remove("scroll-hidden"); $("navToggle").setAttribute("aria-expanded",String(open));
+    $("floatingTools").classList.remove("visible"); $("floatingTools").setAttribute("aria-hidden","true"); $("floatingTools").inert=true;
+  }
+  $("navToggle").addEventListener("click",openNavigation);
+  $("floatMenu").addEventListener("click",openNavigation);
+  $("floatSearch").addEventListener("click",()=>runSearch($("runScope").value));
+  $("floatTop").addEventListener("click",()=>window.scrollTo({top:0,behavior:matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto":"smooth"}));
+  document.addEventListener("keydown",e=>{ if(e.key === "Escape") { $("hdr").classList.remove("nav-open"); $("navToggle").setAttribute("aria-expanded","false"); } });
+  let scrollPrevious=window.scrollY, scrollQueued=false;
+  window.addEventListener("scroll",()=>{
+    if(scrollQueued) return; scrollQueued=true;
+    requestAnimationFrame(()=>{
+      scrollQueued=false;
+      const y=Math.max(0,window.scrollY), delta=y-scrollPrevious, header=$("hdr");
+      if(Math.abs(delta)<6 && y>80) return;
+      const keyboardFocus=header.contains(document.activeElement) && document.activeElement.matches(":focus-visible");
+      const hidden=y>110 && delta>0 && !header.classList.contains("nav-open") && !keyboardFocus;
+      if(y<80 || delta<0 || header.classList.contains("nav-open") || keyboardFocus) header.classList.remove("scroll-hidden");
+      else if(hidden) header.classList.add("scroll-hidden");
+      const floating=header.classList.contains("scroll-hidden") && !header.hidden;
+      $("floatingTools").classList.toggle("visible",floating); $("floatingTools").setAttribute("aria-hidden",String(!floating)); $("floatingTools").inert=!floating;
+      scrollPrevious=y;
+    });
+  },{passive:true});
+  let presenceBusy = false;
+  async function heartbeat() {
+    if (!S.E || !S.token || document.visibilityState !== "visible" || presenceBusy) return;
+    presenceBusy = true;
     try {
-      const r = await (await gh(`/actions/workflows/radar.yml/runs?status=completed&per_page=5&t=${Date.now()}`)).json();
-      const latest = (r.workflow_runs || [])[0];
-      S.actionsProblem = null;
-      if (latest && !["success", "skipped", "cancelled"].includes(latest.conclusion)) {
-        const jobs = await (await gh(`/actions/runs/${latest.id}/jobs`)).json();
-        const step = (jobs.jobs?.[0]?.steps || []).find((x) => x.conclusion === "failure");
-        S.actionsProblem = { at: latest.updated_at, url: latest.html_url,
-          text: `فشلت مهمة على GitHub (${latest.event === "schedule" ? "جولة مجدولة" : "تشغيل يدوي"})` +
-                (step ? ` في خطوة «${STEP_AR[step.name] || step.name}»` : "") };
+      const path = "/contents/data/presence.json";
+      const branch = "radar-presence";
+      let ref = await gh("/git/ref/heads/" + branch);
+      if (!ref.ok) {
+        const main = await (await gh("/git/ref/heads/main")).json();
+        try { await gh("/git/refs", { method: "POST", body: JSON.stringify({ ref: "refs/heads/" + branch, sha: main.object.sha }) }); }
+        catch (e) { if (e.status !== 422) throw e; }
       }
-    } catch { /* the panel still shows problems recorded by the engine */ }
-    renderProblems();
+      const r = await gh(path + "?ref=" + branch); const old = r.ok ? await r.json() : {};
+      const content = btoa(JSON.stringify({ at: new Date().toISOString() }));
+      await gh(path, { method: "PUT", body: JSON.stringify({ message: "dashboard: presence [skip ci]", content, sha: old.sha, branch }) });
+    } catch { /* A failed lease cannot suppress a scheduled round. */ }
+    finally { presenceBusy = false; }
   }
-  function renderProblems() {
-    const box = $("problemBox"); if (!box || !S.E) return;
-    const items = [];
-    const lastRound = (S.E.runs || []).find((r) => r.mode !== "watch");
-    if (lastRound && (lastRound.status === "failed" || lastRound.warning)) {
-      items.push(`<li><b>${lastRound.status === "failed" ? "لم تكتمل" : "تنبيه"} — ${{ scheduled: "جولة مجدولة", manual: "بحث يدوي" }[lastRound.mode] || "جولة"} ${esc(when(lastRound.at))}:</b> ${esc(lastRound.warning || "سبب غير معروف")}</li>`);
-    }
-    const p = S.actionsProblem;
-    if (p && (!lastRound || Date.parse(p.at) > Date.parse(lastRound.at))) {
-      items.push(`<li><b>${esc(p.text)}</b> — ${esc(when(new Date(Date.parse(p.at) + 4 * 3600e3).toISOString()))} <a href="${esc(p.url)}" target="_blank" rel="noopener">التفاصيل ↗</a></li>`);
-    }
-    box.hidden = !items.length;
-    box.className = "banner " + (items.some((x) => x.includes("لم تكتمل") || x.includes("فشلت")) ? "bad" : "warn");
-    box.innerHTML = items.length ? `<ul style="margin:0;padding-inline-start:18px;display:grid;gap:4px">${items.join("")}</ul>` : "";
-  }
-  setInterval(() => { if (S.E) checkActions(); }, 300000);
-
+  document.addEventListener("visibilitychange", () => { if (document.visibilityState === "visible") heartbeat(); });
+  setInterval(heartbeat, 120000);
   // ---------------------------------------------------------------- boot
   (async () => {
     let credentials;
