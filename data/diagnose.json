@@ -1,1 +1,647 @@
-{}
+{
+ "at": "2026-10-18T22:17:00+04:00",
+ "probe": "Toyota Yaris",
+ "platforms": {
+  "dubizzle": {
+   "pages": 1,
+   "ok": 0,
+   "blocked": 1,
+   "cards": 0,
+   "via_search": 0,
+   "status": [
+    200
+   ],
+   "card_sources": [],
+   "cards_with_price": 0,
+   "ad_reads": []
+  },
+  "yallamotor": {
+   "pages": 1,
+   "ok": 1,
+   "blocked": 0,
+   "cards": 22,
+   "via_search": 0,
+   "status": [
+    200
+   ],
+   "card_sources": [
+    "json"
+   ],
+   "cards_with_price": 22,
+   "ad_reads": [
+    {
+     "status": "ok",
+     "found": [
+      [
+       "color",
+       "ld:color"
+      ],
+      [
+       "image",
+       "ld:image"
+      ],
+      [
+       "km",
+       "ld:mileageFromOdometer"
+      ],
+      [
+       "phone",
+       "tel"
+      ],
+      [
+       "price",
+       "ld:price"
+      ],
+      [
+       "specs",
+       "text"
+      ],
+      [
+       "title",
+       "ld:name"
+      ],
+      [
+       "transmission",
+       "ld:vehicleTransmission"
+      ],
+      [
+       "year",
+       "ld:vehicleModelDate"
+      ]
+     ],
+     "has": {
+      "price": true,
+      "year": true,
+      "km": true,
+      "date": true,
+      "phone": true,
+      "image": true,
+      "color": true,
+      "emirate": true
+     }
+    },
+    {
+     "status": "ok",
+     "found": [
+      [
+       "color",
+       "ld:color"
+      ],
+      [
+       "image",
+       "ld:image"
+      ],
+      [
+       "km",
+       "ld:mileageFromOdometer"
+      ],
+      [
+       "phone",
+       "tel"
+      ],
+      [
+       "price",
+       "ld:price"
+      ],
+      [
+       "seller_type",
+       "text"
+      ],
+      [
+       "specs",
+       "text"
+      ],
+      [
+       "title",
+       "ld:name"
+      ],
+      [
+       "transmission",
+       "ld:vehicleTransmission"
+      ],
+      [
+       "updated",
+       "text"
+      ],
+      [
+       "year",
+       "ld:vehicleModelDate"
+      ]
+     ],
+     "has": {
+      "price": true,
+      "year": true,
+      "km": true,
+      "date": true,
+      "phone": true,
+      "image": true,
+      "color": true,
+      "emirate": true
+     }
+    }
+   ]
+  },
+  "dubicars": {
+   "pages": 1,
+   "ok": 1,
+   "blocked": 0,
+   "cards": 30,
+   "via_search": 0,
+   "status": [
+    200
+   ],
+   "card_sources": [
+    "json"
+   ],
+   "cards_with_price": 30,
+   "ad_reads": [
+    {
+     "status": "sold",
+     "found": null,
+     "has": null
+    },
+    {
+     "status": "sold",
+     "found": null,
+     "has": null
+    }
+   ]
+  },
+  "carswitch": {
+   "pages": 1,
+   "ok": 1,
+   "blocked": 0,
+   "cards": 18,
+   "via_search": 0,
+   "status": [
+    200
+   ],
+   "card_sources": [
+    "json"
+   ],
+   "cards_with_price": 18,
+   "ad_reads": [
+    {
+     "status": "ok",
+     "found": [
+      [
+       "color",
+       "ld:color"
+      ],
+      [
+       "image",
+       "ld:image"
+      ],
+      [
+       "inspected",
+       "text"
+      ],
+      [
+       "km",
+       "ld:mileageFromOdometer"
+      ],
+      [
+       "phone",
+       "tel"
+      ],
+      [
+       "price",
+       "ld:price"
+      ],
+      [
+       "seller_type",
+       "text"
+      ],
+      [
+       "specs",
+       "text"
+      ],
+      [
+       "title",
+       "ld:name"
+      ],
+      [
+       "transmission",
+       "ld:vehicleTransmission"
+      ],
+      [
+       "year",
+       "ld:vehicleModelDate"
+      ]
+     ],
+     "has": {
+      "price": true,
+      "year": true,
+      "km": true,
+      "date": false,
+      "phone": true,
+      "image": true,
+      "color": true,
+      "emirate": true
+     }
+    },
+    {
+     "status": "ok",
+     "found": [
+      [
+       "color",
+       "ld:color"
+      ],
+      [
+       "image",
+       "ld:image"
+      ],
+      [
+       "inspected",
+       "text"
+      ],
+      [
+       "km",
+       "ld:mileageFromOdometer"
+      ],
+      [
+       "phone",
+       "tel"
+      ],
+      [
+       "price",
+       "ld:price"
+      ],
+      [
+       "seller_type",
+       "text"
+      ],
+      [
+       "specs",
+       "text"
+      ],
+      [
+       "title",
+       "ld:name"
+      ],
+      [
+       "transmission",
+       "ld:vehicleTransmission"
+      ],
+      [
+       "year",
+       "ld:vehicleModelDate"
+      ]
+     ],
+     "has": {
+      "price": true,
+      "year": true,
+      "km": true,
+      "date": false,
+      "phone": true,
+      "image": true,
+      "color": true,
+      "emirate": true
+     }
+    }
+   ]
+  },
+  "opensooq": {
+   "pages": 1,
+   "ok": 1,
+   "blocked": 0,
+   "cards": 30,
+   "via_search": 0,
+   "status": [
+    200
+   ],
+   "card_sources": [
+    "json"
+   ],
+   "cards_with_price": 30,
+   "ad_reads": [
+    {
+     "status": "ok",
+     "found": [
+      [
+       "color",
+       "text"
+      ],
+      [
+       "image",
+       "meta:og:image"
+      ],
+      [
+       "posted",
+       "text"
+      ],
+      [
+       "price",
+       "ld:price"
+      ],
+      [
+       "seller_type",
+       "text"
+      ],
+      [
+       "title",
+       "ld:name"
+      ],
+      [
+       "transmission",
+       "text"
+      ]
+     ],
+     "has": {
+      "price": true,
+      "year": true,
+      "km": false,
+      "date": false,
+      "phone": false,
+      "image": true,
+      "color": false,
+      "emirate": false
+     }
+    },
+    {
+     "status": "ok",
+     "found": [
+      [
+       "color",
+       "text"
+      ],
+      [
+       "image",
+       "meta:og:image"
+      ],
+      [
+       "km",
+       "text"
+      ],
+      [
+       "posted",
+       "text"
+      ],
+      [
+       "price",
+       "ld:price"
+      ],
+      [
+       "seller_type",
+       "text"
+      ],
+      [
+       "title",
+       "ld:name"
+      ],
+      [
+       "transmission",
+       "text"
+      ]
+     ],
+     "has": {
+      "price": true,
+      "year": true,
+      "km": true,
+      "date": false,
+      "phone": false,
+      "image": true,
+      "color": false,
+      "emirate": false
+     }
+    }
+   ]
+  },
+  "mourjan": {
+   "pages": 1,
+   "ok": 0,
+   "blocked": 0,
+   "cards": 0,
+   "via_search": 0,
+   "status": [
+    404
+   ],
+   "card_sources": [],
+   "cards_with_price": 0,
+   "ad_reads": []
+  },
+  "autoae": {
+   "pages": 1,
+   "ok": 1,
+   "blocked": 0,
+   "cards": 8,
+   "via_search": 0,
+   "status": [
+    200
+   ],
+   "card_sources": [
+    "json"
+   ],
+   "cards_with_price": 8,
+   "ad_reads": [
+    {
+     "status": "ok",
+     "found": [
+      [
+       "color",
+       "text"
+      ],
+      [
+       "image",
+       "ld:image"
+      ],
+      [
+       "phone",
+       "tel"
+      ],
+      [
+       "price",
+       "ld:price"
+      ],
+      [
+       "seller_type",
+       "text"
+      ],
+      [
+       "title",
+       "ld:name"
+      ]
+     ],
+     "has": {
+      "price": true,
+      "year": true,
+      "km": false,
+      "date": false,
+      "phone": true,
+      "image": true,
+      "color": false,
+      "emirate": true
+     }
+    },
+    {
+     "status": "ok",
+     "found": [
+      [
+       "color",
+       "text"
+      ],
+      [
+       "image",
+       "ld:image"
+      ],
+      [
+       "phone",
+       "tel"
+      ],
+      [
+       "price",
+       "ld:price"
+      ],
+      [
+       "seller_type",
+       "text"
+      ],
+      [
+       "title",
+       "ld:name"
+      ],
+      [
+       "transmission",
+       "text"
+      ]
+     ],
+     "has": {
+      "price": true,
+      "year": true,
+      "km": false,
+      "date": false,
+      "phone": true,
+      "image": true,
+      "color": false,
+      "emirate": true
+     }
+    }
+   ]
+  },
+  "oneclickdrive": {
+   "pages": 3,
+   "ok": 3,
+   "blocked": 0,
+   "cards": 32,
+   "via_search": 0,
+   "status": [
+    200,
+    200,
+    200
+   ],
+   "card_sources": [
+    "json"
+   ],
+   "cards_with_price": 32,
+   "ad_reads": [
+    {
+     "status": "ok",
+     "found": [
+      [
+       "color",
+       "text"
+      ],
+      [
+       "image",
+       "meta:og:image"
+      ],
+      [
+       "inspected",
+       "text"
+      ],
+      [
+       "km",
+       "text"
+      ],
+      [
+       "phone",
+       "tel"
+      ],
+      [
+       "seller_type",
+       "text"
+      ],
+      [
+       "specs",
+       "text"
+      ],
+      [
+       "title",
+       "meta:og:title"
+      ],
+      [
+       "year",
+       "text"
+      ]
+     ],
+     "has": {
+      "price": false,
+      "year": true,
+      "km": true,
+      "date": false,
+      "phone": true,
+      "image": true,
+      "color": true,
+      "emirate": true
+     }
+    },
+    {
+     "status": "ok",
+     "found": [
+      [
+       "color",
+       "text"
+      ],
+      [
+       "image",
+       "meta:og:image"
+      ],
+      [
+       "inspected",
+       "text"
+      ],
+      [
+       "km",
+       "text"
+      ],
+      [
+       "phone",
+       "tel"
+      ],
+      [
+       "seller_type",
+       "text"
+      ],
+      [
+       "specs",
+       "text"
+      ],
+      [
+       "title",
+       "meta:og:title"
+      ],
+      [
+       "updated",
+       "text"
+      ],
+      [
+       "year",
+       "text"
+      ]
+     ],
+     "has": {
+      "price": false,
+      "year": true,
+      "km": true,
+      "date": true,
+      "phone": true,
+      "image": true,
+      "color": true,
+      "emirate": true
+     }
+    }
+   ]
+  },
+  "_samples": 137
+ }
+}
