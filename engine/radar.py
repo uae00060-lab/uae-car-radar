@@ -318,18 +318,26 @@ def run_round(a, key):
 
     # 1) find ads
     plan = []  # (request, card)
+    funnel = {}  # counts only, published as data/last_run.json to explain each round
     for req in reqs:
         plats = [p for p in (req.get("platforms") or [p for p in PLATFORMS if p != "mourjan"]) if p in PLATFORMS]
         cards, samples = discover(req, plats, diag)
         analytics.add_samples(eng["market"], req["id"], samples, today)
         for k, c in cards.items():
+            st = funnel.setdefault(c["platform"], {"cards": 0, "known": 0, "skipped_recently": 0, "card_rejected": 0, "planned": 0, "states": {}, "excluded_by": {}})
+            st["cards"] += 1
             if k in listings:
+                st["known"] += 1
                 continue
             sk = eng["skipped"].get(k)
             if sk and sk.get("request_id") == req["id"] and sk.get("at", "") > (now - dt.timedelta(days=SKIP_DAYS)).isoformat():
+                st["skipped_recently"] += 1
                 continue
             if card_ok(req, c):
                 plan.append((req, {**c, "id": k}))
+                st["planned"] += 1
+            else:
+                st["card_rejected"] += 1
     # new ads platform by platform in turn, so one busy site cannot take every slot
     cap = MAX_OPEN[a.mode]
     queues = {}
@@ -400,6 +408,11 @@ def run_round(a, key):
             st, note = "unverified", "تعذّر فتح صفحة الإعلان؛ البيانات من صفحة النتائج"
         else:
             st, note = state_of(checks, plat, bool(prev))
+        fs = funnel.setdefault(plat, {"cards": 0, "known": 0, "skipped_recently": 0, "card_rejected": 0, "planned": 0, "states": {}, "excluded_by": {}})
+        fs["states"][st] = fs["states"].get(st, 0) + 1
+        for f, c in checks.items():
+            if c == "mismatched":
+                fs["excluded_by"][f] = fs["excluded_by"].get(f, 0) + 1
         if st == "excluded" and not prev:
             eng["skipped"][item["id"]] = {"request_id": req["id"], "at": stamp, "reason": note}
             continue
@@ -517,6 +530,12 @@ def run_round(a, key):
     run["seconds"] = round(time.time() - t0)
     eng["runs"].insert(0, run)
     finish(eng, key)
+    with open(os.path.join(ROOT, "data", "last_run.json"), "w") as f:  # public: numbers only, no criteria or ads
+        json.dump({"at": stamp, "mode": a.mode, "requests": len(reqs), "seconds": run["seconds"], "opened": run["opened"],
+                   "saved_new": len(new_ids), "drops": len(drops), "sold": len(sold), "listings_total": len(listings),
+                   "platforms": {p: {**{k: v for k, v in diag.get(p, {}).items() if k != "status"}, "http": diag.get(p, {}).get("status"),
+                                     **{k: v for k, v in opened_stats.get(p, {}).items() if k != "fields"}, **funnel.get(p, {})}
+                                 for p in set(diag) | set(opened_stats) | set(funnel)}}, f, ensure_ascii=False, indent=1)
     log("round", id=run_id, mode=a.mode, requests=len(reqs), found=run["found"], opened=run["opened"], new=run["new"],
         new_unverified=run["new_unverified"], drops=len(drops), sold=len(sold), seconds=run["seconds"],
         platforms={p: {k: v for k, v in d.items() if k != "fields"} for p, d in run["platforms"].items()},
