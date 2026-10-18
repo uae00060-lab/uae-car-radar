@@ -196,21 +196,21 @@ def read_ad(item, today, debug=None):
         return "sold", {}
     g = lambda k: (f.get(k) or (None, None))[0]
     src = {k: v[1] for k, v in f.items() if isinstance(v, tuple)}
-    price = to_num(g("price"))
-    price = int(price) if price and 1500 <= price <= 5_000_000 else None
-    year = to_num(g("year"))
-    if not year:
-        m = re.search(r"\b(19[89]\d|20[0-3]\d)\b", str(g("title") or ""))
-        year = float(m[1]) if m else None
-    year = int(year) if year and 1980 <= year <= 2030 else None
-    km = to_num(g("km"))
-    km = int(km) if km is not None and 0 <= km <= 1_500_000 else None
+    # Each value must be plausible; otherwise the next source is used (title, then the results card).
+    card = item if item.get("src") == "json" else {}
+    price = next((int(x) for x in (to_num(g("price")), to_num(card.get("price"))) if x and 1500 <= x <= 5_000_000), None)
+    title_year = re.search(r"\b(19[89]\d|20[0-3]\d)\b", str(g("title") or ""))
+    year = next((int(x) for x in (to_num(g("year")), float(title_year[1]) if title_year else None, to_num(card.get("year")))
+                 if x and 1980 <= x <= today.year + 1), None)
+    km = next((int(x) for x in (to_num(g("km")), to_num(card.get("km"))) if x is not None and 0 <= x <= 1_500_000), None)
+    if price and not to_num(g("price")):
+        src["price"] = "card"
     image = g("image")
     image = image if isinstance(image, str) and image.startswith("http") else None
     st = str(g("seller_type") or "").lower()
     seller_type = "dealer" if st in ("dealer", "showroom", "معرض") else "owner" if st in ("owner", "private seller", "by owner", "مالك", "بائع خاص") else None
     loc = g("location")
-    loc = loc if isinstance(loc, str) else None
+    loc = loc if isinstance(loc, str) and (emirate_of(loc) or "," in loc) and len(loc) <= 120 else None
     date, kind = None, None
     for key, k in (("posted", "posted"), ("updated", "updated")):
         d = epoch_or_date(g(key), today)
@@ -604,6 +604,9 @@ def diagnose(a):
     for plat in ("dubizzle", "mourjan"):
         q = search_query(plat, req)
         out["_search"][plat] = {"query": q, **fetch.search_debug(q)}
+    mj = fetch.get("https://www.mourjan.com/ae/")
+    out["_mourjan_home"] = {"status": mj.status, "links": sorted({h for h in re.findall(r'href="([^"]+)"', mj.html)
+                                                                  if re.search(r"car|toyota|vehicle|motor|سيار", h, re.I)})[:60]}
     bp = fetch.get(search_urls("dubizzle", req)[0])
     out["_dubizzle_page"] = {"status": bp.status, "blocked": bp.blocked, "bytes": len(bp.html),
                              "head": re.sub(r"\s+", " ", extract.text_of(bp.html))[:300]}
