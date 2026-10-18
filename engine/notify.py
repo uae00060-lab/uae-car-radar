@@ -172,14 +172,27 @@ REQUIRED = {"telegram": ("TELEGRAM_BOT_TOKEN", "TELEGRAM_CHAT_ID"), "whatsapp": 
 
 def gmail_control_check():
     """Sign in with an account that does not exist, to tell bad details from a blocked server."""
-    try:
-        with smtplib.SMTP_SSL("smtp.gmail.com", 465, context=ssl.create_default_context(), timeout=30) as s:
-            s.login("radar.control.check.000@gmail.com", "aaaabbbbccccdddd")
-    except smtplib.SMTPAuthenticationError:
-        return "Gmail يرد طبيعيًا من الخادم، فالمشكلة في بيانات الدخول المحفوظة"
-    except Exception as e:  # noqa: BLE001
-        return f"Gmail يغلق الاتصال من خادم GitHub أيضًا مع حساب تجريبي ({type(e).__name__})"
-    return ""
+    outcomes = []
+    for port, method in ((465, "PLAIN"), (587, "PLAIN"), (465, "LOGIN")):
+        try:
+            if port == 465:
+                s = smtplib.SMTP_SSL("smtp.gmail.com", 465, context=ssl.create_default_context(), timeout=30)
+            else:
+                s = smtplib.SMTP("smtp.gmail.com", 587, timeout=30)
+                s.starttls(context=ssl.create_default_context())
+            with s:
+                s.ehlo()
+                auth = s.esmtp_features.get("auth", "")
+                user, pw = "radar.control.check.000@gmail.com", "aaaabbbbccccdddd"
+                s.user, s.password = user, pw
+                s.auth(method, s.auth_plain if method == "PLAIN" else s.auth_login)
+        except smtplib.SMTPAuthenticationError as e:
+            outcomes.append(f"{port}/{method}: رفض طبيعي {e.smtp_code}")
+        except Exception as e:  # noqa: BLE001
+            outcomes.append(f"{port}/{method}: {type(e).__name__} [{auth if 'auth' in dir() else ''}]")
+    if any("رفض طبيعي" in o for o in outcomes):
+        return "Gmail يرد طبيعيًا من الخادم، فالمشكلة في بيانات الدخول المحفوظة (" + " | ".join(outcomes) + ")"
+    return "Gmail يغلق الاتصال من خادم GitHub أيضًا مع حساب تجريبي (" + " | ".join(outcomes) + ")"
 
 
 def report_test(result):
