@@ -81,12 +81,14 @@ def whatsapp(text):
 
 
 def email(subject, text, pdf=None, pdf_name="report.pdf"):
-    user = (env("SMTP_USER") or "").strip()
-    pw = re.sub(r"\s", "", env("SMTP_PASSWORD") or "")  # Gmail shows app passwords in groups of four
+    # Copied from an Arabic page, values often carry invisible direction marks; Gmail drops the
+    # connection on them. App passwords are 16 letters shown in groups of four.
+    user = re.sub(r"[^\x21-\x7e]", "", env("SMTP_USER") or "")
+    pw = re.sub(r"[^A-Za-z0-9]", "", env("SMTP_PASSWORD") or "")
     if not user or not pw:
         return "غير مفعّل"
     msg = EmailMessage()
-    msg["Subject"], msg["From"], msg["To"] = subject, user, (env("MAIL_TO") or "").strip() or user
+    msg["Subject"], msg["From"], msg["To"] = subject, user, re.sub(r"[^\x21-\x7e]", "", env("MAIL_TO") or "") or user
     msg.set_content(text)
     msg.add_alternative(f'<div dir="rtl" style="font-family:Tahoma,Arial,sans-serif;white-space:pre-wrap;line-height:1.6">'
                         f'{text.replace("&", "&amp;").replace("<", "&lt;")}</div>', subtype="html")
@@ -117,6 +119,11 @@ def email(subject, text, pdf=None, pdf_name="report.pdf"):
         return "أُرسل"
     except smtplib.SMTPAuthenticationError:
         return "فشل: Gmail رفض الدخول (تحقق من SMTP_USER وكلمة مرور التطبيق في SMTP_PASSWORD)"
+    except smtplib.SMTPServerDisconnected as e:
+        if stage[0] == "تسجيل الدخول":
+            hint = "" if len(pw) == 16 else f"؛ كلمة مرور التطبيق يجب أن تكون 16 حرفًا والموجود {len(pw)}"
+            return f"فشل: Gmail أغلق الاتصال عند تسجيل الدخول (تحقق من SMTP_USER وSMTP_PASSWORD{hint})"
+        return f"فشل أثناء {stage[0]} (SMTPServerDisconnected: {e})"
     except Exception as e:  # noqa: BLE001
         reason = re.sub(r"\S+@\S+", "…", str(e))[:120]  # the log is public: never echo an address
         return f"فشل أثناء {stage[0]} ({type(e).__name__}{': ' + reason if reason else ''})"
