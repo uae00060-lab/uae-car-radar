@@ -402,13 +402,46 @@ def ad_page(html, url, ad_id):
         if m:
             found["title"] = (unescape(m[1]).strip(), "title")
     avail = ""
-    for blob in blobs:
-        for d in walk(blob):
-            a = d.get("availability")
-            if isinstance(a, str):
-                avail = a.lower()
+    for obj in primary_schema(blobs, url, ad_id):
+        offer = obj.get("offers")
+        candidates = [obj] + ([offer] if isinstance(offer, dict) else offer if isinstance(offer,list) else [])
+        for candidate in candidates:
+            if isinstance(candidate,dict) and candidate.get("availability"): avail = str(candidate["availability"]).lower()
     if avail:
-        found["_sold"] = any(x in avail for x in ("soldout", "outofstock", "discontinued"))
+        found["_sold"] = "soldout" in avail
+        found["_unavailable"] = any(x in avail for x in ("outofstock","discontinued"))
+        found["_reserved"] = "reserved" in avail
     else:
-        found["_sold"] = "price" not in found and bool(SOLD.search(text[:20000]))
+        from identity import AdText
+        ad_text=AdText(); ad_text.feed(html)
+        own_text="".join(ad_text.parts)
+        found["_sold"] = "price" not in found and bool(SOLD.search(own_text[:20000]))
+        title = str((found.get("title") or ("",))[0])
+        found["_reserved"] = bool(re.search(r"^(?:reserved\b|محجوز\b|تم حجز السيارة)",title,re.I))
     return found
+
+
+def mourjan_model_url(html, url, model):
+    """Use the live category's model IDs; they differ by manufacturer."""
+    from common import slug
+    from urllib.parse import urlparse, parse_qs, urlencode, urlunparse
+    class Options(HTMLParser):
+        def __init__(self): super().__init__(); self.depth=0; self.value=None; self.label=""; self.options=[]
+        def handle_starttag(self,tag,attrs):
+            d=dict(attrs)
+            if d.get("id") == "_cm": self.depth=1; return
+            if self.depth and tag == "div":
+                self.depth+=1
+                if d.get("data-value"): self.value=d["data-value"]; self.label=""
+        def handle_data(self,data):
+            if self.depth and self.value: self.label+=data
+        def handle_endtag(self,tag):
+            if self.depth and tag == "div":
+                if self.value: self.options.append((self.value,self.label)); self.value=None
+                self.depth-=1
+    parser=Options(); parser.feed(html)
+    for value,label in parser.options:
+        if value != "0" and slug(label) == slug(model):
+            u=urlparse(url); q=parse_qs(u.query); q["cm"]=[value]
+            return urlunparse(u._replace(query=urlencode(q,doseq=True)))
+    return None

@@ -127,8 +127,8 @@ class Engine(unittest.TestCase):
         self.assertIsNone(L["dubizzle-0e178fe896f34a32b34968b5266f36dd"]["fair"])
         self.assertEqual(L["dubizzle-0e178fe896f34a32b34968b5266f36dd"]["rating"], "unknown")
         self.assertEqual(L["dubizzle-8507a50ad04143bebd4191dbc57586e8"]["urgency"]["level"] in ("medium", "high"), True)
-        self.assertEqual(len(eng["reports"]), 1)
-        self.assertTrue(os.path.exists(os.path.join(self.tmp, eng["reports"][0]["file"])))
+        self.assertEqual(len(eng["reports"]), 0)  # manual searches never create reports
+        self.assertFalse(os.path.exists(radar.REPORTS_DIR))
         # second round: price drop is detected and nothing is duplicated
         PAGES["https://uae.dubizzle.com" + DZ1] = ld_ad("Toyota Yaris 2022 GCC Specs", 24900, 2022, 132000, d(10))
         for l in L.values():
@@ -204,6 +204,35 @@ class Engine(unittest.TestCase):
     def test_wrong_key(self):
         with self.assertRaises(store.BadPassphrase):
             store.read_json(radar.USER_FILE, "wrong", {})
+
+    def test_manual_search_never_calls_pdf_renderer(self):
+        with patch.object(radar.report,"to_pdf") as pdf:
+            radar.run_round(self.args(),KEY)
+            pdf.assert_not_called()
+        self.assertEqual(store.read_json(radar.ENGINE_FILE,KEY,{})["reports"],[])
+
+    def test_scheduled_report_is_created_only_when_absent(self):
+        with patch.object(radar,"load_presence",return_value=False):
+            radar.run_round(self.args("scheduled"),KEY)
+        eng=store.read_json(radar.ENGINE_FILE,KEY,{})
+        self.assertEqual(len(eng["reports"]),1)
+        self.assertEqual(eng["reports"][0]["mode"],"scheduled")
+
+    def test_weekly_review_covers_saved_search_without_favorites(self):
+        radar.run_round(self.args(),KEY)
+        eng=store.read_json(radar.ENGINE_FILE,KEY,{})
+        target=next(iter(eng["listings"]))
+        args=self.args();args.weekly=True
+        def observation(item,today):
+            return ("gone",{}) if item["ad_id"]==eng["listings"][target]["ad_id"] else ("failed",{})
+        with patch.object(radar,"read_ad",side_effect=observation), patch.object(radar.report,"to_pdf") as pdf:
+            radar.watch(args,KEY);pdf.assert_not_called()
+        updated=store.read_json(radar.ENGINE_FILE,KEY,{})
+        self.assertEqual(updated["listings"][target]["availability"],"unavailable")
+        self.assertEqual(len(updated["alerts"]),1)
+        self.assertEqual(updated["runs"][0]["opened"],len(eng["listings"]))
+        self.assertTrue(updated["last_weekly_review"])
+        self.assertEqual(len(updated["reports"]),0)
 
 
 class Parts(unittest.TestCase):

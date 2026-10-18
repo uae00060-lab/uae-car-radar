@@ -22,6 +22,8 @@ from concurrent.futures import ThreadPoolExecutor
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
+from progress import Progress
+import lifecycle
 import analytics  # noqa: E402
 import extract  # noqa: E402
 import fetch  # noqa: E402
@@ -30,7 +32,7 @@ import report  # noqa: E402
 import store  # noqa: E402
 from common import (COLOR_AR, EMIRATE_AR, FIELD_AR, NO_DATE_PLATFORMS, PLATFORMS, ad_identity, clean_url,  # noqa: E402
                     color_of, date_in_path, emirate_of, has_terms, model_terms, now_uae, parse_date, slug,
-                    to_num, window_start, validate_request, request_view)
+                    to_num, window_start, validate_request, request_view, MOURJAN_BRANDS, MOURJAN_ALIASES)
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 USER_FILE = os.path.join(ROOT, "data", "user.enc")
@@ -57,8 +59,6 @@ def log(msg, **kw):
 
 def search_urls(plat, req, market=False):
     make, model = slug(req.get("make")), slug(req.get("model"))
-    if not make:
-        return []
     path = f"{make}/{model}" if model else make
     if plat == "dubizzle":
         q = {}
@@ -68,7 +68,7 @@ def search_urls(plat, req, market=False):
             q["year__gte"] = int(req["year_from"]) - (1 if market else 0)
         if req.get("year_to"):
             q["year__lte"] = int(req["year_to"]) + (1 if market else 0)
-        return [f"https://uae.dubizzle.com/motors/used-cars/{path}/" + ("?" + urllib.parse.urlencode(q) if q else "")]
+        return [("https://uae.dubizzle.com/motors/used-cars/" + (path + "/" if path else "")) + ("?" + urllib.parse.urlencode(q) if q else "")]
     if plat == "yallamotor":
         return [f"https://uae.yallamotor.com/used-cars/{path}"]
     if plat == "dubicars":
@@ -76,29 +76,27 @@ def search_urls(plat, req, market=False):
     if plat == "carswitch":
         return [f"https://carswitch.com/uae/used-cars/{path}"]
     if plat == "autoae":
-        return [f"https://auto.ae/sale/car/all/{path}/"]
+        return [("https://auto.ae/sale/car/all/" + (path + "/" if path else ""))]
     if plat == "oneclickdrive":
+        if not make: return []  # discover through public search instead of guessing a URL
         name = f"{make}-{model}" if model else make
         return [f"https://www.oneclickdrive.com/buy-{name}-used-cars-{c}" for c in ("dubai", "abu-dhabi", "sharjah")]
     if plat == "opensooq":
         return [f"https://ae.opensooq.com/en/cars/cars-for-sale/{path}"]
     if plat == "mourjan":
-        if not make:
-            return []
-        # Public form values observed on the Toyota category, not guessed URL slugs.
-        toyota_models = {"yaris": 250, "camry": 205, "corolla": 209, "land-cruiser": 223, "prado": 2209, "fortuner": 2205}
-        q = {}
-        if make == "toyota" and model in toyota_models: q["cm"] = toyota_models[model]
-        for field, name in (("year_from", "mny"), ("year_to", "mxy"), ("price_max", "mxp")):
-            if req.get(field) and not market: q[name] = int(req[field])
-        return [f"https://www.mourjan.com/ae/{make}/for-sale/" + ("?" + urllib.parse.urlencode(q) if q else "")]
+        brand = MOURJAN_ALIASES.get(make, make)
+        brands = [brand if brand in MOURJAN_BRANDS else "other-autos"] if make else list(MOURJAN_BRANDS)
+        q = {name: int(req[field]) for field,name in (("year_from","mny"),("year_to","mxy"),("price_max","mxp")) if req.get(field) and not market}
+        if make and brand not in MOURJAN_BRANDS: q["q"] = " ".join(x for x in (make, model) if x)
+        return [f"https://www.mourjan.com/ae/{brand}/for-sale/" + ("?" + urllib.parse.urlencode(q) if q else "") for brand in brands if brand in MOURJAN_BRANDS]
     return []
+
 
 
 def search_queries(plat, req):
     """Search-engine queries that land on individual ads of this platform."""
     make, model = slug(req.get("make")), slug(req.get("model"))
-    words = f"{make} {model}".replace("-", " ").strip()
+    words = f"{make} {model}".replace("-", " ").strip() or "used cars UAE"
     years = []
     if req.get("year_from") and req.get("year_to") and int(req["year_to"]) - int(req["year_from"]) <= 4:
         years = [str(y) for y in range(int(req["year_from"]), int(req["year_to"]) + 1)]
@@ -128,7 +126,7 @@ def card_ok(req, c):
     return has_terms(text, model_terms(req))
 
 
-def discover(req, plats, diag):
+def discover(req, plats, diag, progress=None):
     """All ad cards for one request across its platforms, plus market samples from structured cards."""
     cards, samples = {}, []
     for plat in plats:
@@ -136,14 +134,24 @@ def discover(req, plats, diag):
         got = 0
         urls = search_urls(plat, req) + (search_urls(plat, req, market=True) if plat == "dubizzle" and req.get("price_max") else [])
         for url in urls:
-            page = fetch.get(url)
+            if progress: progress.update("discover", progress.discovery_done, progress.discovery_total)
+            page = fetch.get(url, timeout=12, retries=0) if plat == "mourjan" and not req.get("make") else fetch.get(url)
             d["pages"] += 1
+            if progress: progress.discovery_done += 1
             d["status"].append(page.status)
             if page.blocked:
                 d["blocked"] += 1
             if not page.ok:
                 continue
             d["ok"] += 1
+            if plat == "mourjan" and req.get("model"):
+                refined = extract.mourjan_model_url(page.html, url, req["model"])
+                if refined:
+                    filtered = fetch.get(refined)
+                    d["pages"] += 1; d["status"].append(filtered.status)
+                    if progress: progress.discovery_total+=1; progress.discovery_done+=1
+                    if filtered.ok: page = filtered; d["ok"] += 1
+                    elif filtered.blocked: d["blocked"] += 1
             base = "{0.scheme}://{0.netloc}".format(urllib.parse.urlparse(page.final_url))
             for c in extract.results(page.html, base, plat):
                 key = f"{plat}-{c['ad_id']}"
@@ -190,6 +198,8 @@ def read_ad(item, today, debug=None):
     if not page.ok:
         return "failed", {"_why": page.error or ("blocked" if page.blocked else f"HTTP {page.status}")}
     p2, id2 = ad_identity(page.final_url)
+    if id2 != item["ad_id"] and re.search(r"(?:login|signin|sign-in|auth|captcha)", urllib.parse.urlparse(page.final_url).path, re.I):
+        return "failed", {"_why": "authentication required"}
     if id2 != item["ad_id"]:  # redirected to a results page: the ad was removed
         return "gone", {}
     f = extract.ad_page(page.html, page.final_url, item["ad_id"])
@@ -202,6 +212,8 @@ def read_ad(item, today, debug=None):
             r"post|publish|added|updated|date|ago|AED|price|km|kilomet|mileage|year|نشر|تاريخ|منذ|درهم|السعر|كم", ln, re.I) and len(ln.strip()) < 140][:40]
     if f.get("_sold"):
         return "sold", {}
+    if f.get("_unavailable"):
+        return "gone", {}
     g = lambda k: (f.get(k) or (None, None))[0]
     src = {k: v[1] for k, v in f.items() if isinstance(v, tuple)}
     # Each value must be plausible; otherwise the next source is used (title, then the results card).
@@ -240,6 +252,7 @@ def read_ad(item, today, debug=None):
         phone = None  # a sample number in the page template, or the platform's own office line
     return "ok", {
         "title": str(g("title") or item.get("title") or "")[:160], "price": price,
+        "availability": "reserved" if f.get("_reserved") else "available",
         "price_source": src.get("price"), "price_currency": "AED" if price else None, "price_version": 3, "year": year, "km": km,
         "color": color_of(str(g("color") or "")), "emirate": emirate_of(" ".join(str(x or "") for x in (loc, g("title"), item["url"]))),
         **{k: g(k) for k in ("vin", "vin_source", "vin_status", "phone_source", "phone_status", "identity_version")},
@@ -359,6 +372,9 @@ def run_round(a, key):
             return
     invalid = [validate_request(r) for r in reqs if validate_request(r)]
     reqs = [r for r in reqs if not validate_request(r)]
+    progress=Progress(run_id)
+    progress.discovery_total=sum(len(search_urls(p,r)) + (len(search_urls(p,r,market=True)) if p=="dubizzle" and r.get("price_max") else 0) for r in reqs for p in (r.get("platforms") or list(PLATFORMS)) if p in PLATFORMS)
+    progress.update("discover",0,progress.discovery_total,force=True)
     listings = eng["listings"]
     diag, opened_stats = {}, {}
     new_ids, drops, sold = [], [], []
@@ -370,7 +386,7 @@ def run_round(a, key):
     funnel = {}  # counts only, published as data/last_run.json to explain each round
     for req in reqs:
         plats = [p for p in (req.get("platforms") or list(PLATFORMS)) if p in PLATFORMS]
-        cards, samples = discover(req, plats, diag)
+        cards, samples = discover(req, plats, diag, progress)
         # Price estimates use opened ad evidence, never unverified result-card prices/years.
         model_key = slug(req.get("make")) + "/" + slug(req.get("model"))
         if eng.setdefault("market_models", {}).get(req["id"]) != model_key:
@@ -430,7 +446,10 @@ def run_round(a, key):
 
     # 2) read the ad pages
     with ThreadPoolExecutor(max_workers=6) as pool:
-        results = list(pool.map(lambda it: read_ad(it[1], today), order))
+        results=[]
+        progress.update("read",0,len(order),force=True)
+        for result in pool.map(lambda it: read_ad(it[1], today), order):
+            results.append(result); progress.update("read",len(results),len(order))
 
     # 3) decide
     for (req, item), (status, v) in zip(order, results):
@@ -438,9 +457,10 @@ def run_round(a, key):
         ps = opened_stats.setdefault(plat, {"opened": 0, "read_ok": 0, "read_failed": 0, "fields": {}})
         ps["opened"] += 1
         prev = listings.get(item["id"])
+        events = lifecycle.observe(eng, prev, status, v, stamp) if prev else []
         if status in ("sold", "gone"):
-            if prev and prev.get("state") != "sold":
-                prev.update({"state": "sold", "note": "الإعلان مباع أو محذوف", "last_checked": stamp})
+            if prev and any(c["field"]=="availability" for e in events for c in e["changes"]):
+                prev.update({"state": "sold", "last_checked": stamp})
                 sold.append(prev)
             continue
         if status == "failed":
@@ -515,7 +535,7 @@ def run_round(a, key):
             "title": v["title"], "price": v["price"], "price_source": v.get("price_source"), "price_currency": "AED", "price_version": 3, "year": v["year"], "mileage": v["km"], **extra,
             **{k: v.get(k) for k in ("vin", "vin_source", "vin_status", "phone_source", "phone_status", "identity_version")},
             "location": v["location"], "phone": v["phone"], "seller_name": v["seller_name"], "seller_type": v["seller_type"],
-            "specs": v["specs"], "transmission": v["transmission"], "image": v["image"],
+            "availability": v.get("availability", "available"), "specs": v["specs"], "transmission": v["transmission"], "image": v["image"],
             "date": (v["date"] or today).isoformat(), "date_kind": v["date_kind"] or "first_seen",
             "posted": v["date"].isoformat() if v["date"] and v["date_kind"] == "posted" else None,
             "state": st, "note": note, "checks": checks, "first_seen": stamp, "last_seen": stamp,
@@ -549,8 +569,9 @@ def run_round(a, key):
         l.update({"fair": fp, "rating": rating, "dev": round(dev, 4) if dev is not None else None,
                   "urgency": {"score": score, "level": level, "why": why}})
 
+    progress.update("save", len(order), len(order), force=True)
     # 5) report
-    live = lambda l: bool(l.get("price")) and l.get("price_version") == 3 and l.get("price_currency") == "AED" and l.get("state") in ("verified", "approx", "unverified") and (marks.get(l["id"]) or {}).get("status") not in ("dismissed", "purchased")
+    live = lambda l: bool(l.get("price")) and l.get("price_version") == 3 and l.get("price_currency") == "AED" and l.get("availability", "available") == "available" and l.get("state") in ("verified", "approx", "unverified") and (marks.get(l["id"]) or {}).get("status") not in ("dismissed", "purchased")
     full = a.mode == "manual"
     groups, cur_ver, cur_cand = [], 0, 0
     for req in reqs:
@@ -565,7 +586,7 @@ def run_round(a, key):
                     continue
                 rows.append(dict(l, _new=l["id"] in new_ids))
         if not (full or first):  # later scheduled rounds: what is new or changed price
-            fresh = set(new_ids) | {d["id"] for d in drops}
+            fresh = set(new_ids) | {d["id"] for d in drops} | {e["listing_id"] for e in eng.get("alerts",[]) if e["at"]==stamp}
             rows = [l for l in rows if l["id"] in fresh]
         ver = [l for l in rows if l["state"] == "verified"]
         cand = [l for l in rows if l["state"] in ("unverified", "approx")]
@@ -592,13 +613,19 @@ def run_round(a, key):
     profile = user.get("profile") or {}
     os.makedirs(WORK, exist_ok=True)
     pdf_plain = os.path.join(WORK, f"{run_id}.pdf")
-    have_pdf = bool(reqs) and report.to_pdf(report.render_html(run, groups, drops, now, start, profile, sorted(diag)),
+    wants_pdf = a.mode == "scheduled" and bool(reqs)
+    have_pdf = wants_pdf and report.to_pdf(report.render_html(run, groups, drops, now, start, profile, sorted(diag)),
                                             os.path.join(WORK, f"{run_id}.html"), pdf_plain)
-    if not have_pdf and reqs:
+    if wants_pdf and not have_pdf:
         run["warning"] = (run.get("warning", "") + "؛ تعذّر إنشاء PDF").strip("؛ ")
     morning = now.hour < 15
     full_text = report.summary_text(run, groups, drops, now, start, SITE, short=False)
     short_text = report.summary_text(run, groups, drops, now, start, SITE, short=True)
+    round_events=[e for e in eng.get("alerts",[]) if e["at"]==stamp]
+    run["changes"]=len(round_events)
+    if round_events:
+        change_text=lifecycle.message(round_events,SITE)
+        full_text += "\n\n"+change_text; short_text += "\n\n"+change_text
     if have_pdf:
         os.makedirs(REPORTS_DIR, exist_ok=True)
         with open(pdf_plain, "rb") as f:
@@ -630,46 +657,51 @@ def run_round(a, key):
 
 
 def watch(a, key):
-    """Re-read the ads you follow; alert at once on a price drop."""
-    now = now_uae()
-    today, stamp = now.date(), now.isoformat(timespec="seconds")
-    user, eng = load_all(key)
-    marks = marks_of(user)
-    reqs = {r["id"]: r for r in (user.get("requests") or [])}
-    targets = [l for l in eng["listings"].values()
-               if l.get("state") not in ("sold", "excluded") and l.get("request_id") in reqs
-               and ((marks.get(l["id"]) or {}).get("favorite") or (marks.get(l["id"]) or {}).get("status") in FOLLOWING)]
-    targets = targets[:MAX_OPEN["watch"]]
-    if not targets:
-        log("watch", followed=0)
-        return
+    """Weekly review of saved searches, or an explicit review of followed cars. No PDF."""
+    now=now_uae(); today=now.date(); stamp=now.isoformat(timespec="seconds")
+    user,eng=load_all(key); marks=marks_of(user)
+    reqs={r["id"]:r for r in user.get("requests",[]) if r.get("active",True)}
+    weekly=getattr(a,"weekly",False)
+    targets=[l for l in eng["listings"].values() if l.get("state")!='excluded' and any(r in reqs for r in l.get("request_ids",[l.get("request_id")])) and (weekly or (marks.get(l["id"]) or {}).get("favorite") or (marks.get(l["id"]) or {}).get("status") in FOLLOWING) and (marks.get(l["id"]) or {}).get("status") not in ('dismissed','purchased')]
+    targets.sort(key=lambda l:l.get('last_reviewed') or '')
+    total=len(targets); targets=targets[:100]
+    events=[]; drops=[]; failed=0
     with ThreadPoolExecutor(max_workers=6) as pool:
-        res = list(pool.map(lambda l: read_ad({"url": l["url"], "ad_id": l["ad_id"], "platform": l["platform"]}, today), targets))
-    drops = []
-    for l, (status, v) in zip(targets, res):
-        if status in ("sold", "gone"):
-            l.update({"state": "sold", "note": "الإعلان مباع أو محذوف", "last_checked": stamp})
+        res=list(pool.map(lambda l:read_ad({"url":l["url"],"ad_id":l["ad_id"],"platform":l["platform"]},today),targets))
+    for l,(status,v) in zip(targets,res):
+        events += lifecycle.observe(eng,l,status,v,stamp)
+        l['last_reviewed']=stamp
+        if status!='ok':
+            if status=='failed': failed+=1
             continue
-        if status != "ok":
-            continue
-        l["last_checked"] = stamp
-        l.update({k: v.get(k) for k in ("vin", "vin_source", "vin_status", "phone", "phone_source", "phone_status", "identity_version")})
-        if v["price"] and l.get("price") and v["price"] != l["price"]:
-            hist = list(l.get("price_history") or []) + [{"at": stamp, "price": v["price"]}]
-            d = analytics.price_drop(l["price"], v["price"])
-            if d:
-                drops.append({"id": l["id"], "name": report.car_name(l, reqs[l["request_id"]]), "from": l["price"],
-                              "to": v["price"], "pct": d[1], "url": l["url"], "at": stamp, "request_id": l["request_id"]})
-            l.update({"price": v["price"], "price_prev": l["price"], "price_changed_at": stamp, "price_history": hist[-30:]})
-    sent = None
-    if drops:
-        text = report.drop_alert_text(drops, SITE)
-        sent = notify.send_all("📉 تخفيض سعر على سيارة تتابعها", text, text)
-        eng["drops"] = (drops + eng["drops"])[:200]
-    eng["runs"].insert(0, {"id": "w" + now.strftime("%Y%m%d%H%M"), "at": stamp, "mode": "watch", "status": "done",
-                           "opened": len(targets), "price_drops": len(drops), "notify": sent})
-    finish(eng, key)
-    log("watch", followed=len(targets), drops=len(drops), notify=sent)
+        l['last_checked']=stamp
+        if v.get('price'):
+            if l.get('price') and v['price']!=l['price']:
+                old=l['price']; hist=list(l.get('price_history') or [])+[{"at":stamp,"price":v['price']}]
+                if v['price']<old: drops.append({"id":l['id'],"from":old,"to":v['price'],"at":stamp,"url":l['url']})
+                l.update(price_prev=old,price_changed_at=stamp,price_history=hist[-30:])
+            l.update(price=v['price'],price_version=3,price_currency='AED',price_source=v.get('price_source'))
+        else:
+            l.update(price=None,price_currency=None,price_version=3)
+        for k in ('vin','vin_source','vin_status','phone','phone_source','phone_status','identity_version','availability'):
+            l[k]=v.get(k)
+        for k in ('title','year','mileage','location'):
+            val=v.get('km' if k=='mileage' else k)
+            if val is not None: l[k]=val
+        if v.get('color'):l['color']=COLOR_AR.get(v['color'],v['color'])
+    reassess_saved(eng['listings'],list(reqs.values()),window_start(today),today)
+    for listing in eng['listings'].values():
+        if listing.get('state')=='sold': continue
+        assessments=list(listing.get('by_request',{}).values())
+        if assessments:
+            listing.update(min(assessments,key=lambda x:{'verified':0,'unverified':1,'approx':1,'excluded':2}.get(x['state'],3)))
+    sent=None
+    if events:
+        text=lifecycle.message(events,SITE)
+        sent=notify.send_all('تحديثات السيارات المحفوظة',text,text)
+    eng['last_weekly_review']=stamp if weekly else eng.get('last_weekly_review')
+    eng['runs'].insert(0,{"id":"w"+now.strftime('%Y%m%d%H%M'),"at":stamp,"mode":"watch","weekly":weekly,"status":"done","opened":len(targets),"changes":len(events),"price_drops":len(drops),"failed":failed,"deferred":max(0,total-len(targets)),"notify":sent})
+    finish(eng,key);log('watch',reviewed=len(targets),changes=len(events),failed=failed,notify=sent)
 
 
 def finish(eng, key):
@@ -726,6 +758,7 @@ def diagnose(a):
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("cmd", choices=["run", "watch", "diagnose"])
+    ap.add_argument("--weekly", action="store_true", help="review saved searches weekly")
     ap.add_argument("--mode", choices=["scheduled", "manual"], default="scheduled")
     ap.add_argument("--request", default="all")
     ap.add_argument("--run-id", default="")

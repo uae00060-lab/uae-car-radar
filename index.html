@@ -248,6 +248,30 @@ section.tab { gap:20px; }
 @media(prefers-reduced-motion:reduce) { .ad,.ph img { transition:none; } }
 
 .nav-icon { width:16px;height:16px;flex-shrink:0; }
+
+.ad.focus-card { outline:3px solid #36D5C1; box-shadow:0 0 0 7px #36D5C11A; }
+/* Navigation dock: generous type and a clear visual hierarchy. */
+nav.tabs { display:grid; grid-template-columns:repeat(7,minmax(0,1fr)); gap:5px; padding:7px; margin:0 0 18px; background:#fff; border:1px solid #ffffff38; border-radius:17px; box-shadow:0 8px 24px #030B1D14; overflow:visible; }
+nav.tabs button { display:flex; justify-content:center; align-items:center; gap:8px; padding:13px 8px; min-height:51px; margin:0; border:0; border-radius:11px; color:#66758C; font-size:13px; font-weight:700; background:transparent; white-space:nowrap; position:relative; transition:background .2s,color .2s,transform .2s; }
+nav.tabs button:hover { background:#F0F4FA; color:#0B1732; } nav.tabs button[aria-selected="true"] { background:#0B1732; color:#fff; box-shadow:0 4px 10px #0B173222; }
+nav.tabs .nav-icon { width:20px; height:20px; flex-shrink:0; opacity:1; } nav.tabs button[aria-selected="true"] .nav-icon { color:#36D5C1; } nav.tabs button::after { display:none; }
+nav.tabs .count { font-size:10px; padding:1px 6px; min-width:20px; margin:0; background:#E9EEF6; color:#52627D; border-radius:6px; } nav.tabs button[aria-selected="true"] .count { background:#36D5C120; color:#75E8D8; }
+.search-progress { display:flex; align-items:center; gap:25px; background:#fff; border:1px solid #DFE7F1; padding:24px 28px; border-radius:20px; box-shadow:0 10px 35px #0B173209; margin-top:22px; position:relative; overflow:hidden; }
+.search-progress::before { content:""; position:absolute; top:0; right:0; width:100%; height:3px; background:linear-gradient(90deg,#3D70F4,#36D5C1,#3D70F4); background-size:200% 100%; animation:progress-flow 3s linear infinite; }
+.progress-orbit { width:102px; height:102px; flex-shrink:0; border-radius:50%; padding:6px; background:conic-gradient(#1AB6A2 calc(var(--p)*1%),#EAF0F7 0); transition:background .5s; }
+.progress-orbit>div { background:#fff; border-radius:50%; height:100%; display:flex; flex-direction:column; justify-content:center; align-items:center; }.progress-orbit b { font-size:27px; color:#0B1732; line-height:1.3; }.progress-orbit small { font-size:12px; }.progress-orbit span { font-size:10px; color:#8090A6; }
+.progress-kicker { display:flex; align-items:center; gap:7px; color:#008C7D; font-size:10px; font-weight:700; letter-spacing:.05em; }.progress-kicker i { width:6px; height:6px; border-radius:50%; background:#1AB6A2; box-shadow:0 0 0 4px #36D5C11A; animation:progress-pulse 1.7s ease-in-out infinite; }
+.progress-copy h3 { font-size:18px; color:#0B1732; margin:4px 0; }.progress-copy p { font-size:12px; color:#6D7E95; margin:0 0 12px; display:flex; gap:16px; }.progress-time { color:#0B1732; }.progress-copy>small { display:block; margin-top:7px; font-size:9px; color:#93A0B2; }
+.progress-track { height:5px; border-radius:8px; background:#EDF2F8; overflow:hidden; }.progress-track i { display:block; height:100%; background:linear-gradient(90deg,#3D70F4,#26C9B3); border-radius:8px; transition:width .7s ease; }
+.progress-milestones { display:flex; justify-content:space-between; margin-top:8px; font-size:10px; color:#A1ADBD; }.progress-milestones .current { color:#0B1732; font-weight:700; }.progress-milestones .complete { color:#008C7D; }.progress-details { font-size:10px; color:#77879D; max-width:225px; }.progress-details summary { cursor:pointer; white-space:nowrap; }.progress-details ol { max-height:140px; overflow:auto; padding-inline-start:18px; }.search-spinner { display:inline-block; width:16px; height:16px; border:2px solid currentColor; border-left-color:transparent; border-radius:50%; animation:progress-spin .8s linear infinite; vertical-align:middle; flex-shrink:0; }
+@keyframes progress-spin { to { transform:rotate(360deg); } } @keyframes progress-flow { to { background-position:200% 0; } } @keyframes progress-pulse { 50% { opacity:.4; } }
+.availability-badge { display:flex; gap:10px; align-items:center; border:1px solid #DCE4EF; background:#F0F3F7; color:#526078; border-radius:10px; padding:10px 12px; }.availability-badge>span { font-size:23px; }.availability-badge b { font-size:12px; display:block; }.availability-badge small { display:block; font-size:9px; opacity:.8; }.availability-badge.reserved { background:#FFF4DA; color:#8B641F; border-color:#F0D9A2; }.availability-badge.uncertain { background:#EDF4FF; color:#4C6794; border-color:#D7E5FA; }
+.availability-sold .ph img,.availability-unavailable .ph img { filter:grayscale(1); opacity:.55; }.availability-sold .price,.availability-unavailable .price { color:#8794A8; text-decoration:line-through; }.availability-reserved { border-color:#E5CA8D; }.availability-sold,.availability-unavailable { background:#F6F8FB; border-style:dashed; }
+.review-summary { display:flex; justify-content:space-between; align-items:center; gap:15px; background:#E9F2F9; border-radius:15px; padding:20px; margin-bottom:20px; }.review-summary b { color:#0B1732; }.review-summary p { font-size:12px; color:#65778E; line-height:1.9; margin:5px 0 0; max-width:850px; }.alerts-list { display:grid; gap:12px; }.change-card { display:flex; gap:16px; padding:22px; border:1px solid #E0E7F0; border-radius:17px; background:#fff; }.change-card.unread { border-right:4px solid #1AB6A2; }.change-icon { width:40px; height:40px; background:#E9F7F4; color:#089B87; border-radius:12px; display:grid; place-items:center; font-size:22px; flex-shrink:0; }.change-heading { display:flex; justify-content:space-between; gap:12px; }.change-lines { margin:12px 0; display:grid; gap:7px; }.change-lines>div { display:flex; align-items:center; flex-wrap:wrap; gap:10px; font-size:12px; }.change-lines del { color:#9AA6B7; }.change-lines strong { color:#0B1732; }#repList { border:0; background:transparent; padding:0; }
+@media(max-width:1100px) and (min-width:701px) { nav.tabs { display:flex; overflow-x:auto; } nav.tabs button { flex:1 0 auto; padding-inline:15px; } }
+@media(max-width:700px) { nav.tabs { grid-template-columns:repeat(4,minmax(0,1fr)); border-radius:15px; gap:4px; padding:5px; margin-bottom:12px; } nav.tabs button { flex-direction:column; gap:5px; font-size:10px; padding:10px 2px; min-height:61px; }.tabs .count { position:absolute; top:5px; left:6px; font-size:8px; } .search-progress { padding:18px; gap:15px; flex-wrap:wrap; }.progress-orbit { width:76px; height:76px; }.progress-orbit b { font-size:22px; }.progress-copy { flex-basis:calc(100% - 100px); min-width:0; }.progress-copy h3 { font-size:14px; }.progress-copy p { font-size:10px; gap:8px; }.progress-milestones { font-size:8px; }.progress-details { width:100%; max-width:none; }.progress-copy>small { font-size:8px; }.review-summary { align-items:flex-start; flex-direction:column; }.change-card { padding:15px; gap:10px; }.change-heading { flex-direction:column; gap:4px; } }
+@media(prefers-reduced-motion:reduce) { .search-progress::before,.search-spinner,.progress-kicker i { animation:none; }.progress-track i { transition:none; } }
+
 </style>
 </head>
 <body>
@@ -267,6 +291,7 @@ section.tab { gap:20px; }
       <button role="tab" data-tab="compare" aria-selected="false"><svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 3v18m6-18v18M3 7h6m6 10h6M3 17h6m6-10h6"/></svg>المقارنة<span class="count" id="cCmp">0</span></button>
       <button role="tab" data-tab="deals" aria-selected="false"><svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m12 3 2.8 5.7 6.2.9-4.5 4.4 1.1 6.2-5.6-3-5.6 3 1.1-6.2L3 9.6l6.2-.9Z"/></svg>المتابعة<span class="count" id="cDeals">0</span></button>
       <button role="tab" data-tab="reqs" aria-selected="false"><svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="10.5" cy="10.5" r="6.5"/><path d="m16 16 5 5M8 10.5h5m-2.5-2.5v5"/></svg>طلبات البحث<span class="count" id="cReqs">0</span></button>
+      <button role="tab" data-tab="updates" aria-selected="false"><svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9M10 21h4"/></svg>التحديثات<span class="count" id="cAlerts">0</span></button>
       <button role="tab" data-tab="reports" aria-selected="false"><svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 3H6a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9Z"/><path d="M14 3v6h6M8 13h8m-8 4h5"/></svg>التقارير<span class="count" id="cReports">0</span></button>
       <button role="tab" data-tab="history" aria-selected="false"><svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>سجل الجولات</button>
       <button role="tab" data-tab="settings" aria-selected="false"><svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 7h16M4 17h16"/><circle cx="9" cy="7" r="3"/><circle cx="15" cy="17" r="3"/></svg>الإعدادات</button>
@@ -310,7 +335,7 @@ section.tab { gap:20px; }
       <input type="search" id="fText" placeholder="ابحث في العناوين والمواقع…" aria-label="بحث نصي">
       <select id="fReq" aria-label="الطلب"><option value="">كل الطلبات</option></select>
       <select id="fState" aria-label="درجة التأكد">
-        <option value="all">كل الإعلانات المسعّرة</option><option value="match">مطابقة لشروطك</option><option value="unverified">تحتاج تأكيدًا</option>
+        <option value="all">الإعلانات المتاحة</option><option value="unavailable">مباعة / غير متاحة</option><option value="reserved">محجوزة</option><option value="match">مطابقة لشروطك</option><option value="unverified">تحتاج تأكيدًا</option>
       </select>
       <select id="fRate" aria-label="تقييم السعر">
         <option value="">كل الأسعار</option><option value="deal">صفقات فقط (أقل من السوق)</option><option value="hot">بائع مستعجل</option>
@@ -346,7 +371,7 @@ section.tab { gap:20px; }
       <div class="row" style="justify-content:space-between"><h2 id="formTitle">طلب بحث جديد</h2><button type="button" class="ghost sm" id="rCancel">إغلاق</button></div>
       <div class="fields">
         <label>اسم الطلب<input id="rName" required></label>
-        <label>الشركة المصنّعة<input id="rMake" required dir="auto" placeholder="Toyota أو تويوتا"></label>
+        <label>الشركة المصنّعة<input id="rMake" dir="auto" placeholder="اتركه فارغًا لكل الماركات"></label>
         <label>الطراز<input id="rModel" dir="auto" placeholder="Yaris أو يارس"></label>
         <label>الفئة أو كلمات إضافية<input id="rKeys" dir="auto" placeholder="اختياري"></label>
         <label>الموديل من<input id="rYf" type="number" min="1990" max="2030" inputmode="numeric" placeholder="أي سنة"></label>
@@ -358,7 +383,7 @@ section.tab { gap:20px; }
       </div>
       <div class="chips" id="rPlats"></div>
       <div class="chips"><label><input type="checkbox" id="rSched"> جولتان يوميًا: 10 صباحًا و 8 مساءً بتوقيت الإمارات</label></div>
-      <div class="small">السعر حدّ أقصى، وسنوات الموديل تشمل «من» و«إلى». الحقل الفارغ لا يقيّد البحث.</div>
+      <div class="small">السعر حدّ أقصى، وسنوات الموديل تشمل «من» و«إلى». الحقل الفارغ لا يقيّد البحث. اترك الماركة والطراز فارغين للبحث العام. يشمل مرجان 70 قسمًا للسيارات؛ عدد صفحات التفاصيل التي تُفحص في الجولة يبقى محدودًا.</div>
       <div class="row"><button class="primary" type="submit" id="rSave">حفظ الطلب</button><span class="small" id="rMsg"></span></div>
     </form>
     <div class="cards" id="reqCards"></div>
@@ -366,11 +391,12 @@ section.tab { gap:20px; }
 
   <!-- reports -->
   <section class="tab" id="tab-reports" hidden>
-    <div class="small">كل بحث مكتمل ينشئ تقرير PDF، ويظهر فشل إنشائه في السجل. الموعدان: تقرير مجمّع بالعروض الجديدة والتغييرات. «فتح التقرير» يعرضه هنا، و«تنزيل PDF» يحفظه، و«مشاركة الملخص» يجهز نصًا للواتساب. التقارير القديمة تبقى كما أُنشئت؛ التصميم الجديد يظهر في التقارير القادمة.</div>
+    <div class="small">البحث اليدوي يحدّث النتائج فقط، دون إنشاء تقرير. التقارير المجدولة تصلك عند غيابك في 10 صباحًا و8 مساءً للطلبات التي فعّلت جدولتها. «فتح التقرير» يعرضه هنا، و«تنزيل PDF» يحفظه، و«مشاركة الملخص» يجهز نصًا للواتساب. التقارير القديمة تبقى كما أُنشئت؛ التقارير القديمة محفوظة في الأرشيف.</div>
     <div class="list" id="repList"></div>
   </section>
 
   <!-- history -->
+  <section class="tab" id="tab-updates" hidden><div class="section-heading"><div><span class="eyebrow light">تابع ما تغيّر</span><h2>تحديثات سياراتك</h2></div><button type="button" id="reviewNow" class="primary sm">↻ مراجعة المحفوظة الآن</button></div><div class="review-summary"><div><b>مراجعة أسبوعية تلقائية</b><p id="reviewNote"></p></div><button type="button" id="readAlerts" class="btn sm">تعليم الكل كمقروء</button></div><div id="alertsList" class="alerts-list"></div></section>
   <section class="tab" id="tab-history" hidden>
     <div class="list" id="histList"></div>
   </section>
@@ -398,8 +424,8 @@ section.tab { gap:20px; }
         <dl class="kv">
           <dt>10:00 صباحًا</dt><dd>بحث عند غيابك + تقرير مجمّع وPDF</dd>
           <dt>8:00 مساءً</dt><dd>بحث عند غيابك + تقرير مجمّع وPDF</dd>
-          <dt>متابعة الأسعار</dt><dd>تُفحص الأسعار ضمن جولتي 10 صباحًا و8 مساءً فقط، دون تنبيهات إضافية</dd>
-          <dt>«ابحث الآن»</dt><dd>بحث يدوي يظهر في اللوحة دون إشعار. تُتجاوز الجولة المجدولة عند وصول إشارة نشاط حديثة من اللوحة؛ قد يستغرق انتهاء الإشارة بعد إغلاقها 3 دقائق.</dd>
+          <dt>المراجعة الأسبوعية</dt><dd>الاثنين 8 صباحًا: مراجعة الإعلانات المحفوظة وتنبيه بالتغييرات، دون PDF</dd>
+          <dt>«ابحث الآن»</dt><dd>بحث يدوي يظهر في اللوحة دون تقرير PDF أو إشعار خارجي. تُتجاوز الجولة المجدولة عند وصول إشارة نشاط حديثة من اللوحة؛ قد يستغرق انتهاء الإشارة بعد إغلاقها 3 دقائق.</dd>
           <dt>ملاحظة</dt><dd>قد تتأخر المواعيد المجدولة أو تُفقد عند ضغط GitHub؛ ليست خدمة بموعد مضمون</dd>
         </dl></div>
       <div class="panel"><h2>حدود البحث والتوكن</h2><dl class="kv"><dt>مفتاح GitHub</dt><dd>وسيلة دخول للمستودع وتشغيل المهام، وليس رصيد ذكاء اصطناعي.</dd><dt>المتاح في الساعة</dt><dd id="apiQuota">يظهر بعد أول اتصال بـ GitHub.</dd><dt>الجولة اليدوية</dt><dd>حتى 45 إعلانًا جديدًا، إضافة إلى حصة إعادة الفحص. تشمل الحصة جميع الطلبات في الجولة.</dd><dt>الجولة المجدولة</dt><dd>حتى 70 إعلانًا جديدًا، إضافة إلى حصة إعادة الفحص. جولتان يوميًا عند غيابك.</dd><dt>المدة</dt><dd>مهلة المهمة 30 دقيقة. حدود المنصات قد تمنع بعض النتائج. لا يوجد حد شهري 200 أو 900 بحث داخل الأداة.</dd><dt>التكاليف</dt><dd>لا تستخدم الأداة API لذكاء اصطناعي أو بحث مدفوع. تشغيل GitHub القياسي مجاني للمستودعات العامة؛ المستودعات الخاصة تخضع لخطة الحساب.</dd><dt>دوبيزل</dt><dd>الوصول الآلي غير مضمون. الربط الكامل يحتاج وسيلة وصول يجيزها دوبيزل؛ مفتاح GitHub لا يمنح هذه الصلاحية. <a href="https://business.dubizzle.com/" target="_blank" rel="noopener">التواصل مع دوبيزل</a></dd></dl></div>
@@ -612,7 +638,10 @@ section.tab { gap:20px; }
   const dateKind = (l) => l.date_kind || (l.posted ? "posted" : "first_seen");
   function windowStart() { const n = uaeNow(); const y = n.getUTCFullYear(), m = n.getUTCMonth(), d = n.getUTCDate(); const last = new Date(Date.UTC(y, m, 0)).getUTCDate(); return ymd(new Date(Date.UTC(y, m - 1, Math.min(d, last)))); }
   const inWindow = (l) => dateKind(l) === "posted" && adDate(l) >= windowStart() && adDate(l) <= ymd(uaeNow());
-  const live = (l) => l.state !== "sold" && l.state !== "excluded" && mark(l.id).status !== "dismissed";
+  const availabilityOf = (l) => l.availability || (l.state === "sold" ? "unavailable" : "available");
+  const availabilityLabel = (l) => ({sold:"مباع حسب المنصة",unavailable:"الإعلان غير متاح",reserved:"محجوز حسب المنصة"}[availabilityOf(l)] || "متاح");
+  function statusHtml(l) { const a=availabilityOf(l); return a !== "available" ? `<div class="availability-badge ${a}"><span aria-hidden="true">${a === "reserved" ? "◷" : "✓"}</span><div><b>${availabilityLabel(l)}</b><small>${a === "unavailable" ? "حُذف الإعلان أو توقف عرضه؛ البيع غير مؤكد" : "حالة معلنة من المصدر"}</small></div></div>` : l.check_status === "unreachable" ? '<div class="availability-badge uncertain"><span>↻</span><div><b>تعذّر التحقق مؤخرًا</b><small>حفظنا آخر بيانات مؤكدة؛ لا يعني أن السيارة مباعة</small></div></div>' : ''; }
+  const live = (l) => !["sold", "unavailable", "reserved"].includes(availabilityOf(l)) && l.state !== "sold" && l.state !== "excluded" && mark(l.id).status !== "dismissed";
   const belongs = (l, id) => (l.request_ids || [l.request_id]).includes(id);
   const viewFor = (l, id) => ({ ...l, ...(l.by_request?.[id] || {}), request_id: id });
   const reqOf = (l) => S.U.requests.find((r) => r.id === l.request_id) || {};
@@ -640,7 +669,7 @@ section.tab { gap:20px; }
     if (l.run_id && l.run_id === lastRunId()) tags.push('<span class="pill good">جديد</span>');
     if (l.price_prev && l.price < l.price_prev) tags.push(`<span class="pill good">انخفض <span class="num">${pct((l.price - l.price_prev) / l.price_prev)}</span></span>`);
     if (l.state === "unverified") tags.push('<span class="pill bad">يحتاج تأكيدًا</span>');
-    if (l.state === "sold") tags.push('<span class="pill">مباع</span>');
+    if (availabilityOf(l) !== "available") tags.push(`<span class="pill">${availabilityLabel(l)}</span>`);
     const img = l.image ? `<img src="${esc(l.image)}" alt="" loading="lazy" referrerpolicy="no-referrer" onerror="this.replaceWith(Object.assign(document.createElement('div'),{className:'noimg',textContent:'${esc(PLATFORMS[l.platform] || "")}'}))">`
       : `<div class="noimg">${esc(PLATFORMS[l.platform] || "")}</div>`;
     return `<div class="ph">${img}<div class="tags">${tags.join("")}</div><button class="star" type="button" data-fav="${esc(l.id)}" aria-pressed="${!!m.favorite}" aria-label="مفضلة">${m.favorite ? "★" : "☆"}</button><span class="platf">${esc(PLATFORMS[l.platform] || "")}</span></div>`;
@@ -675,7 +704,11 @@ section.tab { gap:20px; }
   function baseAds() {
     const q = $("fText").value.trim().toLowerCase(), rq = $("fReq").value, st = $("fState").value, rt = $("fRate").value;
     return L().map((l) => rq && belongs(l, rq) ? viewFor(l, rq) : l).filter((l) => {
-      if (!live(l) || !S.U.requests.some((r) => belongs(l, r.id))) return false;
+      const availability = availabilityOf(l);
+      if (!S.U.requests.some((r) => belongs(l, r.id)) || mark(l.id).status === "dismissed") return false;
+      if (st === "unavailable") { if (!["sold", "unavailable"].includes(availability)) return false; }
+      else if (st === "reserved") { if (availability !== "reserved") return false; }
+      else if (!live(l)) return false;
       if (rq && !belongs(l, rq)) return false;
       if (q && !`${l.title} ${l.location} ${l.seller_name}`.toLowerCase().includes(q)) return false;
       if (rt === "deal" && !["excellent", "good"].includes(l.rating)) return false;
@@ -701,7 +734,7 @@ section.tab { gap:20px; }
     $("statReports").textContent = fmt((S.E.reports || []).length);
     const last = (S.E.runs || []).find((r) => r.mode !== "watch");
     $("statLast").textContent = last ? "آخر بحث: " + when(last.at) : "لم يُنفّذ بحث بعد";
-    $("headerState").textContent = S.live ? "البحث قيد التنفيذ" : "لوحة الرصد";
+    $("headerState").textContent = S.live ? "رصد مباشر" : "لوحة الرصد";
     const used = new Set(S.U.requests.flatMap((r) => r.platforms || Object.keys(PLATFORMS)));
     $("cover").innerHTML = `<button type="button" data-plat="" aria-pressed="${!S.plat}"><b>${base.length}</b><span>كل المنصات</span></button>` +
       Object.entries(PLATFORMS).filter(([k]) => used.has(k) || base.some((l) => l.platform === k))
@@ -712,10 +745,10 @@ section.tab { gap:20px; }
     if (lastMissing) $("windowNote").textContent += ` · استُبعد ${lastMissing} إعلانًا لعدم تأكيد السعر.`;
     const rows = visibleAds();
     if (!rows.length) { $("adsGrid").innerHTML = `<div class="empty"><b>لا توجد إعلانات هنا</b>${S.U.requests.length ? "غيّر التصفية، أو اضغط «ابحث الآن»." : "أضف أول طلب بحث من تبويب «طلبات البحث»."}</div>`; return; }
-    $("adsGrid").innerHTML = rows.map((l) => `<article class="ad${S.pick.includes(l.id) ? " picked" : ""}">${photo(l)}<div class="bd">
+    $("adsGrid").innerHTML = rows.map((l) => `<article data-car-id="${esc(l.id)}" class="ad availability-${availabilityOf(l)}${S.pick.includes(l.id) ? " picked" : ""}">${photo(l)}<div class="bd">
       <div><a class="title" href="${esc(l.url)}" target="_blank" rel="noopener">${esc(carName(l))}</a><div class="var">${esc(l.title || "")}</div></div>
       <div class="priceline"><span class="price">${l.price ? fmt(l.price) + " <small>درهم</small>" : ""}</span>${l.price_prev && l.price_prev !== l.price ? `<span class="price-prev num">${fmt(l.price_prev)}</span>` : ""}${l.year ? `<span class="plate">${l.year}</span>` : ""}</div>
-      ${verdict(l)}${facts(l)}
+      ${statusHtml(l)}${verdict(l)}${facts(l)}
       ${l.state === "unverified" && l.note ? `<div class="note">${esc(l.note)}</div>` : ""}
       ${(l.also_on || []).map((u) => `<div class="small">معروض أيضًا على <a href="${esc(u)}" target="_blank" rel="noopener">${esc(new URL(u).hostname.replace(/^www\./, ""))}</a></div>`).join("")}
       <div class="foot">${stageSelect(l)}<label class="cmp-toggle"><input type="checkbox" data-pick="${esc(l.id)}"${S.pick.includes(l.id) ? " checked" : ""}> قارن</label><a class="btn sm" href="${esc(l.url)}" target="_blank" rel="noopener">فتح الإعلان ↗</a></div>
@@ -773,12 +806,12 @@ section.tab { gap:20px; }
     $("cDeals").textContent = tracked.filter((l) => !["dismissed", "purchased"].includes(mark(l.id).status)).length;
     $("pipe").innerHTML = STAGES.map((s) => `<button type="button" data-pipe="${s.k}" aria-pressed="${S.stage === s.k}" style="--stage:${s.c}"><b>${counts[s.k]}</b><span>${s.k === "new" ? "مفضلة جديدة" : s.t}</span></button>`).join("");
     const rows = S.stage === "active" ? tracked.filter((l) => mark(l.id).status !== "dismissed") : L().filter((l) => (mark(l.id).status || "new") === S.stage && (S.stage !== "new" || mark(l.id).favorite));
-    $("pipeNote").textContent = "تُراجع أسعار السيارات المتابَعة ضمن جولات البحث اليدوية والمجدولة. يعمل الجدول مرتين يوميًا عندما تكون الصفحة غير نشطة.";
+    $("pipeNote").textContent = "مراجعة أسبوعية للإعلانات المحفوظة: الاثنين 8 صباحًا بتوقيت الإمارات. تغيّر السعر أو البيانات يظهر في «التحديثات»، مع إشعار عبر قناتك المفعّلة. الحجب المؤقت لا يعني أن السيارة مباعة.";
     if (!rows.length) { $("dealGrid").innerHTML = '<div class="empty"><b>لا سيارات هنا</b>اضغط النجمة ☆ على أي إعلان، أو اختر مرحلة مثل «مهتم».</div>'; return; }
     $("dealGrid").innerHTML = rows.map((l) => {
       const st = STAGE[mark(l.id).status || "new"], d = mark(l.id).deal || {};
       const diff = d.final_price && l.price ? l.price - d.final_price : 0;
-      return `<article class="panel" style="--stage:${st.c}"><div class="row" style="justify-content:space-between"><a class="title" href="${esc(l.url)}" target="_blank" rel="noopener"><b>${esc(carName(l))}</b></a><span class="pill" style="background:${st.c};color:#fff">${st.t}</span></div>
+      return `<article class="panel availability-${availabilityOf(l)}" style="--stage:${st.c}">${statusHtml(l)}<div class="row" style="justify-content:space-between"><a class="title" href="${esc(l.url)}" target="_blank" rel="noopener"><b>${esc(carName(l))}</b></a><span class="pill" style="background:${st.c};color:#fff">${st.t}</span></div>
         <div class="priceline"><span class="price">${fmt(l.price)} <small>درهم</small></span>${l.price_prev && l.price_prev !== l.price ? `<span class="price-prev num">${fmt(l.price_prev)}</span>` : ""}<span class="small">${esc(PLATFORMS[l.platform])} · ${l.mileage ? fmt(l.mileage) + " كم" : ""}</span></div>
         ${verdict(l)}
         <div class="steps">${STAGES.map((s) => `<button type="button" data-setstage="${esc(l.id)}" data-v="${s.k}" aria-pressed="${(mark(l.id).status || "new") === s.k}" style="--stage:${s.c}">${s.t}</button>`).join("")}</div>
@@ -825,6 +858,8 @@ section.tab { gap:20px; }
   }
   const formIds = { name: "rName", make: "rMake", model: "rModel", keywords: "rKeys", year_from: "rYf", year_to: "rYt", price_max: "rPmax", mileage_max: "rKmax", color: "rColor", emirate: "rEmirate" };
   const AR_NAMES = { "تيوتا":"Toyota", "تويوتا":"Toyota", "يارس":"Yaris", "ياريس":"Yaris", "كورولا":"Corolla", "كامري":"Camry", "نيسان":"Nissan", "صني":"Sunny", "باترول":"Patrol", "هوندا":"Honda", "سيفيك":"Civic", "اكورد":"Accord", "أكورد":"Accord", "هيونداي":"Hyundai", "هونداي":"Hyundai", "كيا":"Kia", "ميتسوبيشي":"Mitsubishi", "لكزس":"Lexus", "شفروليه":"Chevrolet", "شيفروليه":"Chevrolet", "فورد":"Ford", "مازدا":"Mazda", "سوزوكي":"Suzuki", "مرسيدس":"Mercedes-Benz", "بي ام دبليو":"BMW", "رينو":"Renault", "جيلي":"Geely", "شانجان":"Changan", "إم جي":"MG", "ام جي":"MG", "لاندكروزر":"Land Cruiser", "برادو":"Prado", "التيما":"Altima", "سنترا":"Sentra", "النترا":"Elantra", "إلنترا":"Elantra", "أكسنت":"Accent", "اكسنت":"Accent", "سوناتا":"Sonata", "توسان":"Tucson", "بيكانتو":"Picanto", "ريو":"Rio", "سيراتو":"Cerato", "سبورتاج":"Sportage", "لانسر":"Lancer", "اتراج":"Attrage", "أتراج":"Attrage", "سويفت":"Swift", "دزاير":"Dzire", "سيليريو":"Celerio" };
+  Object.assign(AR_NAMES, {"بي ام دبليو": "Bmw", "اودي": "Audi", "تويوتا": "Toyota", "مرسيدس": "Mercedes-Benz", "كاديلاك": "Cadillac", "شفروليه": "Chevrolet", "فيات": "Fiat", "فورد": "Ford", "نيسان": "Nissan", "هوندا": "Honda", "لكزس": "Lexus", "همر": "Hummer", "ميتسوبيشي": "Mitsubishi", "جي ام سي": "Gmc", "هيونداي": "Hyundai", "جاكوار": "Jaguar", "جيب": "Jeep", "لاند روفر": "Land Rover", "مازدا": "Mazda", "اوبل": "Opel", "بيجو": "Peugeot", "رينو": "Renault", "سوزوكي": "Suzuki", "فولفو": "Volvo", "فولكس واجن": "Volkswagen", "كرايسلر": "Chrysler", "ستروين": "Citroen", "لينكولن": "Lincoln", "كيا": "Kia", "دودج": "Dodge", "دايهاتسو": "Daihatsu", "انفينيتي": "Infiniti", "بورش": "Porsche", "كلاسيكية": "Classic Cars", "الفا روميو": "Alfa Romeo", "ميني كوبر": "Mini", "سوبارو": "Subaru", "ايسوزي": "Isuzu", "تاتا": "Tata", "سكودا": "Skoda", "رولز رويس": "Rolls Royce", "روفر": "Rover", "بنتلي": "Bentley", "مازيراتي": "Maserati", "ام جي": "Mg", "متفرقات": "Other Autos", "شيري": "Chery", "جاك": "Jac", "استيراد سيارات": "Import Cars", "تسلا": "Tesla", "Daewoo": "Daewoo", "Olds Mobile": "Olds Mobile", "Seat": "Seat", "Mercury": "Mercury", "Pontiac": "Pontiac", "Saab": "Saab", "Sangyoung": "Sangyoung", "Smart": "Smart", "Proton": "Proton", "Buick": "Buick", "Ferrari": "Ferrari", "Austin": "Austin", "Lancia": "Lancia", "Asia": "Asia", "Lamborghini": "Lamborghini", "Morgan": "Morgan", "Mclaren": "Mclaren", "Lotus": "Lotus", "Dfsk": "Dfsk"});
+  Object.assign(AR_NAMES, {"Aston Martin": "Aston Martin"});
   const normalizeName = (v) => AR_NAMES[v.trim()] || v.trim();
   const validName = (v) => /^[A-Za-z0-9][A-Za-z0-9 .&-]*$/.test(normalizeName(v));
   const oldMakeInput = $("rMake");
@@ -845,7 +880,7 @@ section.tab { gap:20px; }
     const r = { name: $("rName").value.trim(), make: $("rMake").value.trim(), model: $("rModel").value.trim(), keywords: $("rKeys").value.trim(),
       year_from: num("rYf"), year_to: num("rYt"), price_max: num("rPmax"), mileage_max: num("rKmax"), color: $("rColor").value, emirate: $("rEmirate").value,
       platforms: Object.keys(PLATFORMS).filter((p) => $("p_" + p).checked), scheduled: $("rSched").checked };
-    if (!validName(r.make) || (r.model && !validName(r.model))) return ($("rMsg").textContent = "اختر اسم السيارة المقترح أو اكتبه بالإنجليزية؛ الاسم الحالي غير معروف.");
+    if ((r.make && !validName(r.make)) || (r.model && !validName(r.model))) return ($("rMsg").textContent = "اختر اسم السيارة المقترح أو اكتبه بالإنجليزية؛ الاسم الحالي غير معروف.");
     r.make = normalizeName(r.make); r.model = normalizeName(r.model);
     if (r.year_from && r.year_to && r.year_from > r.year_to) return ($("rMsg").textContent = "سنة «من» يجب أن تكون أقل من أو تساوي «إلى».");
     if (!r.platforms.length) return ($("rMsg").textContent = "اختر منصة واحدة على الأقل.");
@@ -903,9 +938,9 @@ section.tab { gap:20px; }
   function renderHistory() {
     const runs = S.E.runs || [];
     $("histList").innerHTML = runs.length ? runs.slice(0, 80).map((r) => `<div class="item">
-      <div class="when"><b class="num">${esc(when(r.at))}</b><span class="small">${{ scheduled: "جولة مجدولة", manual: "بحث يدوي", watch: "متابعة الأسعار" }[r.mode] || r.mode}</span></div>
+      <div class="when"><b class="num">${esc(when(r.at))}</b><span class="small">${{ scheduled: "جولة مجدولة", manual: "بحث يدوي", watch: "مراجعة المحفوظة" }[r.mode] || r.mode}</span></div>
       <span class="pill ${r.status === "done" ? "good" : "bad"}">${RUNSTATE[r.status] || esc(r.status)}</span>
-      <div class="kp grow">${r.mode === "watch" ? `<span><b>${fmt(r.opened)}</b>سيارة فُحصت</span><span><b>${fmt(r.price_drops)}</b>تخفيضات</span>`
+      <div class="kp grow">${r.mode === "watch" ? `<span><b>${fmt(r.opened)}</b>سيارة فُحصت</span><span><b>${fmt(r.changes || 0)}</b>تغييرات</span><span><b>${fmt(r.failed || 0)}</b>تعذّر فحصها</span><span><b>${fmt(r.deferred || 0)}</b>مؤجلة</span>`
         : `<span><b>${fmt(r.found)}</b>إعلانات وُجدت</span><span><b>${fmt(r.opened)}</b>صفحات فُتحت</span><span><b>${fmt(r.new)}</b>جديد</span><span><b>${fmt(r.price_drops)}</b>تخفيضات</span><span><b>${fmt(r.seconds)}</b>ثانية</span>`}</div>
       ${r.platforms ? `<div class="plats">${Object.entries(r.platforms).map(([p, d]) => `<span class="pill ${d.ok || d.via_search ? (d.read_ok ? "good" : "acc") : "bad"}" title="صفحات النتائج ${d.ok || 0}/${d.pages || 0} · بحث بديل ${d.via_search || 0} · إعلانات قُرئت ${d.read_ok || 0}">${esc(PLATFORMS[p] || p)} ${d.cards || 0}</span>`).join("")}</div>` : ""}
       ${r.warning ? `<div class="log">${esc(r.warning)}</div>` : ""}
@@ -927,11 +962,22 @@ section.tab { gap:20px; }
   $("meForm").addEventListener("submit", async (e) => { e.preventDefault(); S.U.profile = { name: $("mName").value.trim(), phone: $("mPhone").value.trim(), city: $("mCity").value.trim() }; if (await saveUser("profile")) $("mMsg").textContent = "حُفظت."; });
   $("btnForget").addEventListener("click", () => { store.set("pass", null); store.set("token", null); store.set("deviceCredentials", null); indexedDB.deleteDatabase("radar-device"); location.reload(); });
 
+  function renderUpdates() {
+    const events = S.E.alerts || [], seen = S.U.alerts_seen_at || "";
+    $("cAlerts").textContent = events.filter(e => e.at > seen).length;
+    $("reviewNote").textContent = `الاثنين 8 صباحًا بتوقيت الإمارات · آخر مراجعة: ${S.E.last_weekly_review ? when(S.E.last_weekly_review) : "لم تُنفّذ بعد"}. تُراجع حتى 100 سيارة في الجولة؛ يظهر أي عدد مؤجل في السجل. التغييرات تُكتشف عند المراجعة أو إعادة فتح الإعلان في جولة بحث، وليست مراقبة لحظية.`;
+    const labels = {available:"متاح مجددًا",sold:"مباع حسب المنصة",unavailable:"الإعلان غير متاح",reserved:"محجوز حسب المنصة"};
+    $("alertsList").innerHTML = events.length ? events.map(e => `<article class="change-card ${e.at > seen ? "unread" : ""}"><div class="change-icon">${e.changes.some(c=>c.field === "availability") ? "◉" : "↗"}</div><div class="grow"><div class="change-heading"><b>${esc(e.title)}</b><time class="small num">${esc(when(e.at))}</time></div><div class="change-lines">${e.changes.map(c=>`<div><span>${esc(c.label)}</span><del dir="auto">${esc(c.field === "availability" ? labels[c.old] || c.old : c.old)}</del><span aria-hidden="true">←</span><strong dir="auto">${esc(c.field === "availability" ? labels[c.new] || c.new : c.new)}</strong></div>`).join("")}</div><div class="row"><span class="small">${esc(PLATFORMS[e.platform] || e.platform)}</span><a class="btn sm ghost" href="${esc(e.url)}" target="_blank" rel="noopener">المصدر ↗</a><button type="button" class="sm ghost" data-showcar="${esc(e.listing_id)}">عرض البطاقة</button></div></div></article>`).join("") : '<div class="empty"><b>لا تغييرات مسجّلة بعد</b>عندما يتغيّر إعلان محفوظ، يظهر هنا ما تغيّر والقيمة السابقة والجديدة. أخطاء الاتصال لا تُعامل كبيع.</div>';
+    $("reviewNow").disabled = !S.token || !!S.live;
+  }
+  $("reviewNow").addEventListener("click", () => dispatch({cmd:"review",mode:"manual",request:"all",run_id:""},"مراجعة المحفوظة"));
+  $("readAlerts").addEventListener("click", async () => { S.U.alerts_seen_at = (S.E.alerts || [])[0]?.at || new Date().toISOString(); renderUpdates(); await saveUser("read updates"); });
   function renderAll() {
     $("nextRun").textContent = nextRunText();
-    renderReqs(); renderAds(); renderDeals(); renderReports(); renderHistory(); renderSettings(); renderCmpBar();
+    renderReqs(); renderAds(); renderDeals(); renderUpdates(); renderReports(); renderHistory(); renderSettings(); renderCmpBar();
     if (S.tab === "compare") renderCompare();
     $("searchNow").disabled = !S.token || !!S.live;
+    if (!S.live) $("searchNow").innerHTML = '<span aria-hidden="true">⌕</span> ابحث الآن';
   }
   ["fText", "fReq", "fState", "fSort", "fRate"].forEach((id) => $(id).addEventListener("input", renderAds));
 
@@ -949,6 +995,7 @@ section.tab { gap:20px; }
     else if (d.sched) { const r = S.U.requests.find((x) => x.id === d.sched); r.scheduled = !r.scheduled; if (r.scheduled) r.sched_reset_at = new Date(Date.now() + 4 * 3600e3).toISOString().slice(0, 19) + "+04:00"; renderAll(); saveUser("schedule"); }
     else if (d.toggle) { const r = S.U.requests.find((x) => x.id === d.toggle); r.active = r.active === false; renderAll(); saveUser("toggle"); }
     else if (d.del) { if (d.armed) { S.U.requests = S.U.requests.filter((x) => x.id !== d.del); renderAll(); saveUser("delete request"); } else { d.armed = "1"; t.textContent = "اضغط للتأكيد"; setTimeout(() => { delete t.dataset.armed; t.textContent = "حذف"; }, 4000); } }
+    else if (d.showcar) { const l=(S.E.listings || {})[d.showcar]; if (l) { $("fText").value=""; $("fReq").value=""; $("fState").value=["sold","unavailable"].includes(availabilityOf(l)) ? "unavailable" : availabilityOf(l)==="reserved" ? "reserved" : "all"; S.plat=null; showTab("ads"); renderAds(); const card=document.querySelector(`[data-car-id="${CSS.escape(l.id)}"]`); if (card) { card.scrollIntoView({behavior:"smooth",block:"center"}); card.classList.add("focus-card"); setTimeout(()=>card.classList.remove("focus-card"),4000); } } }
     else if (d.runreq) runSearch(d.runreq);
     else if (d.view) { const r = (S.E.reports || []).find((x) => x.id === d.view); if (r) viewReport(r); }
   });
@@ -989,13 +1036,13 @@ section.tab { gap:20px; }
     try {
       await gh("/actions/workflows/radar.yml/dispatches", { method: "POST", body: JSON.stringify({ ref: "main", inputs }) });
     } catch (e) { return flash(e.status === 403 || e.status === 404 ? "المفتاح لا يملك صلاحية Actions (قراءة وكتابة)." : "لم يبدأ: " + e.message, "bad"); }
-    S.live = { since, label, id: null }; store.set("live", JSON.stringify(S.live)); renderAll(); pollLive();
+    S.live = { since, label, id: null, run_id: inputs.run_id || null, percent: 0 }; store.set("live", JSON.stringify(S.live)); renderAll(); pollLive();
   }
   function runSearch(scope) {
     if (S.live) return flash("هناك عملية قيد التنفيذ؛ انتظر اكتمالها قبل بدء بحث آخر.", "warn");
     if (!S.U.requests.some((r) => r.active !== false)) return flash("أضف طلب بحث نشطًا أولًا.", "warn");
     const chosen = S.U.requests.filter((r) => r.active !== false && (!scope || scope === "all" || r.id === scope));
-    if (chosen.some((r) => !validName(r.make) || (r.model && !validName(r.model)))) return flash("اسم سيارة غير معروف. عدّل الطلب واختر الماركة والطراز المقترحين.", "bad");
+    if (chosen.some((r) => (r.make && !validName(r.make)) || (r.model && !validName(r.model)))) return flash("اسم سيارة غير معروف. عدّل الطلب واختر الماركة والطراز المقترحين.", "bad");
     const id = "m" + new Date(Date.now() + 4 * 3600e3).toISOString().slice(0, 23).replace(/\D/g, "");
     dispatch({ cmd: "run", mode: "manual", request: scope || "all", run_id: id }, "بحث يدوي");
   }
@@ -1005,7 +1052,7 @@ section.tab { gap:20px; }
   function resumeLiveRun() { try { const l = JSON.parse(store.get("live") || "null"); if (l && Date.now() - l.since < 40 * 60e3) { S.live = l; pollLive(); } } catch {} }
   async function pollLive() {
     if (!S.live) return;
-    const box = $("liveBox"); box.hidden = false; box.className = "banner";
+    const box = $("liveBox"); box.hidden = false; if (!box.classList.contains("search-progress")) box.className = "search-progress pending";
     try {
       if (!S.live.id) {
         const r = await (await gh(`/actions/workflows/radar.yml/runs?event=workflow_dispatch&per_page=5&t=${Date.now()}`)).json();
@@ -1017,21 +1064,30 @@ section.tab { gap:20px; }
         const jobs = await (await gh(`/actions/runs/${S.live.id}/jobs?t=${Date.now()}`)).json();
         const steps = (jobs.jobs?.[0]?.steps || []).filter((s) => STEP_AR[s.name] && s.conclusion !== "skipped");
         const secs = Math.round((Date.now() - Date.parse(run.created_at)) / 1000);
-        box.innerHTML = `<div class="live grow"><b>${esc(S.live.label)}: ${RUNSTATE[run.status] || esc(run.status)} · <span class="num">${Math.floor(secs / 60)}:${String(secs % 60).padStart(2, "0")}</span></b>
-          <ol>${steps.map((s) => `<li class="${s.status === "completed" ? "done" : s.status === "in_progress" ? "run" : "wait"}">${STEP_AR[s.name]}${s.status === "completed" ? " ✓" : s.status === "in_progress" ? " …" : ""}</li>`).join("")}</ol></div>
-          <a class="btn sm" href="${esc(run.html_url)}" target="_blank" rel="noopener">التفاصيل</a>`;
+        let progress = null;
+        if (S.live.run_id) {
+          try { const response = await gh("/contents/data/search-progress.json?ref=radar-presence"); if (response.ok) { const file = await response.json(); const data = JSON.parse(new TextDecoder().decode(b64.dec((file.content || "").replace(/\n/g,"")))); if (data.run_id === S.live.run_id) progress=data; } } catch {}
+        }
+        const active = steps.find(s=>s.status === "in_progress"), phase = progress?.phase || (active?.name === "Save results" ? "save" : "prepare");
+        const fraction = progress?.total ? Math.min(1, progress.done / progress.total) : 0;
+        const percent = phase === "read" ? Math.round(40 + fraction * 50) : phase === "discover" ? Math.round(12 + fraction * 28) : phase === "save" ? 95 : Math.min(10, steps.filter(s=>s.status === "completed").length * 2);
+        S.live.percent = Math.max(S.live.percent || 0, percent);
+        const phaseLabel = {prepare:"تجهيز محرك البحث",discover:"جمع نتائج المنصات",read:"قراءة الإعلانات والتحقق منها",save:"حفظ النتائج وتحديث اللوحة"}[phase];
+        box.className = "search-progress";
+        box.innerHTML = `<div class="progress-orbit" style="--p:${S.live.percent}" role="progressbar" aria-label="تقدم مراحل البحث" aria-valuemin="0" aria-valuemax="100" aria-valuenow="${S.live.percent}"><div><b class="num">${S.live.percent}<small>%</small></b><span>قيد العمل</span></div></div><div class="progress-copy grow"><span class="progress-kicker"><i></i> الرادار يعمل</span><h3>${phaseLabel}</h3><p>${progress?.total ? `<span class="num">${progress.done} / ${progress.total}</span> ${phase === "read" ? "صفحات إعلانات فُحصت" : phase === "discover" ? "صفحات نتائج فُحصت" : "إعلانات عولجت"}` : "جارٍ بدء المهمة على الخادم"}<span class="progress-time num">${Math.floor(secs / 60)}:${String(secs % 60).padStart(2,"0")}</span></p><div class="progress-track"><i style="width:${S.live.percent}%"></i></div><div class="progress-milestones"><span class="${phase !== "prepare" ? "complete" : "current"}">01 تجهيز</span><span class="${["discover","read"].includes(phase) ? "current" : phase === "save" ? "complete" : ""}">02 بحث وتحقق</span><span class="${phase === "save" ? "current" : ""}">03 تحديث النتائج</span></div><small>النسبة تعبّر عن مراحل التنفيذ والصفحات المنجزة، وليست تقديرًا للوقت المتبقي.</small></div><details class="progress-details"><summary>تفاصيل التنفيذ</summary><ol>${steps.map(s=>`<li>${esc(STEP_AR[s.name])} ${s.status === "completed" ? "✓" : s.status === "in_progress" ? "…" : ""}</li>`).join("")}</ol><a href="${esc(run.html_url)}" target="_blank" rel="noopener">سجل المهمة ↗</a></details>`;
+        $("searchNow").innerHTML = `<span class="search-spinner" aria-hidden="true"></span> ${S.live.percent}%`;
         if (run.status === "completed") {
           const ok = run.conclusion === "success", label = S.live.label;
           S.live = null; store.set("live", null);
           if (ok) { await loadAll(); renderAll(); box.className = "banner good"; const latest = (S.E.runs || [])[0];
             box.className = latest?.warning ? "banner warn" : "banner good";
-            box.textContent = latest?.warning ? `${label}: ${latest.warning}` : `${label}: اكتمل. البيانات محدّثة.`; if (label === "فحص المنصات") showDiag(); }
+            box.className="search-progress finished"; box.innerHTML=`<div class="progress-orbit" style="--p:100" role="progressbar" aria-label="اكتمل البحث" aria-valuemin="0" aria-valuemax="100" aria-valuenow="100"><div><b class="num">100<small>%</small></b><span>اكتمل</span></div></div><div class="progress-copy"><span class="progress-kicker">✓ اكتملت المهمة</span><h3>النتائج محدّثة في لوحتك</h3><p>${esc(latest?.warning || "يمكنك تصفّح النتائج ومتابعة السيارات التي تهمك.")}</p><small>البحث اليدوي يحدّث النتائج دون إنشاء تقرير.</small></div>`; if (label === "فحص المنصات") showDiag(); }
           else { box.className = "banner bad"; box.innerHTML = `${esc(label)}: لم يكتمل. <a href="${esc(run.html_url)}" target="_blank" rel="noopener">اعرض السبب</a>`; }
           setTimeout(() => { box.hidden = true; }, 15000); renderAll(); return;
         }
-      } else box.textContent = `${S.live.label}: يبدأ الآن…`;
+      } else { box.className = "search-progress pending"; box.innerHTML = '<span class="search-spinner"></span><div><b>الرادار يستعد للانطلاق</b><p>المهمة في قائمة التنفيذ؛ ستظهر النسبة عند بدء المراحل.</p></div>'; }
     } catch (e) { box.textContent = "تعذّر متابعة الجولة: " + e.message; }
-    setTimeout(pollLive, 4000);
+    setTimeout(pollLive, 7000);
   }
   async function showDiag() {
     try {

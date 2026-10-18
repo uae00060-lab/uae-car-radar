@@ -33,7 +33,7 @@ AD_PATTERNS = {
     "dubicars":   re.compile(r"^/(?:\d{4})-[a-z0-9-]+-(\d{5,})\.html$"),
     "carswitch":  re.compile(r"^/[a-z-]+/used-car/[^/]+/[^/]+/\d{4}/(\d{5,})/?$"),
     "opensooq":   re.compile(r"^/(?:en|ar)/search/(\d{6,})/?$"),
-    "mourjan":    re.compile(r"^/ae/(?:[a-z-]+/)?(?:toyota|nissan|honda|hyundai|kia|mitsubishi|lexus|chevrolet|ford|mazda|suzuki|mercedes|mercedes-benz|bmw|renault|geely|changan|mg|audi|volkswagen)/for-sale/(\d{7,})/?$"),
+    "mourjan":    re.compile(r"^/ae/(?:[a-z-]+/)?([a-z-]+)/for-sale/(\d{7,})/?$"),
     "autoae":     re.compile(r"^/([a-z0-9-]+)/sale/car/[^/]+/[^/]+/id/(\d+)/?$"),
     "oneclickdrive": re.compile(r"^/details/index/search-usedcar-[a-z-]+/[^/]+/[^/]+/?$"),
 }
@@ -60,6 +60,13 @@ AR_NAMES = {
     "سبورتاج": "sportage", "لانسر": "lancer", "اتراج": "attrage", "أتراج": "attrage", "سويفت": "swift",
     "دزاير": "dzire", "سيليريو": "celerio",
 }
+with open(os.path.join(os.path.dirname(__file__), "mourjan_catalog.json"), encoding="utf-8") as _catalog:
+    MOURJAN_BRANDS = {b["slug"]: b for b in json.load(_catalog)["brands"]}
+MOURJAN_ALIASES = {"hyundai": "hyunday", "mercedes-benz": "mercedes", "volkswagen": "volks-wagen", "infiniti": "infinity", "maserati": "maseratti", "mini": "mini-cooper"}
+for _brand in MOURJAN_BRANDS.values():
+    if re.search(r"[؀-ۿ]", _brand["name"]):
+        AR_NAMES.setdefault(_brand["name"], next((k for k,v in MOURJAN_ALIASES.items() if v == _brand["slug"]), _brand["slug"]))
+
 COLORS = {
     "white": ("white", "أبيض", "ابيض", "pearl white"), "black": ("black", "أسود", "اسود"),
     "silver": ("silver", "فضي"), "grey": ("grey", "gray", "رمادي"), "red": ("red", "أحمر", "احمر"),
@@ -229,6 +236,8 @@ def ad_identity(url):
         if m[1].startswith(AUTOAE_FOREIGN):
             return None, None
         return plat, m[2]
+    if plat == "mourjan":
+        return (plat, m[2]) if m[1] in MOURJAN_BRANDS else (None, None)
     if plat == "oneclickdrive":
         q = urllib.parse.parse_qs(u.query).get("id", [""])[0]
         return plat, (q if q.isdigit() else None)
@@ -265,7 +274,11 @@ def model_terms(req):
     for k in ("make", "model"):
         v = (req.get(k) or "").strip()
         if v:
-            out.append({slug(v).replace("-", " "), v.lower()})
+            key=slug(v)
+            alts={key.replace("-", " "), v.lower()}
+            alts.update(k.lower() for k,val in AR_NAMES.items() if slug(val)==key)
+            alts.add(MOURJAN_ALIASES.get(key,key).replace("-"," "))
+            out.append(alts)
     return out
 
 
@@ -277,7 +290,7 @@ def has_terms(text, terms):
 
 def validate_request(req):
     """Reject names that cannot produce a platform path instead of an empty round."""
-    if not slug(req.get("make")):
+    if req.get("make") and not slug(req.get("make")):
         return "اسم الماركة غير معروف؛ اختر اسمًا من القائمة أو اكتبه بالإنجليزية"
     if req.get("model") and not slug(req.get("model")):
         return "اسم الطراز غير معروف؛ اختر اسمًا من القائمة أو اكتبه بالإنجليزية"

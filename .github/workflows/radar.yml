@@ -3,12 +3,13 @@ name: radar
 on:
   schedule:
     - cron: "0 6,16 * * *"        # 10:00 and 20:00 UAE time: full rounds with report and notifications
+    - cron: "0 4 * * 1"          # Monday 08:00 UAE: weekly saved-ad review, no PDF
   workflow_dispatch:
     inputs:
       cmd:
         description: "run = search, watch = price check of followed cars, diagnose = platform check, notify-test = test message"
         type: choice
-        options: [run, watch, diagnose, notify-test]
+        options: [run, watch, review, diagnose, notify-test]
         default: run
       mode:
         type: choice
@@ -58,12 +59,13 @@ jobs:
         run: |
           clean() { printf '%s' "$1" | tr -cd 'A-Za-z0-9_-'; }
           if [ "$EVENT" = "schedule" ]; then
-            if [ "$SCHEDULE" = "0 6,16 * * *" ]; then args="run --mode scheduled"; else args="watch"; fi
+            if [ "$SCHEDULE" = "0 6,16 * * *" ]; then args="run --mode scheduled"; else args="watch --weekly"; fi
           else
             case "$CMD" in
               run)
                 args="run --mode $(clean "$MODE") --request $(clean "${REQ:-all}")"
                 [ -n "$RID" ] && args="$args --run-id $(clean "$RID")" ;;
+              review) args="watch --weekly" ;;
               *) args="$(clean "$CMD")" ;;
             esac
           fi
@@ -84,7 +86,7 @@ jobs:
         run: python -m unittest discover engine/tests
 
       - name: Verify PDF renderer
-        if: startsWith(steps.task.outputs.args, 'run')
+        if: startsWith(steps.task.outputs.args, 'run --mode scheduled')
         run: python engine/tests/pdf_smoke.py
 
       - name: Read dashboard activity
@@ -96,6 +98,8 @@ jobs:
           fi
 
       - name: Search the platforms
+        env:
+          RADAR_PROGRESS_TOKEN: ${{ github.token }}
         if: steps.task.outputs.args != 'notify-test'
         run: python engine/radar.py ${{ steps.task.outputs.args }}
 

@@ -1,0 +1,336 @@
+{
+  "source": "https://www.mourjan.com/ae/toyota/",
+  "checked": "2026-10-18",
+  "brands": [
+    {
+      "slug": "bmw",
+      "value": 10,
+      "name": "بي ام دبليو"
+    },
+    {
+      "slug": "audi",
+      "value": 11,
+      "name": "اودي"
+    },
+    {
+      "slug": "toyota",
+      "value": 13,
+      "name": "تويوتا"
+    },
+    {
+      "slug": "mercedes",
+      "value": 15,
+      "name": "مرسيدس"
+    },
+    {
+      "slug": "cadillac",
+      "value": 21,
+      "name": "كاديلاك"
+    },
+    {
+      "slug": "chevrolet",
+      "value": 22,
+      "name": "شفروليه"
+    },
+    {
+      "slug": "fiat",
+      "value": 24,
+      "name": "فيات"
+    },
+    {
+      "slug": "ford",
+      "value": 26,
+      "name": "فورد"
+    },
+    {
+      "slug": "nissan",
+      "value": 27,
+      "name": "نيسان"
+    },
+    {
+      "slug": "honda",
+      "value": 28,
+      "name": "هوندا"
+    },
+    {
+      "slug": "lexus",
+      "value": 30,
+      "name": "لكزس"
+    },
+    {
+      "slug": "hummer",
+      "value": 32,
+      "name": "همر"
+    },
+    {
+      "slug": "mitsubishi",
+      "value": 33,
+      "name": "ميتسوبيشي"
+    },
+    {
+      "slug": "gmc",
+      "value": 34,
+      "name": "جي ام سي"
+    },
+    {
+      "slug": "hyunday",
+      "value": 35,
+      "name": "هيونداي"
+    },
+    {
+      "slug": "jaguar",
+      "value": 37,
+      "name": "جاكوار"
+    },
+    {
+      "slug": "jeep",
+      "value": 38,
+      "name": "جيب"
+    },
+    {
+      "slug": "land-rover",
+      "value": 39,
+      "name": "لاند روفر"
+    },
+    {
+      "slug": "mazda",
+      "value": 40,
+      "name": "مازدا"
+    },
+    {
+      "slug": "opel",
+      "value": 48,
+      "name": "اوبل"
+    },
+    {
+      "slug": "peugeot",
+      "value": 49,
+      "name": "بيجو"
+    },
+    {
+      "slug": "renault",
+      "value": 50,
+      "name": "رينو"
+    },
+    {
+      "slug": "suzuki",
+      "value": 52,
+      "name": "سوزوكي"
+    },
+    {
+      "slug": "volvo",
+      "value": 53,
+      "name": "فولفو"
+    },
+    {
+      "slug": "volks-wagen",
+      "value": 54,
+      "name": "فولكس واجن"
+    },
+    {
+      "slug": "chrysler",
+      "value": 55,
+      "name": "كرايسلر"
+    },
+    {
+      "slug": "citroen",
+      "value": 56,
+      "name": "ستروين"
+    },
+    {
+      "slug": "lincoln",
+      "value": 57,
+      "name": "لينكولن"
+    },
+    {
+      "slug": "kia",
+      "value": 58,
+      "name": "كيا"
+    },
+    {
+      "slug": "dodge",
+      "value": 59,
+      "name": "دودج"
+    },
+    {
+      "slug": "daihatsu",
+      "value": 71,
+      "name": "دايهاتسو"
+    },
+    {
+      "slug": "infinity",
+      "value": 73,
+      "name": "انفينيتي"
+    },
+    {
+      "slug": "porsche",
+      "value": 74,
+      "name": "بورش"
+    },
+    {
+      "slug": "classic-cars",
+      "value": 75,
+      "name": "كلاسيكية"
+    },
+    {
+      "slug": "alfa-romeo",
+      "value": 76,
+      "name": "الفا روميو"
+    },
+    {
+      "slug": "mini-cooper",
+      "value": 79,
+      "name": "ميني كوبر"
+    },
+    {
+      "slug": "subaru",
+      "value": 81,
+      "name": "سوبارو"
+    },
+    {
+      "slug": "isuzu",
+      "value": 87,
+      "name": "ايسوزي"
+    },
+    {
+      "slug": "tata",
+      "value": 91,
+      "name": "تاتا"
+    },
+    {
+      "slug": "skoda",
+      "value": 92,
+      "name": "سكودا"
+    },
+    {
+      "slug": "rolls-royce",
+      "value": 95,
+      "name": "رولز رويس"
+    },
+    {
+      "slug": "rover",
+      "value": 96,
+      "name": "روفر"
+    },
+    {
+      "slug": "bentley",
+      "value": 98,
+      "name": "بنتلي"
+    },
+    {
+      "slug": "maseratti",
+      "value": 102,
+      "name": "مازيراتي"
+    },
+    {
+      "slug": "mg",
+      "value": 103,
+      "name": "ام جي"
+    },
+    {
+      "slug": "other-autos",
+      "value": 117,
+      "name": "متفرقات"
+    },
+    {
+      "slug": "chery",
+      "value": 120,
+      "name": "شيري"
+    },
+    {
+      "slug": "jac",
+      "value": 1517,
+      "name": "جاك"
+    },
+    {
+      "slug": "import-cars",
+      "value": 1518,
+      "name": "استيراد سيارات"
+    },
+    {
+      "slug": "tesla",
+      "value": 1524,
+      "name": "تسلا"
+    },
+    {
+      "slug": "daewoo",
+      "name": "Daewoo"
+    },
+    {
+      "slug": "olds-mobile",
+      "name": "Olds Mobile"
+    },
+    {
+      "slug": "seat",
+      "name": "Seat"
+    },
+    {
+      "slug": "mercury",
+      "name": "Mercury"
+    },
+    {
+      "slug": "pontiac",
+      "name": "Pontiac"
+    },
+    {
+      "slug": "saab",
+      "name": "Saab"
+    },
+    {
+      "slug": "sangyoung",
+      "name": "Sangyoung"
+    },
+    {
+      "slug": "smart",
+      "name": "Smart"
+    },
+    {
+      "slug": "proton",
+      "name": "Proton"
+    },
+    {
+      "slug": "buick",
+      "name": "Buick"
+    },
+    {
+      "slug": "ferrari",
+      "name": "Ferrari"
+    },
+    {
+      "slug": "austin",
+      "name": "Austin"
+    },
+    {
+      "slug": "lancia",
+      "name": "Lancia"
+    },
+    {
+      "slug": "asia",
+      "name": "Asia"
+    },
+    {
+      "slug": "lamborghini",
+      "name": "Lamborghini"
+    },
+    {
+      "slug": "morgan",
+      "name": "Morgan"
+    },
+    {
+      "slug": "mclaren",
+      "name": "Mclaren"
+    },
+    {
+      "slug": "lotus",
+      "name": "Lotus"
+    },
+    {
+      "slug": "dfsk",
+      "name": "Dfsk"
+    },
+    {
+      "slug": "aston-martin",
+      "name": "Aston Martin"
+    }
+  ]
+}
