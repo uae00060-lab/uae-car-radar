@@ -170,6 +170,18 @@ REQUIRED = {"telegram": ("TELEGRAM_BOT_TOKEN", "TELEGRAM_CHAT_ID"), "whatsapp": 
             "email": ("SMTP_USER", "SMTP_PASSWORD")}
 
 
+def gmail_control_check():
+    """Sign in with an account that does not exist, to tell bad details from a blocked server."""
+    try:
+        with smtplib.SMTP_SSL("smtp.gmail.com", 465, context=ssl.create_default_context(), timeout=30) as s:
+            s.login("radar.control.check.000@gmail.com", "aaaabbbbccccdddd")
+    except smtplib.SMTPAuthenticationError:
+        return "Gmail يرد طبيعيًا من الخادم، فالمشكلة في بيانات الدخول المحفوظة"
+    except Exception as e:  # noqa: BLE001
+        return f"Gmail يغلق الاتصال من خادم GitHub أيضًا مع حساب تجريبي ({type(e).__name__})"
+    return ""
+
+
 def report_test(result):
     """Per-channel outcome of a test message as GitHub annotations and job summary; 1 if not all good."""
     names = {"telegram": "تيليجرام", "whatsapp": "واتساب", "email": "البريد"}
@@ -179,6 +191,8 @@ def report_test(result):
         missing = [n for n in REQUIRED[k] if not (env(n) or "").strip()]
         if v == OFF and missing:
             v = f"{v}: لا يصل للخادم {' و'.join(missing)}"
+        if k == "email" and "أغلق الاتصال" in v:
+            v += "؛ " + gmail_control_check()
         print(f"::{level} title={names[k]}::{v}")
         lines.append(f"{names[k]}: {v}")
     summary = env("GITHUB_STEP_SUMMARY")
