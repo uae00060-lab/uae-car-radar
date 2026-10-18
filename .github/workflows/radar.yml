@@ -3,7 +3,6 @@ name: radar
 on:
   schedule:
     - cron: "0 6,16 * * *"        # 10:00 and 20:00 UAE time: full rounds with report and notifications
-    - cron: "0 3,9,12,19 * * *"   # 07:00, 13:00, 16:00, 23:00 UAE: price watch on the cars you follow
   workflow_dispatch:
     inputs:
       cmd:
@@ -80,6 +79,13 @@ jobs:
           if echo "${{ steps.task.outputs.args }}" | grep -q '^run'; then
             sudo apt-get install -y --no-install-recommends fonts-noto-core >/dev/null 2>&1 || true
           fi
+
+      - name: Offline regression tests
+        run: python -m unittest discover engine/tests
+
+      - name: Verify PDF renderer
+        if: startsWith(steps.task.outputs.args, 'run')
+        run: python engine/tests/pdf_smoke.py
 
       - name: Search the platforms
         if: steps.task.outputs.args != 'notify-test'

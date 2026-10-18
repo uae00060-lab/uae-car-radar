@@ -42,17 +42,20 @@ def telegram(text, pdf=None, pdf_name="report.pdf"):
         return "غير مفعّل"
     base = f"https://api.telegram.org/bot{token}"
     try:
-        for part in chunks(text, 3900):
-            body = urllib.parse.urlencode({"chat_id": chat, "text": part, "disable_web_page_preview": "true"}).encode()
-            _post(base + "/sendMessage", body)
         if pdf and os.path.exists(pdf):
             boundary = uuid.uuid4().hex
             with open(pdf, "rb") as f:
                 blob = f.read()
+            # One document message, with its summary in the caption; details are in the PDF.
+            caption = text[:850] + ("\nالتفاصيل الكاملة داخل التقرير المرفق." if len(text) > 850 else "")
             body = (f"--{boundary}\r\nContent-Disposition: form-data; name=\"chat_id\"\r\n\r\n{chat}\r\n"
+                    f"--{boundary}\r\nContent-Disposition: form-data; name=\"caption\"\r\n\r\n{caption}\r\n"
                     f"--{boundary}\r\nContent-Disposition: form-data; name=\"document\"; filename=\"{pdf_name}\"\r\n"
                     f"Content-Type: application/pdf\r\n\r\n").encode() + blob + f"\r\n--{boundary}--\r\n".encode()
             _post(base + "/sendDocument", body, {"Content-Type": f"multipart/form-data; boundary={boundary}"}, timeout=120)
+        else:
+            caption = text if len(text) <= 3900 else text[:3400] + "\nالتفاصيل في لوحة الرادار."
+            _post(base + "/sendMessage", urllib.parse.urlencode({"chat_id": chat, "text": caption, "disable_web_page_preview": "true"}).encode())
         return "أُرسل"
     except Exception as e:  # noqa: BLE001 - report, never crash the run over a notification
         return f"فشل ({type(e).__name__})"
@@ -63,11 +66,12 @@ def whatsapp(text):
     if not phone or not key:
         return "غير مفعّل"
     try:
-        for part in chunks(text, 1400)[:3]:  # CallMeBot is for short messages; the PDF has the rest
-            q = urllib.parse.urlencode({"phone": phone, "text": part, "apikey": key})
-            status, body = _post("https://api.callmebot.com/whatsapp.php?" + q)
-            if status != 200:
-                return f"فشل (HTTP {status})"
+        link = next((line for line in reversed(text.splitlines()) if "https://" in line), "")
+        part = text if len(text) <= 1400 else text[:1100] + "\nالتفاصيل الكاملة في اللوحة:\n" + link
+        q = urllib.parse.urlencode({"phone": phone, "text": part, "apikey": key})
+        status, body = _post("https://api.callmebot.com/whatsapp.php?" + q)
+        if status != 200:
+            return f"فشل (HTTP {status})"
         return "أُرسل"
     except Exception as e:  # noqa: BLE001
         return f"فشل ({type(e).__name__})"
@@ -97,9 +101,18 @@ def email(subject, text, pdf=None, pdf_name="report.pdf"):
 
 def send_all(subject, full_text, short_text, pdf=None, pdf_name="report.pdf"):
     """Telegram and email get the full text + PDF; WhatsApp gets the short text."""
-    return {"telegram": telegram(full_text, pdf, pdf_name),
-            "whatsapp": whatsapp(short_text),
-            "email": email(subject, full_text, pdf, pdf_name)}
+    # Exactly one configured destination per round: email can contain every offer inline.
+    result = {"telegram": "غير مختار", "whatsapp": "غير مختار", "email": "غير مختار"}
+    if env("SMTP_USER") and env("SMTP_PASSWORD"):
+        result["email"] = email(subject, full_text, pdf, pdf_name)
+    elif env("TELEGRAM_BOT_TOKEN") and env("TELEGRAM_CHAT_ID"):
+        result["telegram"] = telegram(full_text, pdf, pdf_name)
+    elif env("CALLMEBOT_PHONE") and env("CALLMEBOT_APIKEY"):
+        result["whatsapp"] = whatsapp(full_text)
+    else:
+        result = {k: "غير مفعّل" for k in result}
+    return result
+
 
 
 if __name__ == "__main__":  # python notify.py test  -> sends a test message on every configured channel

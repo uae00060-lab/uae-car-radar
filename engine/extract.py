@@ -68,6 +68,7 @@ def scalar(v):
 
 # Field -> key names used by car sites in their embedded data (compared case-insensitively).
 KEYS = {
+    "currency": ("pricecurrency", "price_currency", "currency"),
     "price": ("price", "price_aed", "pricevalue", "priceamount", "sale_price", "saleprice", "asking_price", "amount"),
     "year": ("year", "model_year", "modelyear", "manufacture_year", "manufactureyear", "vehiclemodeldate", "modeldate", "productiondate"),
     "km": ("kilometers", "kilometres", "mileage", "km", "odometer", "mileagefromodometer", "kms"),
@@ -147,7 +148,7 @@ def results(html, base, plat):
             found = {}
             pick_from_dict(d, found, "json")
             add(link, {"title": str(found.get("title", ("",))[0])[:160] or None,
-                       "price": to_num(found.get("price", (None,))[0]),
+                       "price": to_num(found.get("price", (None,))[0]) if str(found.get("currency", ("AED",))[0]).upper() == "AED" else None,
                        "year": to_num(found.get("year", (None,))[0]),
                        "km": to_num(found.get("km", (None,))[0]),
                        "image": found.get("image", (None,))[0] if isinstance(found.get("image", (None,))[0], str) else None}, "json")
@@ -284,6 +285,23 @@ def ad_page(html, url, ad_id):
             m = re.search(rx, text, re.I)
             if m:
                 found[f] = (m[1].strip(), "text")
+    # Structured prices may be converted currencies; compare with an explicit AED cash price.
+    amounts = re.findall(r"(?:AED|درهم)\s*([\d,]+(?:\.\d{1,2})?)([^\n]{0,65})", text, re.I)
+    cash = []
+    for amount, tail in amounts:
+        n = to_num(amount)
+        if n and 1500 <= n <= 5_000_000 and not re.match(r"\s*(?:/|per\s*)?(?:month|mo\b|شهري|شهر)", tail, re.I):
+            # Only explicit cash/total lines or fee-bearing asking price lines are authoritative.
+            if re.search(r"convenience fee|رسوم|cash price|سعر نقدي", tail, re.I):
+                fee = re.search(r"\+\s*(?:AED|درهم)\s*([\d,]+)", tail, re.I)
+                cash.append(n + (to_num(fee[1]) if fee else 0))
+    currency = str(found.get("currency", ("",))[0]).upper()
+    if cash:
+        found["price"] = (max(cash), "text:AED-total")
+        found["currency"] = ("AED", "text:AED")
+    elif currency and currency not in ("AED", "درهم", "د.إ"):
+        found.pop("price", None)
+        found["_price_uncertain"] = True
     if "color" in found and not color_ok(found["color"][0]):
         del found["color"]
     if "phone" not in found:

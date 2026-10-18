@@ -49,11 +49,11 @@ EMIRATE_AR = {"dubai": "دبي", "abu dhabi": "أبوظبي", "sharjah": "الش
 
 # Arabic names the user may type -> the English slug the platforms use.
 AR_NAMES = {
-    "تويوتا": "toyota", "نيسان": "nissan", "هوندا": "honda", "هيونداي": "hyundai", "هونداي": "hyundai",
+    "تيوتا": "toyota", "تويوتا": "toyota", "نيسان": "nissan", "هوندا": "honda", "هيونداي": "hyundai", "هونداي": "hyundai",
     "كيا": "kia", "ميتسوبيشي": "mitsubishi", "متسوبيشي": "mitsubishi", "لكزس": "lexus", "شفروليه": "chevrolet",
     "شيفروليه": "chevrolet", "فورد": "ford", "مازدا": "mazda", "سوزوكي": "suzuki", "مرسيدس": "mercedes-benz",
     "بي ام دبليو": "bmw", "رينو": "renault", "جيلي": "geely", "شانجان": "changan", "إم جي": "mg", "ام جي": "mg",
-    "يارس": "yaris", "كورولا": "corolla", "كامري": "camry", "لاندكروزر": "land-cruiser", "برادو": "prado",
+    "يارس": "yaris", "ياريس": "yaris", "كورولا": "corolla", "كامري": "camry", "لاندكروزر": "land-cruiser", "برادو": "prado",
     "صني": "sunny", "التيما": "altima", "باترول": "patrol", "سنترا": "sentra", "سيفيك": "civic", "أكورد": "accord",
     "اكورد": "accord", "النترا": "elantra", "إلنترا": "elantra", "أكسنت": "accent", "اكسنت": "accent",
     "سوناتا": "sonata", "توسان": "tucson", "بيكانتو": "picanto", "ريو": "rio", "سيراتو": "cerato",
@@ -273,3 +273,21 @@ def has_terms(text, terms):
     t = re.sub(r"[^a-z0-9؀-ۿ]+", " ", (text or "").lower())
     return all(any(re.search(r"(^|\s)" + re.escape(a) + r"(\s|$)", t) for a in alts if a) for alts in terms)
 
+
+
+def validate_request(req):
+    """Reject names that cannot produce a platform path instead of an empty round."""
+    if not slug(req.get("make")):
+        return "اسم الماركة غير معروف؛ اختر اسمًا من القائمة أو اكتبه بالإنجليزية"
+    if req.get("model") and not slug(req.get("model")):
+        return "اسم الطراز غير معروف؛ اختر اسمًا من القائمة أو اكتبه بالإنجليزية"
+    if req.get("year_from") and req.get("year_to") and int(req["year_from"]) > int(req["year_to"]):
+        return "نطاق سنوات الموديل غير صحيح"
+    return None
+
+
+def request_view(listing, request_id):
+    """One ad, independently assessed against every request that found it."""
+    if request_id not in listing.get("request_ids", [listing.get("request_id")]):
+        return None
+    return {**listing, **listing.get("by_request", {}).get(request_id, {}), "request_id": request_id}

@@ -30,7 +30,7 @@ import report  # noqa: E402
 import store  # noqa: E402
 from common import (COLOR_AR, EMIRATE_AR, FIELD_AR, NO_DATE_PLATFORMS, PLATFORMS, ad_identity, clean_url,  # noqa: E402
                     color_of, date_in_path, emirate_of, has_terms, model_terms, now_uae, parse_date, slug,
-                    to_num, window_start)
+                    to_num, window_start, validate_request, request_view)
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 USER_FILE = os.path.join(ROOT, "data", "user.enc")
@@ -198,7 +198,7 @@ def read_ad(item, today, debug=None):
     src = {k: v[1] for k, v in f.items() if isinstance(v, tuple)}
     # Each value must be plausible; otherwise the next source is used (title, then the results card).
     card = item if item.get("src") == "json" else {}
-    price = next((int(x) for x in (to_num(g("price")), to_num(card.get("price"))) if x and 1500 <= x <= 5_000_000), None)
+    price = next((int(x) for x in (to_num(g("price")), None if f.get("_price_uncertain") else to_num(card.get("price"))) if x and 1500 <= x <= 5_000_000), None)
     title_year = re.search(r"\b(19[89]\d|20[0-3]\d)\b", str(g("title") or ""))
     year = next((int(x) for x in (to_num(g("year")), float(title_year[1]) if title_year else None, to_num(card.get("year")))
                  if x and 1980 <= x <= today.year + 1), None)
@@ -263,7 +263,7 @@ def assess(req, v, start, plat):
     if d is None:
         c["posted"] = "unknown"
     elif kind == "posted":
-        c["posted"] = "matched" if d >= start else "mismatched"
+        c["posted"] = "matched" if start <= d <= now_uae().date() else "mismatched"
     elif d >= start:
         c["posted"] = "approx"
     else:
@@ -272,7 +272,7 @@ def assess(req, v, start, plat):
 
 
 def state_of(checks, plat, known):
-    bad = [f for f, s in checks.items() if s == "mismatched" and not (known and f == "posted")]
+    bad = [f for f, s in checks.items() if s == "mismatched"]
     unknown = [f for f, s in checks.items() if s == "unknown"]
     if bad:
         return "excluded", "لا يطابق: " + "، ".join(FIELD_AR[f] for f in bad)
@@ -281,7 +281,7 @@ def state_of(checks, plat, known):
             return "unverified", "كل شروطك مطابقة؛ المنصة لا تعرض تاريخ النشر"
         return "unverified", "غير ظاهر في الإعلان: " + "، ".join(FIELD_AR[f] for f in unknown)
     if checks.get("posted") == "approx":
-        return "approx", "كل شروطك مطابقة؛ التاريخ المعروض ليس تاريخ النشر"
+        return "unverified", "تاريخ النشر غير مؤكد؛ التاريخ المتاح تحديث أو صور أو فحص"
     return "verified", ""
 
 
@@ -299,6 +299,32 @@ def marks_of(user):
     return user.get("marks") or {}
 
 
+def reassess_saved(listings, reqs, start, today):
+    for listing in listings.values():
+        if listing.get("state") == "sold":
+            continue
+        for req in reqs:
+            if req["id"] not in listing.get("request_ids", [listing.get("request_id")]):
+                continue
+            v = {"title": listing.get("title"), "_url": listing.get("url"), "year": listing.get("year"),
+                 "price": listing.get("price"), "km": listing.get("mileage"), "color": color_of(listing.get("color")),
+                 "emirate": emirate_of(listing.get("emirate")), "date": parse_date(listing.get("date"), today),
+                 "date_kind": listing.get("date_kind")}
+            checks = assess(req, v, start, listing["platform"])
+            state, note = state_of(checks, listing["platform"], True)
+            listing.setdefault("by_request", {})[req["id"]] = {"state": state, "note": note, "checks": checks}
+
+
+def load_presence():
+    try:
+        with open(os.path.join(ROOT, "data", "presence.json")) as f:
+            at = dt.datetime.fromisoformat(json.load(f)["at"])
+        age = (now_uae() - at).total_seconds()
+        return 0 <= age < 180
+    except (OSError, ValueError, KeyError, TypeError):
+        return False
+
+
 def run_round(a, key):
     t0 = time.time()
     now = now_uae()
@@ -312,9 +338,18 @@ def run_round(a, key):
         reqs = [r for r in reqs if r.get("id") == a.request]
     if a.mode == "scheduled":
         reqs = [r for r in reqs if r.get("scheduled")]
+    if a.mode == "scheduled":
+        presence = load_presence()
+        if presence:
+            log("scheduled_skipped", why="dashboard active")
+            return
+    invalid = [validate_request(r) for r in reqs if validate_request(r)]
+    reqs = [r for r in reqs if not validate_request(r)]
     listings = eng["listings"]
     diag, opened_stats = {}, {}
     new_ids, drops, sold = [], [], []
+
+    reassess_saved(listings, reqs, start, today)
 
     # 1) find ads
     plan = []  # (request, card)
@@ -328,6 +363,8 @@ def run_round(a, key):
             st["cards"] += 1
             if k in listings:
                 st["known"] += 1
+                if req["id"] not in listings[k].get("by_request", {}):
+                    plan.append((req, {**c, "id": k, "_recheck": True}))
                 continue
             sk = eng["skipped"].get(k)
             if sk and sk.get("request_id") == req["id"] and sk.get("at", "") > (now - dt.timedelta(days=SKIP_DAYS)).isoformat():
@@ -358,7 +395,7 @@ def run_round(a, key):
         m = marks.get(l["id"]) or {}
         if l.get("state") in ("sold", "excluded") or m.get("status") in ("dismissed", "purchased"):
             continue
-        if l.get("request_id") not in run_req_ids or l.get("request_id") not in req_by_id:
+        if not (set(l.get("request_ids", [l.get("request_id")])) & run_req_ids):
             continue
         try:
             age = (now - dt.datetime.fromisoformat(l.get("last_checked") or l.get("first_seen"))).total_seconds() / 3600
@@ -367,7 +404,7 @@ def run_round(a, key):
         if age >= RECHECK_HOURS:
             due.append((age, l))
     due.sort(key=lambda x: -x[0])
-    order += [(req_by_id[l["request_id"]], {"id": l["id"], "url": l["url"], "platform": l["platform"],
+    order += [(req_by_id[next(r for r in l.get("request_ids", [l["request_id"]]) if r in run_req_ids)], {"id": l["id"], "url": l["url"], "platform": l["platform"],
                                            "ad_id": l["ad_id"], "title": l.get("title"), "_recheck": True})
               for _, l in due[: max(20, cap - len(order))]]
 
@@ -419,6 +456,8 @@ def run_round(a, key):
         extra = {"color": COLOR_AR.get(v["color"]) if v["color"] else None,
                  "emirate": EMIRATE_AR.get(v["emirate"]) if v["emirate"] else None}
         if prev:
+            prev["request_ids"] = sorted(set(prev.get("request_ids", [prev["request_id"]])) | {req["id"]})
+            prev.setdefault("by_request", {})[req["id"]] = {"state": st, "note": note, "checks": checks}
             patch = {"last_seen": stamp, "last_checked": stamp, "state": st, "note": note, "checks": checks}
             for k in ("phone", "seller_name", "seller_type", "specs", "transmission", "image", "location", "mileage", "year"):
                 val = v.get("km" if k == "mileage" else k)
@@ -430,6 +469,8 @@ def run_round(a, key):
             if v["date"] and not prev.get("date"):
                 patch.update({"date": v["date"].isoformat(), "date_kind": v["date_kind"],
                               "posted": v["date"].isoformat() if v["date_kind"] == "posted" else None})
+            if v["price"] and not prev.get("price"):
+                patch["price"] = v["price"]
             if v["price"] and prev.get("price") and v["price"] != prev["price"]:
                 hist = list(prev.get("price_history") or []) + [{"at": stamp, "price": v["price"]}]
                 patch.update({"price": v["price"], "price_prev": prev["price"], "price_changed_at": stamp, "price_history": hist[-30:]})
@@ -439,16 +480,9 @@ def run_round(a, key):
                                   "pct": drop[1], "url": prev["url"], "at": stamp, "request_id": req["id"]})
             prev.update(patch)
             continue
-        # The same car listed on two sites by one dealer: same year, mileage and price -> one record.
-        twin = None
-        if v["km"] and v["year"] and v["price"]:
-            twin = next((l for l in listings.values() if (l.get("year"), l.get("mileage"), l.get("price")) == (v["year"], v["km"], v["price"])
-                         and l["platform"] != plat and l.get("state") != "sold"), None)
-        if twin:
-            twin["also_on"] = sorted(set((twin.get("also_on") or []) + [item["url"]]))
-            continue
         doc = {
-            "id": item["id"], "ad_id": item["ad_id"], "request_id": req["id"], "platform": plat, "url": item["url"],
+            "id": item["id"], "ad_id": item["ad_id"], "request_id": req["id"],
+            "request_ids": [req["id"]], "by_request": {req["id"]: {"state": st, "note": note, "checks": checks}}, "platform": plat, "url": item["url"],
             "title": v["title"], "price": v["price"], "year": v["year"], "mileage": v["km"], **extra,
             "location": v["location"], "phone": v["phone"], "seller_name": v["seller_name"], "seller_type": v["seller_type"],
             "specs": v["specs"], "transmission": v["transmission"], "image": v["image"],
@@ -461,6 +495,15 @@ def run_round(a, key):
         listings[item["id"]] = doc
         new_ids.append(item["id"])
 
+    reassess_saved(listings, reqs, start, today)
+    for listing in listings.values():
+        if listing.get("state") == "sold":
+            continue
+        assessments = list(listing.get("by_request", {}).values())
+        if assessments:
+            best = min(assessments, key=lambda x: {"verified": 0, "unverified": 1, "approx": 1, "excluded": 2}.get(x["state"], 3))
+            listing.update(best)
+
     # 4) analytics for every live listing of the round's requests
     market_info = {}
     for req in reqs:
@@ -468,7 +511,7 @@ def run_round(a, key):
         prices = sorted(s["price"] for s in book.values())
         market_info[req["id"]] = {"n": len(prices), "median": int(prices[len(prices) // 2]) if prices else None}
     for l in listings.values():
-        if l.get("request_id") not in run_req_ids or l.get("state") in ("sold", "excluded"):
+        if not (set(l.get("request_ids", [l.get("request_id")])) & run_req_ids) or l.get("state") in ("sold", "excluded"):
             continue
         fp = analytics.fair_price(eng["market"].get(l["request_id"]) or {}, l.get("year"), l.get("mileage"), exclude_id=l["id"])
         rating, dev = analytics.rate(l.get("price"), fp)
@@ -484,12 +527,18 @@ def run_round(a, key):
         # A request's first scheduled round (or the first after its conditions changed) lists the whole month.
         done_at = (eng.get("sched_done") or {}).get(req["id"], "")
         first = a.mode == "scheduled" and (not done_at or done_at < (req.get("sched_reset_at") or ""))
-        rows = [dict(l, _new=l["id"] in new_ids) for l in listings.values() if l.get("request_id") == req["id"] and live(l)]
+        rows = []
+        for listing in listings.values():
+            l = request_view(listing, req["id"])
+            if l and live(l):
+                if l.get("date_kind") == "posted" and not (start.isoformat() <= l.get("posted", "") <= today.isoformat()):
+                    continue
+                rows.append(dict(l, _new=l["id"] in new_ids))
         if not (full or first):  # later scheduled rounds: what is new or changed price
             fresh = set(new_ids) | {d["id"] for d in drops}
             rows = [l for l in rows if l["id"] in fresh]
-        ver = [l for l in rows if l["state"] in ("verified", "approx")]
-        cand = [l for l in rows if l["state"] == "unverified"]
+        ver = [l for l in rows if l["state"] == "verified"]
+        cand = [l for l in rows if l["state"] in ("unverified", "approx")]
         cur_ver += len(ver)
         cur_cand += len(cand)
         groups.append((req, ver, cand))
@@ -498,22 +547,27 @@ def run_round(a, key):
     blocked = [PLATFORMS[p]["name"] for p, d in diag.items() if d["pages"] and not d["ok"] and not d["via_search"]]
     run = {"id": run_id, "at": stamp, "mode": a.mode, "status": "done", "requests": [r["id"] for r in reqs],
            "request_names": [r.get("name") for r in reqs], "found": sum(d["cards"] for d in diag.values()),
-           "opened": len(order), "new": len([i for i in new_ids if listings[i]["state"] != "unverified"]),
+           "opened": len(order), "new": len([i for i in new_ids if listings[i]["state"] == "verified"]),
            "new_unverified": len([i for i in new_ids if listings[i]["state"] == "unverified"]),
            "price_drops": len(drops), "sold": len(sold), "current_offers": cur_ver, "candidates": cur_cand,
            "deferred": deferred, "market": market_info,
-           "warning": ("تعذّر الوصول إلى: " + "، ".join(blocked)) if blocked else "",
+           "warning": "؛ ".join(invalid + ([("تعذّر الوصول إلى: " + "، ".join(blocked))] if blocked else [])),
            "platforms": {p: {**diag.get(p, {}), **opened_stats.get(p, {})} for p in set(diag) | set(opened_stats)}}
+    if reqs and not sum(d.get("ok", 0) for d in diag.values()) and not run["found"]:
+        run["status"] = "failed"
+        run["warning"] = (run.get("warning", "") + "؛ لم تُفحص أي صفحة نتائج بنجاح؛ لا يمكن استنتاج عدم وجود عروض").strip("؛ ")
     if not reqs:
-        run.update({"status": "done", "warning": "لا توجد طلبات بحث مفعّلة لهذه الجولة"})
+        run.update({"status": "failed" if invalid else "done", "warning": "؛ ".join(invalid) if invalid else "لا توجد طلبات بحث مفعّلة لهذه الجولة"})
     eng["drops"] = (drops + eng["drops"])[:200]
     profile = user.get("profile") or {}
     os.makedirs(WORK, exist_ok=True)
     pdf_plain = os.path.join(WORK, f"{run_id}.pdf")
     have_pdf = bool(reqs) and report.to_pdf(report.render_html(run, groups, drops, now, start, profile, sorted(diag)),
                                             os.path.join(WORK, f"{run_id}.html"), pdf_plain)
+    if not have_pdf and reqs:
+        run["warning"] = (run.get("warning", "") + "؛ تعذّر إنشاء PDF").strip("؛ ")
     morning = now.hour < 15
-    full_text = report.summary_text(run, groups, drops, now, start, SITE, short=a.mode == "scheduled" and morning)
+    full_text = report.summary_text(run, groups, drops, now, start, SITE, short=False)
     short_text = report.summary_text(run, groups, drops, now, start, SITE, short=True)
     if have_pdf:
         os.makedirs(REPORTS_DIR, exist_ok=True)
@@ -628,9 +682,11 @@ def diagnose(a):
     bp = fetch.get(search_urls("dubizzle", req)[0])
     out["_dubizzle_page"] = {"status": bp.status, "blocked": bp.blocked, "bytes": len(bp.html),
                              "head": re.sub(r"\s+", " ", extract.text_of(bp.html))[:300]}
-    print(json.dumps(out, ensure_ascii=False, indent=1))
+    out = {p: {k: v for k, v in d.items() if k in ("pages", "ok", "blocked", "cards", "via_search", "status", "cards_with_price")}
+           for p, d in out.items() if p in PLATFORMS}
+    log("diagnose", platforms=out)
     with open(os.path.join(ROOT, "data", "diagnose.json"), "w") as f:
-        json.dump({"at": now_uae().isoformat(timespec="seconds"), "probe": f"{a.make} {a.model}", "platforms": out}, f, ensure_ascii=False, indent=1)
+        json.dump({"at": now_uae().isoformat(timespec="seconds"), "probe": "platform availability", "platforms": out}, f, ensure_ascii=False, indent=1)
 
 
 def main():

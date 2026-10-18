@@ -289,7 +289,7 @@ section.tab { display: grid; gap: 14px; }
 
   <!-- reports -->
   <section class="tab" id="tab-reports" hidden>
-    <div class="small">كل جولة تنتج تقرير PDF. الصباح: ملخص بأفضل 3 عروض. المساء: التقرير الكامل. «عرض» يفتحه هنا، و«تنزيل» يحفظه، و«واتساب» يرسل الملخص.</div>
+    <div class="small">كل بحث مكتمل ينشئ تقرير PDF، ويظهر فشل إنشائه في السجل. الموعدان: تقرير مجمّع بالعروض الجديدة والتغييرات. «عرض» يفتحه هنا، و«تنزيل» يحفظه، و«واتساب» يرسل الملخص.</div>
     <div class="list" id="repList"></div>
   </section>
 
@@ -316,13 +316,13 @@ section.tab { display: grid; gap: 14px; }
         <div class="row"><button type="button" class="sm" id="btnTestNotify">إرسال إشعار تجريبي</button><button type="button" class="sm" id="btnDiag">فحص المنصات</button><button type="button" class="sm ghost" id="btnForget">نسيان هذا الجهاز</button></div>
       </div>
       <div class="panel"><h2>الإشعارات</h2><dl class="kv" id="notifyInfo"></dl>
-        <div class="small">تُفعَّل كل قناة بإضافة أسرارها في GitHub ← Settings ← Secrets and variables ← Actions. التفاصيل في README.</div></div>
+        <div class="small">يُرسل إشعار واحد عبر أول قناة مفعّلة: البريد، ثم تيليجرام، ثم واتساب. تُفعَّل القنوات بإضافة أسرارها في GitHub ← Settings ← Secrets and variables ← Actions. التفاصيل في README.</div></div>
       <div class="panel"><h2>المواعيد</h2>
         <dl class="kv">
-          <dt>10:00 صباحًا</dt><dd>جولة كاملة + ملخص الصباح (أفضل 3 عروض) + التقرير PDF</dd>
-          <dt>8:00 مساءً</dt><dd>جولة كاملة + التقرير الكامل</dd>
-          <dt>متابعة الأسعار</dt><dd>7 ص، 1 ظ، 4 ع، 11 م: تُفحص السيارات المفضلة والتي تتابعها، وإذا نزل سعر إحداها يصلك تنبيه فوري</dd>
-          <dt>«ابحث الآن»</dt><dd>بحث يدوي فوري يظهر في اللوحة دون إشعار</dd>
+          <dt>10:00 صباحًا</dt><dd>بحث عند غيابك + تقرير مجمّع وPDF</dd>
+          <dt>8:00 مساءً</dt><dd>بحث عند غيابك + تقرير مجمّع وPDF</dd>
+          <dt>متابعة الأسعار</dt><dd>تُفحص الأسعار ضمن جولتي 10 صباحًا و8 مساءً فقط، دون تنبيهات إضافية</dd>
+          <dt>«ابحث الآن»</dt><dd>بحث يدوي يظهر في اللوحة دون إشعار. تُتجاوز الجولة المجدولة عند وصول إشارة نشاط حديثة من اللوحة؛ قد يستغرق انتهاء الإشارة بعد إغلاقها 3 دقائق.</dd>
           <dt>ملاحظة</dt><dd>GitHub قد يؤخر المواعيد المجدولة من 5 إلى 15 دقيقة في أوقات الضغط</dd>
         </dl></div>
       <div class="panel"><h2>فحص المنصات</h2><div id="diagBox" class="small">اضغط «فحص المنصات» لمعرفة ما تعرضه كل منصة من خوادم GitHub.</div></div>
@@ -361,6 +361,50 @@ section.tab { display: grid; gap: 14px; }
   const when = (iso) => iso ? iso.replace("T", " ").slice(0, 16) : "—";
   const store = { get(k) { try { return localStorage.getItem(k); } catch { return null; } }, set(k, v) { try { v == null ? localStorage.removeItem(k) : localStorage.setItem(k, v); } catch {} } };
 
+  // Remember on this device without plaintext credentials in localStorage.
+  // The non-extractable device key stays in IndexedDB; same-origin scripts still require trust.
+  async function deviceDB() {
+    return new Promise((resolve, reject) => {
+      const request = indexedDB.open("radar-device", 1);
+      request.onupgradeneeded = () => request.result.createObjectStore("keys");
+      request.onsuccess = () => resolve(request.result); request.onerror = () => reject(request.error);
+    });
+  }
+  async function deviceKey(create = false) {
+    const db = await deviceDB();
+    const get = () => new Promise((resolve, reject) => {
+      const tx = db.transaction("keys", "readonly"), req = tx.objectStore("keys").get("credentials");
+      req.onsuccess = () => resolve(req.result); req.onerror = () => reject(req.error);
+    });
+    try {
+      let key = await get();
+      if (!key && create) {
+        key = await crypto.subtle.generateKey({ name: "AES-GCM", length: 256 }, false, ["encrypt", "decrypt"]);
+        await new Promise((resolve, reject) => {
+          const tx = db.transaction("keys", "readwrite"); tx.objectStore("keys").put(key, "credentials");
+          tx.oncomplete = resolve; tx.onerror = () => reject(tx.error);
+        });
+      }
+      return key;
+    } finally { db.close(); }
+  }
+  async function rememberDevice(pass, token) {
+    const key = await deviceKey(true), iv = crypto.getRandomValues(new Uint8Array(12));
+    const ct = await crypto.subtle.encrypt({ name: "AES-GCM", iv }, key, new TextEncoder().encode(JSON.stringify({ pass, token })));
+    store.set("deviceCredentials", JSON.stringify({ iv: b64.enc(iv), ct: b64.enc(new Uint8Array(ct)) }));
+    store.set("pass", null); store.set("token", null);
+  }
+  async function readDevice() {
+    const value = store.get("deviceCredentials");
+    if (value) {
+      const key = await deviceKey(); if (!key) return null;
+      const e = JSON.parse(value);
+      return JSON.parse(new TextDecoder().decode(await crypto.subtle.decrypt({ name: "AES-GCM", iv: b64.dec(e.iv) }, key, b64.dec(e.ct))));
+    }
+    const pass = store.get("pass"), token = store.get("token");
+    if (pass) { await rememberDevice(pass, token || ""); return { pass, token }; }
+    return null;
+  }
   // repository: owner.github.io/repo, overridable in settings
   const guess = (() => { const h = location.hostname, seg = location.pathname.split("/").filter(Boolean); return h.endsWith(".github.io") ? { owner: h.split(".")[0], repo: seg[0] || "uae-car-radar" } : { owner: "uae00060-lab", repo: "uae-car-radar" }; })();
   const REPO = { owner: store.get("owner") || guess.owner, repo: store.get("repo") || guess.repo };
@@ -423,7 +467,7 @@ section.tab { display: grid; gap: 14px; }
           const r = await gh("/contents/data/user.enc", { method: "PUT", body: JSON.stringify({ message: "dashboard: " + (msg || "update"), content: btoa(body), sha: S.userSha || undefined, branch: "main" }) });
           const j = await r.json(); S.userSha = j.content?.sha; return true;
         } catch (e) {
-          if (e.status === 409 || e.status === 422) { const cur = await readFile("data/user.enc"); S.userSha = cur.sha; continue; }
+          if (e.status === 409 || e.status === 422) { flash("تغيّرت البيانات من جهاز آخر. أعد تحميل الصفحة قبل التعديل حتى لا تُستبدل التغييرات الأحدث.", "bad"); return false; }
           flash(e.status === 401 || e.status === 403 ? "مفتاح GitHub لا يملك صلاحية الكتابة. راجع الإعدادات." : "تعذّر الحفظ: " + e.message, "bad");
           return false;
         }
@@ -461,7 +505,8 @@ section.tab { display: grid; gap: 14px; }
         if (!token) { $("gGo").disabled = false; return ($("gMsg").textContent = "إنشاء البيانات يحتاج مفتاح GitHub."); }
         if (!(await saveUser("create data"))) { $("gGo").disabled = false; return ($("gMsg").textContent = "تعذّر إنشاء البيانات. تحقّق من المفتاح."); }
       }
-      if ($("gRemember").checked) { store.set("pass", pass); store.set("token", token || null); }
+      if ($("gRemember").checked) { try { await rememberDevice(pass, token); } catch { flash("تم الدخول؛ تعذّر تذكّر الجهاز بأمان.", "warn"); } }
+      else { store.set("deviceCredentials", null); store.set("pass", null); store.set("token", null); }
       enter();
     } catch (err) {
       $("gGo").disabled = false;
@@ -474,17 +519,20 @@ section.tab { display: grid; gap: 14px; }
     try { const t = store.get("tab"); if (t && $("tab-" + t)) showTab(t); } catch {}
     renderAll();
     resumeLiveRun();
+    heartbeat();
   }
 
   // ---------------------------------------------------------------- helpers over data
   const L = () => Object.values(S.E.listings || {});
   const mark = (id) => S.U.marks[id] || {};
-  const isMatch = (l) => l.state === "verified" || l.state === "approx";
+  const isMatch = (l) => l.state === "verified" && dateKind(l) === "posted";
   const adDate = (l) => l.date || l.posted || (l.first_seen || "").slice(0, 10);
   const dateKind = (l) => l.date_kind || (l.posted ? "posted" : "first_seen");
   function windowStart() { const n = uaeNow(); const y = n.getUTCFullYear(), m = n.getUTCMonth(), d = n.getUTCDate(); const last = new Date(Date.UTC(y, m, 0)).getUTCDate(); return ymd(new Date(Date.UTC(y, m - 1, Math.min(d, last)))); }
-  const inWindow = (l) => dateKind(l) === "first_seen" || adDate(l) >= windowStart();
+  const inWindow = (l) => dateKind(l) === "posted" && adDate(l) >= windowStart() && adDate(l) <= ymd(uaeNow());
   const live = (l) => l.state !== "sold" && l.state !== "excluded" && mark(l.id).status !== "dismissed";
+  const belongs = (l, id) => (l.request_ids || [l.request_id]).includes(id);
+  const viewFor = (l, id) => ({ ...l, ...(l.by_request?.[id] || {}), request_id: id });
   const reqOf = (l) => S.U.requests.find((r) => r.id === l.request_id) || {};
   const carName = (l) => { const r = reqOf(l); const n = [r.make, r.model].filter(Boolean).map((x) => x.trim().replace(/\b\w/g, (c) => c.toUpperCase())).join(" "); return n ? `${n} ${l.year || ""}`.trim() : (l.title || "إعلان"); };
   const lastRunId = () => (S.E.runs || []).find((r) => r.mode !== "watch")?.id;
@@ -542,14 +590,14 @@ section.tab { display: grid; gap: 14px; }
   // ---------------------------------------------------------------- ads
   function baseAds() {
     const q = $("fText").value.trim().toLowerCase(), rq = $("fReq").value, st = $("fState").value, rt = $("fRate").value;
-    return L().filter((l) => {
-      if (!live(l) || !S.U.requests.some((r) => r.id === l.request_id)) return false;
-      if (rq && l.request_id !== rq) return false;
+    return L().map((l) => rq && belongs(l, rq) ? viewFor(l, rq) : l).filter((l) => {
+      if (!live(l) || !S.U.requests.some((r) => belongs(l, r.id))) return false;
+      if (rq && !belongs(l, rq)) return false;
       if (q && !`${l.title} ${l.location} ${l.seller_name}`.toLowerCase().includes(q)) return false;
       if (rt === "deal" && !["excellent", "good"].includes(l.rating)) return false;
       if (rt === "hot" && !["high", "medium"].includes(l.urgency?.level)) return false;
       if (st === "match") return isMatch(l) && inWindow(l);
-      if (st === "unverified") return l.state === "unverified";
+      if (st === "unverified") return ["unverified", "approx"].includes(l.state);
       return true;
     });
   }
@@ -669,7 +717,7 @@ section.tab { display: grid; gap: 14px; }
     $("runScope").innerHTML = '<option value="all">كل الطلبات</option>' + opts; $("runScope").value = S.U.requests.some((r) => r.id === keepS) ? keepS : "all";
     if (!S.U.requests.length) { $("reqCards").innerHTML = '<div class="empty"><b>لا توجد طلبات بحث</b>اضغط «طلب بحث جديد».</div>'; return; }
     $("reqCards").innerHTML = S.U.requests.map((r) => {
-      const mine = L().filter((l) => l.request_id === r.id && live(l));
+      const mine = L().filter((l) => belongs(l, r.id)).map((l) => viewFor(l, r.id)).filter(live);
       const on = r.active !== false;
       return `<article class="panel req"><div class="top"><div class="row" style="justify-content:space-between"><b>${esc(r.name)}</b><span class="row"><span class="pill ${on ? "good" : ""}">${on ? "نشط" : "متوقف"}</span>${r.scheduled ? '<span class="pill acc">مجدول</span>' : ""}</span></div>
         <div class="small">${esc([r.make, r.model, r.keywords].filter(Boolean).join(" "))} ${r.year_from || r.year_to ? `<span class="plate">${r.year_from || "…"}–${r.year_to || "…"}</span>` : ""}</div></div>
@@ -681,6 +729,13 @@ section.tab { display: grid; gap: 14px; }
     }).join("");
   }
   const formIds = { name: "rName", make: "rMake", model: "rModel", keywords: "rKeys", year_from: "rYf", year_to: "rYt", price_max: "rPmax", mileage_max: "rKmax", color: "rColor", emirate: "rEmirate" };
+  const AR_NAMES = { "تيوتا":"Toyota", "تويوتا":"Toyota", "يارس":"Yaris", "ياريس":"Yaris", "كورولا":"Corolla", "كامري":"Camry", "نيسان":"Nissan", "صني":"Sunny", "باترول":"Patrol", "هوندا":"Honda", "سيفيك":"Civic", "اكورد":"Accord", "أكورد":"Accord", "هيونداي":"Hyundai", "هونداي":"Hyundai", "كيا":"Kia", "ميتسوبيشي":"Mitsubishi", "لكزس":"Lexus", "شفروليه":"Chevrolet", "شيفروليه":"Chevrolet", "فورد":"Ford", "مازدا":"Mazda", "سوزوكي":"Suzuki", "مرسيدس":"Mercedes-Benz", "بي ام دبليو":"BMW", "رينو":"Renault", "جيلي":"Geely", "شانجان":"Changan", "إم جي":"MG", "ام جي":"MG", "لاندكروزر":"Land Cruiser", "برادو":"Prado", "التيما":"Altima", "سنترا":"Sentra", "النترا":"Elantra", "إلنترا":"Elantra", "أكسنت":"Accent", "اكسنت":"Accent", "سوناتا":"Sonata", "توسان":"Tucson", "بيكانتو":"Picanto", "ريو":"Rio", "سيراتو":"Cerato", "سبورتاج":"Sportage", "لانسر":"Lancer", "اتراج":"Attrage", "أتراج":"Attrage", "سويفت":"Swift", "دزاير":"Dzire", "سيليريو":"Celerio" };
+  const normalizeName = (v) => AR_NAMES[v.trim()] || v.trim();
+  const validName = (v) => /^[A-Za-z0-9][A-Za-z0-9 .&-]*$/.test(normalizeName(v));
+  const oldMakeInput = $("rMake");
+  const nameList = document.createElement("datalist"); nameList.id = "carNames";
+  nameList.innerHTML = [...new Set(Object.values(AR_NAMES))].map((n) => `<option value="${esc(n)}"></option>`).join("");
+  document.body.appendChild(nameList); oldMakeInput.setAttribute("list", "carNames"); $("rModel").setAttribute("list", "carNames");
   const CONDS = ["make", "model", "keywords", "year_from", "year_to", "price_max", "mileage_max", "color", "emirate"];
   function openForm(t) { $("reqForm").hidden = false; $("formTitle").textContent = t; $("rMsg").textContent = ""; $("rName").focus(); }
   function resetForm() { S.editing = null; $("reqForm").reset(); Object.keys(PLATFORMS).forEach((p) => { $("p_" + p).checked = !DEFAULT_OFF.includes(p); }); $("rSave").textContent = "حفظ الطلب"; $("reqForm").hidden = true; }
@@ -692,6 +747,8 @@ section.tab { display: grid; gap: 14px; }
     const r = { name: $("rName").value.trim(), make: $("rMake").value.trim(), model: $("rModel").value.trim(), keywords: $("rKeys").value.trim(),
       year_from: num("rYf"), year_to: num("rYt"), price_max: num("rPmax"), mileage_max: num("rKmax"), color: $("rColor").value, emirate: $("rEmirate").value,
       platforms: Object.keys(PLATFORMS).filter((p) => $("p_" + p).checked), scheduled: $("rSched").checked };
+    if (!validName(r.make) || (r.model && !validName(r.model))) return ($("rMsg").textContent = "اختر اسم السيارة المقترح أو اكتبه بالإنجليزية؛ الاسم الحالي غير معروف.");
+    r.make = normalizeName(r.make); r.model = normalizeName(r.model);
     if (r.year_from && r.year_to && r.year_from > r.year_to) return ($("rMsg").textContent = "سنة «من» يجب أن تكون أقل من أو تساوي «إلى».");
     if (!r.platforms.length) return ($("rMsg").textContent = "اختر منصة واحدة على الأقل.");
     const now = new Date(Date.now() + 4 * 3600e3).toISOString().slice(0, 19) + "+04:00";
@@ -768,7 +825,7 @@ section.tab { display: grid; gap: 14px; }
     $("notifyInfo").innerHTML = Object.entries(ch).map(([k, v]) => `<dt>${v}</dt><dd>${last ? esc(last.notify[k] || "—") : "تظهر الحالة بعد أول جولة مجدولة"}</dd>`).join("");
   }
   $("meForm").addEventListener("submit", async (e) => { e.preventDefault(); S.U.profile = { name: $("mName").value.trim(), phone: $("mPhone").value.trim(), city: $("mCity").value.trim() }; if (await saveUser("profile")) $("mMsg").textContent = "حُفظت."; });
-  $("btnForget").addEventListener("click", () => { store.set("pass", null); store.set("token", null); location.reload(); });
+  $("btnForget").addEventListener("click", () => { store.set("pass", null); store.set("token", null); store.set("deviceCredentials", null); indexedDB.deleteDatabase("radar-device"); location.reload(); });
 
   function renderAll() {
     $("nextRun").textContent = nextRunText();
@@ -836,7 +893,9 @@ section.tab { display: grid; gap: 14px; }
   }
   function runSearch(scope) {
     if (!S.U.requests.some((r) => r.active !== false)) return flash("أضف طلب بحث نشطًا أولًا.", "warn");
-    const id = "m" + new Date(Date.now() + 4 * 3600e3).toISOString().slice(0, 16).replace(/\D/g, "");
+    const chosen = S.U.requests.filter((r) => r.active !== false && (!scope || scope === "all" || r.id === scope));
+    if (chosen.some((r) => !validName(r.make) || (r.model && !validName(r.model)))) return flash("اسم سيارة غير معروف. عدّل الطلب واختر الماركة والطراز المقترحين.", "bad");
+    const id = "m" + new Date(Date.now() + 4 * 3600e3).toISOString().slice(0, 23).replace(/\D/g, "");
     dispatch({ cmd: "run", mode: "manual", request: scope || "all", run_id: id }, "بحث يدوي");
   }
   $("searchNow").addEventListener("click", () => runSearch($("runScope").value));
@@ -863,7 +922,9 @@ section.tab { display: grid; gap: 14px; }
         if (run.status === "completed") {
           const ok = run.conclusion === "success", label = S.live.label;
           S.live = null; store.set("live", null);
-          if (ok) { await loadAll(); renderAll(); box.className = "banner good"; box.textContent = `${label}: اكتمل. البيانات محدّثة.`; if (label === "فحص المنصات") showDiag(); }
+          if (ok) { await loadAll(); renderAll(); box.className = "banner good"; const latest = (S.E.runs || [])[0];
+            box.className = latest?.warning ? "banner warn" : "banner good";
+            box.textContent = latest?.warning ? `${label}: ${latest.warning}` : `${label}: اكتمل. البيانات محدّثة.`; if (label === "فحص المنصات") showDiag(); }
           else { box.className = "banner bad"; box.innerHTML = `${esc(label)}: لم يكتمل. <a href="${esc(run.html_url)}" target="_blank" rel="noopener">اعرض السبب</a>`; }
           setTimeout(() => { box.hidden = true; }, 15000); renderAll(); return;
         }
@@ -878,16 +939,31 @@ section.tab { display: grid; gap: 14px; }
       $("diagBox").innerHTML = `<div class="small">فحص ${esc(when(d.at))} على «${esc(d.probe)}»</div><dl class="kv">${Object.entries(d.platforms).filter(([k]) => PLATFORMS[k]).map(([k, v]) => {
         const reads = (v.ad_reads || []).filter((x) => x.status === "ok").length;
         const st = v.ok ? `صفحة النتائج تعمل · ${v.cards} إعلان` : v.via_search ? `محجوبة؛ وُجد ${v.cards} عبر البحث البديل` : `لا يمكن الوصول (${(v.status || []).join("، ")})`;
-        return `<dt>${PLATFORMS[k]}</dt><dd>${st} · قراءة الإعلانات ${reads}/${(v.ad_reads || []).length}</dd>`; }).join("")}</dl>`;
+        return `<dt>${PLATFORMS[k]}</dt><dd>${st}</dd>`; }).join("")}</dl>`;
       showTab("settings");
     } catch {}
   }
 
+  let presenceBusy = false;
+  async function heartbeat() {
+    if (!S.E || !S.token || document.visibilityState !== "visible" || presenceBusy) return;
+    presenceBusy = true;
+    try {
+      const path = "/contents/data/presence.json";
+      const r = await gh(path + "?ref=main"); const old = r.ok ? await r.json() : {};
+      const content = btoa(JSON.stringify({ at: new Date().toISOString() }));
+      await gh(path, { method: "PUT", body: JSON.stringify({ message: "dashboard: presence [skip ci]", content, sha: old.sha, branch: "main" }) });
+    } catch { /* A failed lease cannot suppress a scheduled round. */ }
+    finally { presenceBusy = false; }
+  }
+  document.addEventListener("visibilitychange", () => { if (document.visibilityState === "visible") heartbeat(); });
+  setInterval(heartbeat, 120000);
   // ---------------------------------------------------------------- boot
   (async () => {
-    const pass = store.get("pass"), token = store.get("token");
-    if (!pass) return;
-    S.pass = pass; S.token = token || "";
+    let credentials;
+    try { credentials = await readDevice(); } catch { $("gMsg").textContent = "تعذّر فتح بيانات الجهاز المحفوظة؛ أدخل بيانات الدخول."; return; }
+    if (!credentials?.pass) return;
+    S.pass = credentials.pass; S.token = credentials.token || "";
     try { await loadAll(); enter(); }
     catch (e) { $("gPass").value = ""; $("gMsg").textContent = e.message === "BADPASS" ? "تغيّرت كلمة السر. أدخلها من جديد." : "تعذّر التحميل: " + e.message; }
   })();

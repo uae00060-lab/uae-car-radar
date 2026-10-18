@@ -7,6 +7,7 @@ import shutil
 import sys
 import tempfile
 import unittest
+from unittest.mock import patch
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, os.path.dirname(HERE))
@@ -76,6 +77,17 @@ def fake_get(url, referer=None, timeout=25, retries=1):
 
 class Engine(unittest.TestCase):
     def setUp(self):
+        self.original_pages = dict(PAGES)
+        for obj, attr in ((radar, "ROOT"), (radar, "USER_FILE"), (radar, "ENGINE_FILE"), (radar, "REPORTS_DIR"), (radar, "WORK"), (fetch, "get"), (fetch, "search_links"), (radar.notify, "send_all")):
+            original = getattr(obj, attr)
+            self.addCleanup(setattr, obj, attr, original)
+        def fake_pdf(html, html_path, pdf_path):
+            # The engine contract is tested offline; PDF rendering has a separate smoke test.
+            with open(pdf_path, "wb") as f:
+                f.write(b"%PDF-1.4\n" + b"0" * 1200)
+            return True
+        self.pdf_patch = patch.object(radar.report, "to_pdf", side_effect=fake_pdf)
+        self.pdf_patch.start(); self.addCleanup(self.pdf_patch.stop)
         self.tmp = tempfile.mkdtemp()
         radar.ROOT = self.tmp
         radar.USER_FILE = os.path.join(self.tmp, "data", "user.enc")
@@ -92,6 +104,7 @@ class Engine(unittest.TestCase):
             "marks": {}}, KEY)
 
     def tearDown(self):
+        PAGES.clear(); PAGES.update(self.original_pages)
         shutil.rmtree(self.tmp)
 
     def args(self, mode="manual"):
@@ -106,10 +119,10 @@ class Engine(unittest.TestCase):
         self.assertEqual(L["dubizzle-0e178fe896f34a32b34968b5266f36dd"]["phone"], "+971552398817")
         self.assertNotIn("dubizzle-1111111111111111111111111111aaaa", L)        # posted 90 days ago
         self.assertIn("dubizzle-1111111111111111111111111111aaaa", eng["skipped"])
-        # same car on yallamotor and dubicars -> one record pointing at the other link
+        # Matching price/year/km is not enough evidence to merge distinct ads.
         twins = [l for l in L.values() if l.get("mileage") == 77000]
-        self.assertEqual(len(twins), 1)
-        self.assertTrue(twins[0].get("also_on"))
+        self.assertEqual(len(twins), 2)
+        self.assertFalse(any(l.get("also_on") for l in twins))
         # fair price from 12 market samples + opened ads
         self.assertIsNotNone(L["dubizzle-0e178fe896f34a32b34968b5266f36dd"]["fair"])
         self.assertIn(L["dubizzle-0e178fe896f34a32b34968b5266f36dd"]["rating"], ("excellent", "good", "fair"))
@@ -140,6 +153,35 @@ class Engine(unittest.TestCase):
         self.assertEqual(len(sent), 1)
         self.assertIn("23,000", sent[0][1])
 
+    def test_invalid_make_reports_failure(self):
+        user = store.read_json(radar.USER_FILE, KEY, {})
+        user["requests"][0]["make"] = "اسم غير معروف"
+        store.write_json(radar.USER_FILE, user, KEY)
+        radar.run_round(self.args(), KEY)
+        eng = store.read_json(radar.ENGINE_FILE, KEY, {})
+        self.assertEqual(eng["runs"][0]["status"], "failed")
+        self.assertIn("الماركة", eng["runs"][0]["warning"])
+
+    def test_presence_suppresses_scheduled_only(self):
+        with open(os.path.join(self.tmp, "data", "presence.json"), "w") as f:
+            json.dump({"at": now_uae().isoformat()}, f)
+        radar.run_round(self.args("scheduled"), KEY)
+        self.assertFalse(os.path.exists(radar.ENGINE_FILE))
+        radar.run_round(self.args(), KEY)
+        self.assertTrue(os.path.exists(radar.ENGINE_FILE))
+
+    def test_one_ad_matches_two_requests(self):
+        user = store.read_json(radar.USER_FILE, KEY, {})
+        user["requests"].append({**user["requests"][0], "id": "r2", "price_max": 27000})
+        store.write_json(radar.USER_FILE, user, KEY)
+        base = "https://uae.dubizzle.com/motors/used-cars/toyota/yaris/?price__lte=30000&year__gte=2020&year__lte=2022"
+        PAGES[base.replace("30000", "27000")] = PAGES[base]
+        radar.run_round(self.args(), KEY)
+        eng = store.read_json(radar.ENGINE_FILE, KEY, {})
+        ad = eng["listings"]["dubizzle-0e178fe896f34a32b34968b5266f36dd"]
+        self.assertEqual(set(ad["request_ids"]), {"r1", "r2"})
+        self.assertEqual(ad["by_request"]["r2"]["state"], "verified")
+
     def test_wrong_key(self):
         with self.assertRaises(store.BadPassphrase):
             store.read_json(radar.USER_FILE, "wrong", {})
@@ -162,6 +204,48 @@ class Parts(unittest.TestCase):
     def test_ad_page_sold(self):
         f = extract.ad_page("<html><body>This ad is no longer available</body></html>", "u", "1")
         self.assertTrue(f["_sold"])
+
+    def test_alias_and_validation(self):
+        from common import slug, validate_request
+        self.assertEqual(slug("تيوتا"), "toyota")
+        self.assertTrue(radar.search_urls("yallamotor", {"make": "تيوتا", "model": "يارس"}))
+        self.assertIsNotNone(validate_request({"make": "غير معروف"}))
+
+    def test_price_year_boundaries_and_unconfirmed_date(self):
+        from common import window_start
+        req = {"make": "Toyota", "model": "Yaris", "price_max": 30000, "year_from": 2022, "year_to": 2026}
+        v = {"title": "Toyota Yaris", "year": 2022, "price": 29000, "date": TODAY, "date_kind": "posted"}
+        for price in (29000, 30000):
+            c = radar.assess(req, {**v, "price": price}, window_start(TODAY), "yallamotor")
+            self.assertEqual(radar.state_of(c, "yallamotor", False)[0], "verified")
+        c = radar.assess(req, {**v, "price": 30001}, window_start(TODAY), "yallamotor")
+        self.assertEqual(radar.state_of(c, "yallamotor", False)[0], "excluded")
+        for year in (2022, 2026):
+            self.assertEqual(radar.assess(req, {**v, "year": year}, window_start(TODAY), "yallamotor")["year"], "matched")
+        c = radar.assess(req, {**v, "date_kind": "photos"}, window_start(TODAY), "yallamotor")
+        self.assertEqual(radar.state_of(c, "yallamotor", False)[0], "unverified")
+        c = radar.assess(req, {**v, "date": TODAY - dt.timedelta(days=90)}, window_start(TODAY), "yallamotor")
+        self.assertEqual(radar.state_of(c, "yallamotor", True)[0], "excluded")
+
+    def test_currency_and_total_cash_price(self):
+        html = ld_ad("Toyota Yaris 2022", 8719, 2022, 90000, d(2)).replace('"AED"', '"USD"')
+        html = html.replace("</body>", "<p>AED 31,999 (+ AED 3,000 Convenience Fee)</p></body>")
+        f = extract.ad_page(html, "u", "1")
+        self.assertEqual(f["price"][0], 34999)
+        self.assertEqual(f["currency"][0], "AED")
+        f = extract.ad_page(ld_ad("Toyota Yaris", 8719, 2022, 90000, d(2)).replace('"AED"', '"USD"'), "u", "1")
+        self.assertNotIn("price", f)
+        self.assertTrue(f["_price_uncertain"])
+
+    def test_single_notification_channel_and_message(self):
+        import notify
+        with patch.dict(os.environ, {"SMTP_USER": "a", "SMTP_PASSWORD": "b", "TELEGRAM_BOT_TOKEN": "t", "TELEGRAM_CHAT_ID": "c"}, clear=True), patch.object(notify, "email", return_value="sent") as mail, patch.object(notify, "telegram") as tg:
+            notify.send_all("subject", "all offers", "short")
+            mail.assert_called_once(); tg.assert_not_called()
+        with tempfile.NamedTemporaryFile() as f, patch.dict(os.environ, {"TELEGRAM_BOT_TOKEN": "t", "TELEGRAM_CHAT_ID": "c"}, clear=True), patch.object(notify, "_post", return_value=(200, b"{}")) as post:
+            notify.telegram("details" * 1000, f.name)
+            post.assert_called_once()
+            self.assertTrue(post.call_args.args[0].endswith("/sendDocument"))
 
     def test_crypto_roundtrip(self):
         t = store.encrypt_bytes(b'{"a":1}', "k")
