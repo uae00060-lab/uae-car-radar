@@ -141,6 +141,24 @@ class Engine(unittest.TestCase):
         self.assertEqual((x["price"], x["price_prev"]), (24900, 26500))
         self.assertEqual(eng2["runs"][0]["price_drops"], 1)
 
+    def test_platform_health_persists_and_warns_after_two_empty_rounds(self):
+        radar.run_round(self.args(), KEY)
+        eng = store.read_json(radar.ENGINE_FILE, KEY, {})
+        self.assertTrue(eng["platform_health"]["dubizzle"]["latest"]["had_price"])
+        def empty(req, plats, diag, progress=None):
+            for platform in plats:
+                diag[platform] = {"pages": 1, "ok": 1, "cards": 0, "blocked": 0, "via_search": 0, "status": [200]}
+            return {}, []
+        with patch.object(radar, "discover", side_effect=empty):
+            radar.run_round(self.args(), KEY)
+            first = store.read_json(radar.ENGINE_FILE, KEY, {})
+            self.assertFalse(first["runs"][0]["health_warnings"])
+            radar.run_round(self.args(), KEY)
+        final = store.read_json(radar.ENGINE_FILE, KEY, {})
+        self.assertTrue(final["platform_health"]["dubizzle"]["latest"]["alert"])
+        self.assertIn("جولتين", final["runs"][0]["warning"])
+        self.assertEqual(final["reports"], [])
+
     def test_watch_alerts_followed_only(self):
         radar.run_round(self.args(), KEY)
         user = store.read_json(radar.USER_FILE, KEY, {})

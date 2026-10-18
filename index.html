@@ -449,7 +449,7 @@ body { font-family:"Inter","Cairo",sans-serif; font-weight:500; text-rendering:o
         <div class="row"><button type="button" class="sm" id="btnTestNotify">إرسال إشعار تجريبي</button><button type="button" class="sm" id="btnDiag">فحص المنصات</button><button type="button" class="sm ghost" id="btnForget">نسيان هذا الجهاز</button></div>
       </div>
       <div class="panel"><h2>الإشعارات</h2><dl class="kv" id="notifyInfo"></dl>
-        <div class="small">يُرسل إشعار واحد عبر أول قناة مفعّلة: البريد، ثم تيليجرام، ثم واتساب. تُفعَّل القنوات بإضافة أسرارها في GitHub ← Settings ← Secrets and variables ← Actions. التفاصيل في README.</div></div>
+        <div class="small">تُرسل الإشعارات عبر جميع القنوات المفعّلة: البريد وتيليجرام وواتساب. تُفعَّل القنوات بإضافة أسرارها في GitHub ← Settings ← Secrets and variables ← Actions. التفاصيل في README.</div></div>
       <div class="panel"><h2>المواعيد</h2>
         <dl class="kv">
           <dt>10:00 صباحًا</dt><dd>بحث عند غيابك + تقرير مجمّع وPDF</dd>
@@ -459,6 +459,8 @@ body { font-family:"Inter","Cairo",sans-serif; font-weight:500; text-rendering:o
           <dt>ملاحظة</dt><dd>قد تتأخر المواعيد المجدولة أو تُفقد عند ضغط GitHub؛ ليست خدمة بموعد مضمون</dd>
         </dl></div>
       <div class="panel"><h2>حدود البحث والتوكن</h2><dl class="kv"><dt>مفتاح GitHub</dt><dd>وسيلة دخول للمستودع وتشغيل المهام، وليس رصيد ذكاء اصطناعي.</dd><dt>المتاح في الساعة</dt><dd id="apiQuota">يظهر بعد أول اتصال بـ GitHub.</dd><dt>الجولة اليدوية</dt><dd>حتى 45 إعلانًا جديدًا، إضافة إلى حصة إعادة الفحص. تشمل الحصة جميع الطلبات في الجولة.</dd><dt>الجولة المجدولة</dt><dd>حتى 70 إعلانًا جديدًا، إضافة إلى حصة إعادة الفحص. جولتان يوميًا عند غيابك.</dd><dt>المدة</dt><dd>مهلة المهمة 30 دقيقة. حدود المنصات قد تمنع بعض النتائج. لا يوجد حد شهري 200 أو 900 بحث داخل الأداة.</dd><dt>التكاليف</dt><dd>لا تستخدم الأداة API لذكاء اصطناعي أو بحث مدفوع. تشغيل GitHub القياسي مجاني للمستودعات العامة؛ المستودعات الخاصة تخضع لخطة الحساب.</dd><dt>دوبيزل</dt><dd>الوصول الآلي غير مضمون. الربط الكامل يحتاج وسيلة وصول يجيزها دوبيزل؛ مفتاح GitHub لا يمنح هذه الصلاحية. <a href="https://business.dubizzle.com/" target="_blank" rel="noopener">التواصل مع دوبيزل</a></dd></dl></div>
+      <div class="panel"><h2>تنبيهات دوبيزل</h2><p class="small">البحث المحفوظ في دوبيزل يساعدك على اكتشاف إعلانات جديدة. فعّل تنبيهات السيارات في حسابك؛ رسائل التوصيات قد لا تطابق شروط طلبك.</p><div class="row"><a class="btn sm" href="https://uae.dubizzle.com/motors/used-cars/" target="_blank" rel="noopener">فتح سيارات دوبيزل ↗</a><a class="btn sm ghost" href="https://support.dubizzle.com/hc/en-us/articles/14780756686866-Can-I-save-my-search-preferences-for-future-use" target="_blank" rel="noopener">طريقة حفظ البحث</a></div><p class="small">استيراد البريد التلقائي غير مفعّل. ربط البريد في المحادثة لا يربطه بهذا الموقع. لا نعتبر تاريخ وصول رسالة تاريخًا لنشر الإعلان، ولا نعرض سعرًا أو هاتفًا أو شاصيًا بالتخمين.</p></div>
+      <div class="panel"><h2>صحة المنصات</h2><p class="small">نراقب الوصول والروابط وقراءة الأسعار. التنبيه بعد جولتين بلا استخراج مقارنةً بنجاح سابق للشروط نفسها؛ لا يُعد غياب النتائج المطابقة عطلًا.</p><div id="healthBox" class="small"></div></div>
       <div class="panel"><h2>فحص المنصات</h2><div id="diagBox" class="small">اضغط «فحص المنصات» لمعرفة ما تعرضه كل منصة من خوادم GitHub.</div></div>
     </div>
   </section>
@@ -1008,6 +1010,8 @@ body { font-family:"Inter","Cairo",sans-serif; font-weight:500; text-rendering:o
     $("connInfo").innerHTML = `<dt>المستودع</dt><dd><a href="https://github.com/${esc(REPO.owner)}/${esc(REPO.repo)}" target="_blank" rel="noopener" dir="ltr">${esc(REPO.owner)}/${esc(REPO.repo)}</a></dd>
       <dt>الصلاحية</dt><dd>${S.token ? "قراءة وتعديل وتشغيل البحث" : "قراءة فقط (أضف مفتاح GitHub للتعديل)"}</dd>
       <dt>آخر تحديث</dt><dd class="num">${esc(when(S.E.updated))}</dd>`;
+    const healthLabels={ok:"الاستخراج يعمل",limited:"وصول محدود",empty:"لا روابط مستخرجة",alert:"تحتاج فحصًا",recovered:"استعادت الاستخراج"};
+    $("healthBox").innerHTML=Object.entries(S.E.platform_health || {}).map(([p,record])=>{const h=record.latest; if(!h)return ""; return `<article style="padding:12px 0;border-bottom:1px solid var(--line)"><div class="row"><b>${esc(PLATFORMS[p] || p)}</b><span class="pill ${h.alert ? "bad" : h.status === "ok" || h.recovered ? "good" : "warn"}">${esc(healthLabels[h.status] || h.status)}</span></div><p>${esc(h.reason)}</p><div>روابط: ${fmt(h.cards)} · صفحات مفتوحة: ${fmt(h.opened)} · مقروءة: ${fmt(h.read_ok)} · أسعار مؤكدة: ${fmt(h.priced)}</div><div>${esc((h.request_names || []).join("، "))} · ${esc(when(h.at))}</div></article>`;}).join("") || "تبدأ المقارنة من أول جولة بعد التحديث. المنصات التي لم تُفحص لا تُحتسب متعطلة.";
     const last = (S.E.runs || []).find((r) => r.notify);
     const ch = { telegram: "تيليجرام", whatsapp: "واتساب", email: "البريد الإلكتروني" };
     $("notifyInfo").innerHTML = Object.entries(ch).map(([k, v]) => `<dt>${v}</dt><dd>${last ? esc(last.notify[k] || "—") : "تظهر الحالة بعد أول جولة مجدولة"}</dd>`).join("");
@@ -1237,6 +1241,10 @@ body { font-family:"Inter","Cairo",sans-serif; font-weight:500; text-rendering:o
     }
     const lastReview=(S.E.runs || []).find(r=>r.mode === "watch");
     if(lastReview?.warning || lastReview?.status === "failed") items.push(`<li><b>تنبيه — مراجعة المحفوظة ${esc(when(lastReview.at))}:</b> ${esc(lastReview.warning || "لم تكتمل المراجعة")}</li>`);
+    for(const [platform, record] of Object.entries(S.E.platform_health || {})) {
+      const h=record.latest;
+      if(h?.alert && !(lastRound?.health_warnings || []).some(w=>w.startsWith((PLATFORMS[platform] || platform)+":"))) items.push(`<li><b>صحة ${esc(PLATFORMS[platform] || platform)}:</b> ${esc(h.reason)} <span class="small">${esc(when(h.at))}</span></li>`);
+    }
     const p = S.actionsProblem;
     if (p && (!lastRound || Date.parse(p.at) > Date.parse(lastRound.at))) {
       items.push(`<li><b>${esc(p.text)}</b> — ${esc(when(new Date(Date.parse(p.at) + 4 * 3600e3).toISOString()))} <a href="${esc(p.url)}" target="_blank" rel="noopener">التفاصيل ↗</a></li>`);

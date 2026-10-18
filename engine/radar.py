@@ -24,6 +24,7 @@ sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
 from progress import Progress
 import lifecycle
+import health
 import analytics  # noqa: E402
 import extract  # noqa: E402
 import fetch  # noqa: E402
@@ -519,6 +520,7 @@ def run_round(a, key):
                 prev.update({"price": None, "price_source": None, "price_currency": None, "price_version": 3, "last_checked": stamp})
             # Keep no-price evidence only in diagnostics, never as a user-facing offer.
             continue
+        ps["priced"] = ps.get("priced", 0) + 1
         if fetched and v["price"] and v["year"] and has_terms(v["title"] + " " + item["url"].replace("-", " "), model_terms(req)):
             analytics.add_samples(eng["market"], req["id"], [{"id": item["id"], "price": v["price"], "year": v["year"], "km": v["km"]}], today)
         v["_url"] = item["url"]
@@ -647,7 +649,8 @@ def run_round(a, key):
     if not reqs:
         run.update({"status": "failed" if invalid else "done", "warning": "؛ ".join(invalid) if invalid else "لا توجد طلبات بحث مفعّلة لهذه الجولة"})
     eng["drops"] = (drops + eng["drops"])[:200]
-    for problem in quality_warnings():
+    run["health_warnings"] = health.update(eng, reqs, diag, opened_stats, stamp, {p: v["name"] for p, v in PLATFORMS.items()})
+    for problem in run["health_warnings"] + quality_warnings():
         run["warning"] = (run.get("warning", "") + "؛ " + problem).strip("؛ ")
     profile = user.get("profile") or {}
     os.makedirs(WORK, exist_ok=True)

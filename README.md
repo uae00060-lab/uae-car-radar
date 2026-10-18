@@ -132,3 +132,17 @@ python engine/radar.py diagnose --make Toyota --model Yaris
 - `data/search-progress.json` على فرع `radar-live` المنفصل يحمل تقدّم البحث المباشر مشفّرًا بنفس كلمة السر، ولا ينشئ نشره عملية Pages جديدة.
 
 - مراجعة 2026-10-19: دمج التكرارات يحتاج VIN صالحًا ومتطابقًا ونطاق طلبات مكافئًا؛ يُعاد حسابه في المراجعة الأسبوعية بعد السعر أو الحذف أو الحجز. تحذيرات الجودة تدخل ملف PDF، وإخفاق إشعارات المراجعة الأسبوعية يظهر في اللوحة.
+
+## Platform health monitoring
+
+Each search stores encrypted health counters for attempted platforms: reachable/blocked pages, discovered ad links, opened/read detail pages and confirmed prices. An alert requires a successful baseline for the same request criteria followed by two consecutive rounds with zero extracted links, or two successful detail-reading rounds with zero confirmed prices after prior price success. Filtered match counts do not trigger parser alarms; network failures do not count as successful price reads, and unattempted platforms do not advance counters. Search changes get a separate baseline (up to 12 scopes/platform). Alerts appear on the dashboard and in scheduled summaries; recovery appears in Settings → صحة المنصات. Health never marks a vehicle sold. Counters are evidence of extraction, not a guarantee of full platform coverage.
+
+Real sanitized OpenSooq and Mourjan snapshots live in engine/tests/fixtures. Offline tests complement live counters; old snapshots cannot themselves detect tomorrow's markup changes.
+
+## Dubizzle email findings
+
+Official references:
+- https://support.dubizzle.com/hc/en-us/articles/14780756686866-Can-I-save-my-search-preferences-for-future-use
+- https://support.dubizzle.com/hc/en-us/articles/14778324154642-How-to-manage-Email-and-Push-notifications-on-the-dubizzle-app
+
+Saved searches and email recommendations exist, but recommendations are not guaranteed to satisfy a saved request. Receiving date is not posting date. Email may omit phone/VIN and may carry tracking links or multiple unrelated prices. The app does not currently read a mailbox. A ChatGPT Gmail connection is not available to GitHub Actions. Continuous mailbox access would need a separate authorized integration (Google documents server-side OAuth/offline access at https://developers.google.com/workspace/gmail/api/auth/web-server). No mailbox credentials, raw messages, or tracking tokens are stored in this public repository. No paid email service was added. Until an actual saved-search message and mailbox authorization are validated, email recommendations are not injected as verified car listings. Settings contains the official saved-search instructions and explicitly shows that automatic import is inactive.
