@@ -1,0 +1,77 @@
+{
+ "at": "2026-10-18T22:52:53+04:00",
+ "mode": "manual",
+ "requests": 1,
+ "seconds": 63,
+ "opened": 0,
+ "saved_new": 0,
+ "drops": 0,
+ "sold": 0,
+ "listings_total": 0,
+ "platforms": {
+  "mourjan": {
+   "pages": 0,
+   "ok": 0,
+   "blocked": 0,
+   "cards": 0,
+   "via_search": 0,
+   "http": []
+  },
+  "autoae": {
+   "pages": 0,
+   "ok": 0,
+   "blocked": 0,
+   "cards": 0,
+   "via_search": 0,
+   "http": []
+  },
+  "dubizzle": {
+   "pages": 0,
+   "ok": 0,
+   "blocked": 0,
+   "cards": 0,
+   "via_search": 0,
+   "http": []
+  },
+  "opensooq": {
+   "pages": 0,
+   "ok": 0,
+   "blocked": 0,
+   "cards": 0,
+   "via_search": 0,
+   "http": []
+  },
+  "oneclickdrive": {
+   "pages": 0,
+   "ok": 0,
+   "blocked": 0,
+   "cards": 0,
+   "via_search": 0,
+   "http": []
+  },
+  "dubicars": {
+   "pages": 0,
+   "ok": 0,
+   "blocked": 0,
+   "cards": 0,
+   "via_search": 0,
+   "http": []
+  },
+  "yallamotor": {
+   "pages": 0,
+   "ok": 0,
+   "blocked": 0,
+   "cards": 0,
+   "via_search": 0,
+   "http": []
+  },
+  "carswitch": {
+   "pages": 0,
+   "ok": 0,
+   "blocked": 0,
+   "cards": 0,
+   "via_search": 0,
+   "http": []
+  }
+ }
+}
