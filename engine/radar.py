@@ -736,6 +736,8 @@ def run_round(a, key):
         new_unverified=run["new_unverified"], drops=len(drops), sold=len(sold), seconds=run["seconds"],
         platforms={p: {k: v for k, v in d.items() if k != "fields"} for p, d in run["platforms"].items()},
         notify=run.get("notify"), condition=condition_counts(in_round))
+    if os.getenv("GITHUB_ACTIONS"):  # counts only, readable in the run's summary
+        print("::notice title=condition::" + json.dumps(condition_counts(in_round), ensure_ascii=False), flush=True)
 
 
 def watch(a, key):
