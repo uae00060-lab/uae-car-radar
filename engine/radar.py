@@ -220,12 +220,6 @@ def read_ad(item, today, debug=None):
     card = item if item.get("src") == "json" else {}
     price = to_num(g("price"))
     price = int(price) if price and 1500 <= price <= 5_000_000 else None
-    card_price = to_num(card.get("price"))
-    if not price and card_price and 5000 <= card_price <= 5_000_000:
-        # Some platforms (OneClickDrive) render the asking price only in their results data.
-        # 5,000 AED floor keeps monthly-instalment figures out.
-        price = int(card_price)
-        src["price"] = "card:json"
     title_year = re.search(r"\b(19[89]\d|20[0-3]\d)\b", str(g("title") or ""))
     year = next((int(x) for x in (to_num(g("year")), float(title_year[1]) if title_year else None, to_num(card.get("year")))
                  if x and 1980 <= x <= today.year + 1), None)
@@ -306,10 +300,10 @@ def state_of(checks, plat, known):
         return "excluded", "لا يطابق: " + "، ".join(FIELD_AR[f] for f in bad)
     if unknown:
         if unknown == ["posted"] and plat in NO_DATE_PLATFORMS:
-            return "approx", "كل شروطك مطابقة؛ المنصة لا تعرض تاريخ النشر"
+            return "approx", "المواصفات متوافقة؛ تاريخ النشر غير متاح ويحتاج تأكيدًا"
         return "unverified", "غير ظاهر في الإعلان: " + "، ".join(FIELD_AR[f] for f in unknown)
     if checks.get("posted") == "approx":
-        return "approx", "كل شروطك مطابقة؛ التاريخ المعروض تحديث أو صور أو فحص وليس تاريخ النشر"
+        return "approx", "المواصفات متوافقة؛ التاريخ المعروض تحديث أو صور أو فحص، وتاريخ النشر يحتاج تأكيدًا"
     return "verified", ""
 
 
@@ -327,47 +321,52 @@ def marks_of(user):
     return user.get("marks") or {}
 
 
-DUP_KM_MIN = 3000      # identical mileage below this is too common to identify a car
-DUP_PRICE_SPREAD = 0.15  # a dealer may price the same car a little differently per platform
+def trusted_price(listing):
+    return bool(listing.get("price")) and listing.get("price_version") == 3 and listing.get("price_currency") == "AED" and not str(listing.get("price_source") or "").startswith("card")
 
 
 def mark_duplicates(listings):
-    """Group the same car listed on different platforms; the cheapest copy is the one shown.
+    """Hide a copy only with the same valid VIN and equivalent request coverage.
 
-    Same car = same VIN, or same model year and exactly the same mileage with prices within 15%.
-    Other copies get dup_of (hidden from results and reports) and the cheapest lists them in
-    duplicates, so the dashboard can show "also on <platform> for <price>".
+    Model year, odometer, price and a shared dealer are not unique vehicle identities.
+    Scopes must agree so a cheap copy cannot hide a match belonging to another request.
     """
-    for l in listings.values():
-        l.pop("dup_of", None)
-        l.pop("duplicates", None)
-    live = [l for l in listings.values() if l.get("price") and l.get("state") not in ("sold", "excluded")]
-    groups, seen = [], set()
-    for a in live:
-        if a["id"] in seen:
+    from identity import vin_status
+    groups = {}
+    for listing in listings.values():
+        for key in ("dup_of", "duplicates", "dup_version"):
+            listing.pop(key, None)
+        if not trusted_price(listing) or listing.get("state") in ("sold", "excluded") or listing.get("availability", "available") != "available":
             continue
-        group = [a]
-        for b in live:
-            if b["id"] in seen or b is a or b["platform"] in {x["platform"] for x in group}:
-                continue
-            same_vin = a.get("vin") and a.get("vin") == b.get("vin")
-            same_car = (a.get("year") and a.get("year") == b.get("year") and (a.get("mileage") or 0) >= DUP_KM_MIN
-                        and a.get("mileage") == b.get("mileage")
-                        and abs(a["price"] - b["price"]) <= DUP_PRICE_SPREAD * min(a["price"], b["price"]))
-            shared_request = set(a.get("request_ids", [a.get("request_id")])) & set(b.get("request_ids", [b.get("request_id")]))
-            if (same_vin or same_car) and shared_request:
-                group.append(b)
-        if len(group) > 1:
-            seen.update(x["id"] for x in group)
-            groups.append(group)
-    for group in groups:
-        best = min(group, key=lambda x: (x["price"], x.get("state") != "verified"))
-        best["duplicates"] = [{"id": x["id"], "platform": x["platform"], "url": x["url"], "price": x["price"]}
-                              for x in sorted(group, key=lambda x: x["price"]) if x is not best]
-        for x in group:
-            if x is not best:
-                x["dup_of"] = best["id"]
-    return len(groups)
+        vin, _ = vin_status(listing.get("vin"))
+        if not vin:
+            continue
+        req_ids = sorted(listing.get("request_ids", [listing.get("request_id")]) or [])
+        coverage = tuple((rid, (listing.get("by_request", {}).get(rid) or {}).get("state", listing.get("state"))) for rid in req_ids)
+        groups.setdefault((vin, coverage), []).append(listing)
+    count = 0
+    for group in groups.values():
+        if len({listing["platform"] for listing in group}) < 2:
+            continue
+        best = min(group, key=lambda listing: (listing["price"], listing.get("state") != "verified", listing["id"]))
+        best["dup_version"] = 2
+        best["duplicates"] = [{"id": item["id"], "platform": item["platform"], "url": item["url"], "price": item["price"]}
+                              for item in sorted(group, key=lambda item: item["price"]) if item is not best]
+        for item in group:
+            if item is not best:
+                item.update(dup_of=best["id"], dup_version=2)
+        count += 1
+    return count
+
+
+def load_presence(key):
+    """Only a fresh, authenticated activity record can suppress a scheduled search."""
+    try:
+        payload = store.read_json(os.path.join(WORK, "activity.enc"), key, {})
+        age = (now_uae() - dt.datetime.fromisoformat(payload["at"])).total_seconds()
+        return 0 <= age < 180
+    except (OSError, ValueError, KeyError, TypeError, store.BadPassphrase):
+        return False
 
 
 def reassess_saved(listings, reqs, start, today):
@@ -398,6 +397,9 @@ def run_round(a, key):
     if a.request and a.request != "all":
         reqs = [r for r in reqs if r.get("id") == a.request]
     if a.mode == "scheduled":
+        if load_presence(key):
+            log("scheduled_skipped", why="dashboard active")
+            return
         reqs = [r for r in reqs if r.get("scheduled")]
     invalid = [validate_request(r) for r in reqs if validate_request(r)]
     reqs = [r for r in reqs if not validate_request(r)]
@@ -405,6 +407,10 @@ def run_round(a, key):
     progress.discovery_total=sum(len(search_urls(p,r)) + (len(search_urls(p,r,market=True)) if p=="dubizzle" and r.get("price_max") else 0) for r in reqs for p in (r.get("platforms") or list(PLATFORMS)) if p in PLATFORMS)
     progress.update("discover",0,progress.discovery_total,force=True)
     listings = eng["listings"]
+    for book in eng.get("market", {}).values():
+        for listing_id in list(book):
+            if str((listings.get(listing_id) or {}).get("price_source") or "").startswith("card"):
+                del book[listing_id]
     diag, opened_stats = {}, {}
     new_ids, drops, sold = [], [], []
 
@@ -464,7 +470,7 @@ def run_round(a, key):
             age = (now - dt.datetime.fromisoformat(l.get("last_checked") or l.get("first_seen"))).total_seconds() / 3600
         except (TypeError, ValueError):
             age = 1e9
-        if not l.get("price") or l.get("price_version", 0) < 3 or l.get("identity_version", 0) < 1:
+        if not l.get("price") or l.get("price_version", 0) < 3 or l.get("identity_version", 0) < 1 or str(l.get("price_source") or "").startswith("card"):
             age += 1e8
         if age >= RECHECK_HOURS:
             due.append((age, l))
@@ -602,7 +608,7 @@ def run_round(a, key):
 
     progress.update("save", len(order), len(order), force=True)
     # 5) report
-    live = lambda l: not l.get("dup_of") and bool(l.get("price")) and l.get("price_version") == 3 and l.get("price_currency") == "AED" and l.get("availability", "available") == "available" and l.get("state") in ("verified", "approx", "unverified") and (marks.get(l["id"]) or {}).get("status") not in ("dismissed", "purchased")
+    live = lambda l: not l.get("dup_of") and trusted_price(l) and l.get("price_version") == 3 and l.get("price_currency") == "AED" and l.get("availability", "available") == "available" and l.get("state") in ("verified", "approx", "unverified") and (marks.get(l["id"]) or {}).get("status") not in ("dismissed", "purchased")
     full = a.mode == "manual"
     groups, cur_ver, cur_cand = [], 0, 0
     for req in reqs:
@@ -619,8 +625,8 @@ def run_round(a, key):
         if not (full or first):  # later scheduled rounds: what is new or changed price
             fresh = set(new_ids) | {d["id"] for d in drops} | {e["listing_id"] for e in eng.get("alerts",[]) if e["at"]==stamp}
             rows = [l for l in rows if l["id"] in fresh]
-        ver = [l for l in rows if l["state"] in ("verified", "approx")]
-        cand = [l for l in rows if l["state"] == "unverified"]
+        ver = [l for l in rows if l["state"] == "verified"]
+        cand = [l for l in rows if l["state"] in ("unverified", "approx")]
         cur_ver += len(ver)
         cur_cand += len(cand)
         groups.append((req, ver, cand))
@@ -629,8 +635,8 @@ def run_round(a, key):
     blocked = [PLATFORMS[p]["name"] for p, d in diag.items() if d["pages"] and not d["ok"] and not d["via_search"]]
     run = {"id": run_id, "at": stamp, "mode": a.mode, "status": "done", "requests": [r["id"] for r in reqs],
            "request_names": [r.get("name") for r in reqs], "found": sum(d["cards"] for d in diag.values()),
-           "opened": len(order), "new": len([i for i in new_ids if listings[i]["state"] in ("verified", "approx")]),
-           "new_unverified": len([i for i in new_ids if listings[i]["state"] == "unverified"]),
+           "opened": len(order), "new": len([i for i in new_ids if listings[i]["state"] == "verified"]),
+           "new_unverified": len([i for i in new_ids if listings[i]["state"] in ("unverified", "approx")]),
            "price_drops": len(drops), "sold": len(sold), "current_offers": cur_ver, "candidates": cur_cand,
            "deferred": deferred, "market": market_info, "missing_price": sum(d.get("missing_price", 0) for d in funnel.values()),
            "warning": "؛ ".join(invalid + ([("تعذّر الوصول إلى: " + "، ".join(blocked))] if blocked else [])),
@@ -641,6 +647,8 @@ def run_round(a, key):
     if not reqs:
         run.update({"status": "failed" if invalid else "done", "warning": "؛ ".join(invalid) if invalid else "لا توجد طلبات بحث مفعّلة لهذه الجولة"})
     eng["drops"] = (drops + eng["drops"])[:200]
+    for problem in quality_warnings():
+        run["warning"] = (run.get("warning", "") + "؛ " + problem).strip("؛ ")
     profile = user.get("profile") or {}
     os.makedirs(WORK, exist_ok=True)
     pdf_plain = os.path.join(WORK, f"{run_id}.pdf")
@@ -649,8 +657,6 @@ def run_round(a, key):
                                             os.path.join(WORK, f"{run_id}.html"), pdf_plain)
     if wants_pdf and not have_pdf:
         run["warning"] = (run.get("warning", "") + "؛ تعذّر إنشاء PDF").strip("؛ ")
-    for problem in quality_warnings():
-        run["warning"] = (run.get("warning", "") + "؛ " + problem).strip("؛ ")
     morning = now.hour < 15
     full_text = report.summary_text(run, groups, drops, now, start, SITE, short=False)
     short_text = report.summary_text(run, groups, drops, now, start, SITE, short=True)
@@ -728,12 +734,17 @@ def watch(a, key):
         assessments=list(listing.get('by_request',{}).values())
         if assessments:
             listing.update(min(assessments,key=lambda x:{'verified':0,'unverified':1,'approx':1,'excluded':2}.get(x['state'],3)))
+    mark_duplicates(eng["listings"])
     sent=None
     if events:
         text=lifecycle.message(events,SITE)
         sent=notify.send_all('تحديثات السيارات المحفوظة',text,text)
+    warnings=quality_warnings()
+    if failed: warnings.append(f"تعذّر فحص {failed} سيارة؛ احتُفظ بآخر حالة مؤكدة.")
+    delivery=notify.delivery_problem(sent)
+    if delivery: warnings.append(delivery)
     eng['last_weekly_review']=stamp if weekly else eng.get('last_weekly_review')
-    eng['runs'].insert(0,{"id":"w"+now.strftime('%Y%m%d%H%M'),"at":stamp,"mode":"watch","weekly":weekly,"status":"done","opened":len(targets),"changes":len(events),"price_drops":len(drops),"failed":failed,"deferred":max(0,total-len(targets)),"warning":f"تعذّر فحص {failed} سيارة؛ احتُفظ بآخر حالة مؤكدة." if failed else "","notify":sent})
+    eng['runs'].insert(0,{"id":"w"+now.strftime('%Y%m%d%H%M'),"at":stamp,"mode":"watch","weekly":weekly,"status":"done","opened":len(targets),"changes":len(events),"price_drops":len(drops),"failed":failed,"deferred":max(0,total-len(targets)),"warning":"؛ ".join(warnings),"notify":sent})
     finish(eng,key);log('watch',reviewed=len(targets),changes=len(events),failed=failed,notify=sent)
 
 

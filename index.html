@@ -656,15 +656,15 @@ body { font-family:"Inter","Cairo",sans-serif; font-weight:500; text-rendering:o
     try { const t = store.get("tab"); if (t && $("tab-" + t)) showTab(t); } catch {}
     renderAll();
     resumeLiveRun();
-    checkActions();
+    checkActions(); heartbeat();
   }
 
   // ---------------------------------------------------------------- helpers over data
-  const hasPrice = (l) => Number.isFinite(Number(l.price)) && Number(l.price) >= 1500 && Number(l.price) <= 5000000 && l.price_version === 3 && l.price_currency === "AED";
-  const L = () => Object.values(S.E.listings || {}).filter((l) => hasPrice(l) && !l.dup_of);
+  const hasPrice = (l) => Number.isFinite(Number(l.price)) && Number(l.price) >= 1500 && Number(l.price) <= 5000000 && l.price_version === 3 && l.price_currency === "AED" && !String(l.price_source || "").startsWith("card");
+  const L = () => Object.values(S.E.listings || {}).filter((l) => hasPrice(l) && !(l.dup_of && l.dup_version === 2));
   const mark = (id) => S.U.marks[id] || {};
   const isMatch = (l) => l.state === "verified" && dateKind(l) === "posted";
-  const isNoDate = (l) => l.state === "approx";  // every condition matched; the platform publishes no posting date
+  const isNoDate = (l) => l.state === "approx";  // posting recency remains unconfirmed
   const adDate = (l) => l.date || l.posted || (l.first_seen || "").slice(0, 10);
   const dateKind = (l) => l.date_kind || (l.posted ? "posted" : "first_seen");
   function windowStart() { const n = uaeNow(); const y = n.getUTCFullYear(), m = n.getUTCMonth(), d = n.getUTCDate(); const last = new Date(Date.UTC(y, m, 0)).getUTCDate(); return ymd(new Date(Date.UTC(y, m - 1, Math.min(d, last)))); }
@@ -766,8 +766,8 @@ body { font-family:"Inter","Cairo",sans-serif; font-weight:500; text-rendering:o
       if (q && !`${l.title} ${l.location} ${l.seller_name}`.toLowerCase().includes(q)) return false;
       if (rt === "deal" && !["excellent", "good"].includes(l.rating)) return false;
       if (rt === "hot" && !["high", "medium"].includes(l.urgency?.level)) return false;
-      if (st === "match") return (isMatch(l) && inWindow(l)) || isNoDate(l);
-      if (st === "unverified") return l.state === "unverified";
+      if (st === "match") return (isMatch(l) && inWindow(l));
+      if (st === "unverified") return l.state === "unverified" || isNoDate(l);
       return true;
     });
   }
@@ -782,8 +782,8 @@ body { font-family:"Inter","Cairo",sans-serif; font-weight:500; text-rendering:o
     const base = baseAds();
     const priced = L().filter(live);
     $("statPriced").textContent = fmt(priced.length);
-    $("statVerified").textContent = fmt(priced.filter((l) => (isMatch(l) && inWindow(l)) || isNoDate(l)).length);
-    $("statPending").textContent = fmt(priced.filter((l) => l.state === "unverified").length);
+    $("statVerified").textContent = fmt(priced.filter((l) => (isMatch(l) && inWindow(l))).length);
+    $("statPending").textContent = fmt(priced.filter((l) => l.state === "unverified" || isNoDate(l)).length);
     $("statReports").textContent = fmt((S.E.reports || []).length);
     const last = (S.E.runs || []).find((r) => r.mode !== "watch");
     $("statLast").textContent = last ? "آخر بحث: " + when(last.at) : "لم يُنفّذ بحث بعد";
@@ -803,7 +803,7 @@ body { font-family:"Inter","Cairo",sans-serif; font-weight:500; text-rendering:o
       <div class="priceline"><span class="price">${l.price ? fmt(l.price) + " <small>درهم</small>" : ""}</span>${l.price_prev && l.price_prev !== l.price ? `<span class="price-prev num">${fmt(l.price_prev)}</span>` : ""}${l.year ? `<span class="plate">${l.year}</span>` : ""}</div>
       ${statusHtml(l)}${verdict(l)}${cardLines(l)}
       ${(l.state === "unverified" || isNoDate(l)) && l.note ? `<div class="note">${esc(l.note)}</div>` : ""}
-      ${(l.duplicates || []).map((d) => `<div class="small dup">نفس السيارة على ${esc(PLATFORMS[d.platform] || d.platform)} بسعر <span class="num">${fmt(d.price)}</span> درهم · <a href="${esc(d.url)}" target="_blank" rel="noopener">فتح</a></div>`).join("")}
+      ${(l.dup_version === 2 ? (l.duplicates || []) : []).map((d) => `<div class="small dup">نفس السيارة على ${esc(PLATFORMS[d.platform] || d.platform)} بسعر <span class="num">${fmt(d.price)}</span> درهم · <a href="${esc(d.url)}" target="_blank" rel="noopener">فتح</a></div>`).join("")}
       <div class="foot">${stageSelect(l)}<label class="cmp-toggle"><input type="checkbox" data-pick="${esc(l.id)}"${S.pick.includes(l.id) ? " checked" : ""}> قارن</label><a class="btn sm" href="${esc(l.url)}" target="_blank" rel="noopener">فتح الإعلان ↗</a></div>
     </div></article>`).join("");
   }
@@ -844,7 +844,7 @@ body { font-family:"Inter","Cairo",sans-serif; font-weight:500; text-rendering:o
         ${line("التاريخ", (l) => `${DATE_KIND[dateKind(l)]} <span class="num">${dmy(adDate(l))}</span>`)}
         ${line("استعجال البائع", (l) => urgencyHtml(l))}
         ${line("تغيّر السعر", (l) => (l.price_history || []).length > 1 ? (l.price_history || []).map((h) => fmt(h.price)).join(" ← ") : "لم يتغيّر")}
-        ${line("درجة التأكد", (l) => isMatch(l) ? '<span class="pill good">مطابقة</span>' : isNoDate(l) ? '<span class="pill">مطابقة · بلا تاريخ نشر</span>' : `<span class="pill warn">تحتاج تأكيدًا</span><div class="small">${esc(l.note || "")}</div>`)}
+        ${line("درجة التأكد", (l) => isMatch(l) ? '<span class="pill good">مطابقة</span>' : isNoDate(l) ? '<span class="pill">تاريخ النشر يحتاج تأكيدًا</span>' : `<span class="pill warn">تحتاج تأكيدًا</span><div class="small">${esc(l.note || "")}</div>`)}
         ${line("رقم الشاصي VIN", (l) => vinHtml(l))}
         ${line("هاتف البائع", (l) => sellerPhone(l))}
         ${line("", (l) => `<a class="btn sm" href="${esc(l.url)}" target="_blank" rel="noopener">فتح الإعلان ↗</a> <button type="button" class="sm ghost" data-unpick="${esc(l.id)}">إزالة</button>`)}
@@ -904,7 +904,7 @@ body { font-family:"Inter","Cairo",sans-serif; font-weight:500; text-rendering:o
         <div class="small">${esc([r.make, r.model, r.keywords].filter(Boolean).join(" "))} ${r.year_from || r.year_to ? `<span class="plate">${r.year_from || "…"}–${r.year_to || "…"}</span>` : ""}</div></div>
         <dl class="spec"><div><dt>أقصى سعر</dt><dd>${r.price_max ? fmt(r.price_max) + " درهم" : "بلا حد"}</dd></div><div><dt>أقصى ممشى</dt><dd>${r.mileage_max ? fmt(r.mileage_max) + " كم" : "بلا حد"}</dd></div>
         <div><dt>اللون</dt><dd>${esc(r.color || "أي لون")}</dd></div><div><dt>الإمارة</dt><dd>${esc(r.emirate || "كل الإمارات")}</dd></div>
-        <div><dt>مطابقة</dt><dd>${mine.filter((l) => (isMatch(l) && inWindow(l)) || isNoDate(l)).length}</dd></div><div><dt>تحتاج تأكيدًا</dt><dd>${mine.filter((l) => l.state === "unverified").length}</dd></div></dl>
+        <div><dt>مطابقة</dt><dd>${mine.filter((l) => (isMatch(l) && inWindow(l))).length}</dd></div><div><dt>تحتاج تأكيدًا</dt><dd>${mine.filter((l) => l.state === "unverified" || isNoDate(l)).length}</dd></div></dl>
         <div class="mk">${marketTable(r.id)}</div>
         <div class="actions"><button type="button" class="primary sm" data-runreq="${esc(r.id)}">ابحث الآن</button><button type="button" class="sm" data-edit="${esc(r.id)}">تعديل</button><button type="button" class="sm" data-sched="${esc(r.id)}">${r.scheduled ? "إلغاء الجدولة" : "جدولة يومية"}</button><button type="button" class="sm" data-toggle="${esc(r.id)}">${on ? "إيقاف" : "تشغيل"}</button><button type="button" class="sm ghost" data-del="${esc(r.id)}">حذف</button></div></article>`;
     }).join("");
@@ -1189,6 +1189,24 @@ body { font-family:"Inter","Cairo",sans-serif; font-weight:500; text-rendering:o
       scrollPrevious=y;
     });
   },{passive:true});
+  let activityBusy=false;
+  async function heartbeat() {
+    if (!S.E || !S.token || document.visibilityState !== "visible" || activityBusy) return;
+    activityBusy=true;
+    try {
+      const branch="radar-live", path="/contents/data/activity.enc";
+      const ref=await gh("/git/ref/heads/"+branch);
+      if (!ref.ok) {
+        const main=await (await gh("/git/ref/heads/main")).json();
+        try { await gh("/git/refs",{method:"POST",body:JSON.stringify({ref:"refs/heads/"+branch,sha:main.object.sha})}); } catch(e) { if(e.status !== 422) throw e; }
+      }
+      const existing=await gh(path+"?ref="+branch), file=existing.ok ? await existing.json() : {};
+      const sealed=await encrypt(new TextEncoder().encode(JSON.stringify({at:new Date().toISOString()})),S.pass);
+      await gh(path,{method:"PUT",body:JSON.stringify({message:"radar: activity [skip ci]",branch,sha:file.sha,content:btoa(sealed)})});
+    } catch {} finally { activityBusy=false; }
+  }
+  setInterval(heartbeat,120000);
+  document.addEventListener("visibilitychange",()=>{if(document.visibilityState === "visible") heartbeat();});
   // ---------------------------------------------------------------- problems
   // Every failure stays visible until a later round succeeds: the round's own record (engine
   // errors, blocked platforms, reports not delivered), or a GitHub task that failed before the
@@ -1217,6 +1235,8 @@ body { font-family:"Inter","Cairo",sans-serif; font-weight:500; text-rendering:o
     if (lastRound && (lastRound.status === "failed" || lastRound.warning)) {
       items.push(`<li><b>${lastRound.status === "failed" ? "لم تكتمل" : "تنبيه"} — ${{ scheduled: "جولة مجدولة", manual: "بحث يدوي" }[lastRound.mode] || "جولة"} ${esc(when(lastRound.at))}:</b> ${esc(lastRound.warning || "سبب غير معروف")}</li>`);
     }
+    const lastReview=(S.E.runs || []).find(r=>r.mode === "watch");
+    if(lastReview?.warning || lastReview?.status === "failed") items.push(`<li><b>تنبيه — مراجعة المحفوظة ${esc(when(lastReview.at))}:</b> ${esc(lastReview.warning || "لم تكتمل المراجعة")}</li>`);
     const p = S.actionsProblem;
     if (p && (!lastRound || Date.parse(p.at) > Date.parse(lastRound.at))) {
       items.push(`<li><b>${esc(p.text)}</b> — ${esc(when(new Date(Date.parse(p.at) + 4 * 3600e3).toISOString()))} <a href="${esc(p.url)}" target="_blank" rel="noopener">التفاصيل ↗</a></li>`);

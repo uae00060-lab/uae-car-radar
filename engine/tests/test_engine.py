@@ -226,8 +226,8 @@ class Engine(unittest.TestCase):
         args=self.args();args.weekly=True
         def observation(item,today):
             return ("gone",{}) if item["ad_id"]==eng["listings"][target]["ad_id"] else ("failed",{})
-        with patch.object(radar,"read_ad",side_effect=observation), patch.object(radar.report,"to_pdf") as pdf:
-            radar.watch(args,KEY);pdf.assert_not_called()
+        with patch.object(radar,"read_ad",side_effect=observation), patch.object(radar.report,"to_pdf") as pdf, patch.object(radar,"mark_duplicates",wraps=radar.mark_duplicates) as dedup:
+            radar.watch(args,KEY);pdf.assert_not_called();dedup.assert_called_once()
         updated=store.read_json(radar.ENGINE_FILE,KEY,{})
         self.assertEqual(updated["listings"][target]["availability"],"unavailable")
         self.assertEqual(len(updated["alerts"]),1)
@@ -235,14 +235,34 @@ class Engine(unittest.TestCase):
         self.assertTrue(updated["last_weekly_review"])
         self.assertEqual(len(updated["reports"]),0)
 
+    def test_encrypted_activity_suppresses_only_scheduled_search(self):
+        store.write_json(os.path.join(radar.WORK,"activity.enc"),{"at":now_uae().isoformat()},KEY)
+        radar.run_round(self.args("scheduled"),KEY)
+        self.assertFalse(os.path.exists(radar.ENGINE_FILE))
+        radar.run_round(self.args(),KEY)
+        self.assertTrue(os.path.exists(radar.ENGINE_FILE))
+
+    def test_expired_or_wrong_key_activity_does_not_suppress(self):
+        path=os.path.join(radar.WORK,"activity.enc")
+        store.write_json(path,{"at":(now_uae()-dt.timedelta(seconds=181)).isoformat()},KEY)
+        self.assertFalse(radar.load_presence(KEY))
+        store.write_json(path,{"at":now_uae().isoformat()},"different-key")
+        self.assertFalse(radar.load_presence(KEY))
+
+    def test_quality_warning_is_in_pdf_input(self):
+        rendered=[]
+        with patch.dict(os.environ,{"RADAR_TESTS":"failure"}), patch.object(radar.report,"to_pdf",side_effect=lambda html,*args: rendered.append(html) or False):
+            radar.run_round(self.args("scheduled"),KEY)
+        self.assertIn("فشلت اختبارات الجودة",rendered[0])
+
 
 class Additions(unittest.TestCase):
     def ad(self, i, plat, price, km=88000, year=2021, vin=None):
         return {"id": f"{plat}-{i}", "platform": plat, "url": f"https://x/{plat}/{i}", "price": price, "year": year,
-                "mileage": km, "vin": vin, "state": "verified", "request_ids": ["r1"]}
+                "mileage": km, "vin": vin, "state": "verified", "request_ids": ["r1"], "price_version": 3, "price_currency": "AED", "price_source": "ad:AED-offer"}
 
     def test_same_car_on_two_platforms_shows_cheapest(self):
-        L = {a["id"]: a for a in (self.ad(1, "dubicars", 29500), self.ad(2, "yallamotor", 28900),
+        L = {a["id"]: a for a in (self.ad(1, "dubicars", 29500, vin="JTDBT923X71000000"), self.ad(2, "yallamotor", 28900, vin="JTDBT923X71000000"),
                                   self.ad(3, "carswitch", 29500, km=91000))}
         self.assertEqual(radar.mark_duplicates(L), 1)
         self.assertEqual(L["dubicars-1"]["dup_of"], "yallamotor-2")
@@ -259,13 +279,38 @@ class Additions(unittest.TestCase):
         self.assertEqual(radar.mark_duplicates(L3), 0)
         self.assertNotIn("dup_of", L3["autoae-2"])
 
-    def test_price_from_structured_results_when_ad_page_has_none(self):
+
+    def test_similar_cars_and_conflicting_vins_never_hide_each_other(self):
+        for vin_a,vin_b in ((None,None),("JTDBT923X71000000","JTDKB20U773205781")):
+            cars={a["id"]:a for a in (self.ad(1,"dubicars",29500,vin=vin_a), self.ad(2,"yallamotor",28900,vin=vin_b))}
+            self.assertEqual(radar.mark_duplicates(cars),0)
+            self.assertFalse(any(a.get("dup_of") for a in cars.values()))
+
+    def test_duplicates_do_not_hide_different_request_coverage(self):
+        a=self.ad(1,"dubicars",29500,vin="JTDBT923X71000000")
+        b=self.ad(2,"yallamotor",28900,vin="JTDBT923X71000000");b["request_ids"].append("r2")
+        self.assertEqual(radar.mark_duplicates({a['id']:a,b['id']:b}),0)
+
+    def test_duplicate_reselection_after_price_or_availability_change(self):
+        a=self.ad(1,"dubicars",29500,vin="JTDBT923X71000000")
+        b=self.ad(2,"yallamotor",28900,vin="JTDBT923X71000000")
+        cars={a['id']:a,b['id']:b};radar.mark_duplicates(cars)
+        self.assertEqual(a['dup_of'],b['id'])
+        a['price']=28000;radar.mark_duplicates(cars)
+        self.assertEqual(b['dup_of'],a['id'])
+        a['availability']='reserved';radar.mark_duplicates(cars)
+        self.assertNotIn('dup_of',b)
+        a['availability']='unavailable';a['state']='sold';radar.mark_duplicates(cars)
+        self.assertNotIn('dup_of',b)
+
+    def test_card_price_is_not_used_when_detail_has_none(self):
         page = fetch.Page("https://www.oneclickdrive.com/details/index/search-usedcar-dubai/Toyota/Yaris/?id=855142")
         page.status, page.html = 200, "<html><title>Toyota Yaris 2021 in Dubai</title><body>Model year: 2021</body></html>"
         item = {"url": page.url, "ad_id": "855142", "platform": "oneclickdrive", "src": "json", "price": 31000, "year": 2021}
         with patch.object(fetch, "get", return_value=page):
             status, v = radar.read_ad(item, TODAY)
-            self.assertEqual((status, v["price"], v["_src"]["price"]), ("ok", 31000, "card:json"))
+            self.assertEqual(status,"ok")
+            self.assertIsNone(v["price"])  # card-only asking prices are not confirmed by the detail page
             # An instalment-sized figure is never taken as the asking price.
             status, v = radar.read_ad({**item, "price": 1999}, TODAY)
             self.assertIsNone(v["price"])

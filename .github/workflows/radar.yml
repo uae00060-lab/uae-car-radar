@@ -94,6 +94,14 @@ jobs:
         if: startsWith(steps.task.outputs.args, 'run --mode scheduled')
         run: python engine/tests/pdf_smoke.py
 
+      - name: Read encrypted dashboard activity
+        if: github.event_name == 'schedule' && startsWith(steps.task.outputs.args, 'run')
+        run: |
+          mkdir -p .work
+          if git fetch --quiet --depth=1 origin radar-live; then
+            git show FETCH_HEAD:data/activity.enc > .work/activity.enc || true
+          fi
+
       - name: Search the platforms
         env:
           RADAR_PROGRESS_TOKEN: ${{ github.token }}
