@@ -93,14 +93,27 @@ def email(subject, text, pdf=None, pdf_name="report.pdf"):
     if pdf and os.path.exists(pdf):
         with open(pdf, "rb") as f:
             msg.add_attachment(f.read(), maintype="application", subtype="pdf", filename=pdf_name)
+    host = env("SMTP_HOST") or "smtp.gmail.com"
     try:
-        with smtplib.SMTP_SSL(env("SMTP_HOST") or "smtp.gmail.com", int(env("SMTP_PORT") or 465),
-                              context=ssl.create_default_context(), timeout=60) as s:
-            s.login(user, pw)
-            s.send_message(msg)
+        try:
+            with smtplib.SMTP_SSL(host, int(env("SMTP_PORT") or 465), context=ssl.create_default_context(),
+                                  timeout=60) as s:
+                s.login(user, pw)
+                s.send_message(msg)
+        except (smtplib.SMTPServerDisconnected, smtplib.SMTPConnectError, OSError) as e:
+            if isinstance(e, smtplib.SMTPAuthenticationError):
+                raise
+            # Some networks drop the SSL port; Gmail also accepts STARTTLS on 587.
+            with smtplib.SMTP(host, 587, timeout=60) as s:
+                s.starttls(context=ssl.create_default_context())
+                s.login(user, pw)
+                s.send_message(msg)
         return "أُرسل"
+    except smtplib.SMTPAuthenticationError:
+        return "فشل: Gmail رفض الدخول (تحقق من SMTP_USER وكلمة مرور التطبيق في SMTP_PASSWORD)"
     except Exception as e:  # noqa: BLE001
-        return f"فشل ({type(e).__name__})"
+        reason = re.sub(r"\S+@\S+", "…", str(e))[:120]  # the log is public: never echo an address
+        return f"فشل ({type(e).__name__}{': ' + reason if reason else ''})"
 
 
 SENT = "أُرسل"
