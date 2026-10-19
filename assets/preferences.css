@@ -146,3 +146,48 @@ body{padding-bottom:0}main{padding-bottom:64px!important}
 }
 
 #hdr .appearance-panel,#hdr .notifications-panel{right:auto;left:auto;inset-inline-end:0}
+
+/* Search status is a functional component: its geometry is independent of skins. */
+#liveBox.search-progress{display:grid;grid-template-columns:76px minmax(0,1fr) auto;align-items:center;gap:20px;margin:18px 0 20px;padding:22px 24px;min-height:154px;border:1px solid var(--line);border-radius:14px;background:var(--surface);color:var(--fg);box-shadow:var(--shadow);overflow:visible}
+#liveBox.search-progress::before{display:none}
+#liveBox .progress-orbit{width:76px;height:76px;padding:5px;border:0;border-radius:50%;background:conic-gradient(var(--accent) calc(var(--p)*1%),var(--sunk) 0);box-shadow:none}
+#liveBox .progress-orbit>div{width:100%;height:100%;padding:0;margin:0;border:0;border-radius:50%!important;background:var(--surface);box-shadow:none;display:flex;align-items:center;justify-content:center;gap:3px}
+#liveBox .progress-orbit b{display:flex;align-items:baseline;justify-content:center;gap:2px;font:700 22px/1.1 Inter,system-ui,sans-serif;color:var(--fg)}
+#liveBox .progress-orbit small{font:600 11px/1 Inter,system-ui,sans-serif}
+#liveBox .progress-orbit span{font:500 10px/1.5 var(--body);color:var(--muted)}
+#liveBox .progress-copy{min-width:0;width:auto;flex-basis:auto}
+#liveBox .progress-kicker{display:inline-flex;align-items:center;gap:6px;font:600 11px/1.6 var(--body);color:var(--accent)}
+#liveBox .progress-copy h3{font:700 17px/1.65 var(--body);margin:3px 0 5px;color:var(--fg)}
+#liveBox .progress-copy p{display:flex;align-items:center;flex-wrap:wrap;gap:6px 12px;font:400 13px/1.8 var(--body);color:var(--muted);margin:0 0 12px}
+#liveBox .progress-time{margin-inline-start:auto;color:var(--fg);font:600 12px/1.6 Inter,system-ui,sans-serif;padding:2px 8px;background:var(--sunk);border-radius:5px}
+#liveBox .progress-track{height:6px;background:var(--sunk);border-radius:6px;overflow:hidden}
+#liveBox .progress-track i{height:100%;background:var(--accent);border-radius:6px}
+#liveBox .progress-milestones{display:flex;justify-content:space-between;gap:10px;margin-top:9px;font:500 11px/1.8 var(--body);color:var(--muted)}
+#liveBox .progress-milestones .current{color:var(--accent);font-weight:700}
+#liveBox .progress-milestones .complete{color:var(--muted)}
+#liveBox .progress-copy>small{font:400 11px/1.8 var(--body);color:var(--muted);margin-top:10px;display:block}
+#liveBox .progress-details{align-self:start;max-width:220px;min-width:115px;font:400 12px/1.9 var(--body);color:var(--muted)}
+#liveBox .progress-details summary{padding:6px 10px;border:1px solid var(--line);border-radius:7px;cursor:pointer;color:var(--fg);background:var(--surface);white-space:normal}
+#liveBox .progress-details ol{padding-inline-start:20px;max-height:160px;overflow:auto;margin:10px 0}
+#liveBox.pending{display:flex;min-height:94px}
+#liveBox.pending p{margin:5px 0 0;font-size:13px;line-height:1.8;color:var(--muted)}
+#liveBox.finished{grid-template-columns:76px minmax(0,1fr)}
+.workspace-top{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:8px 24px;margin-block:8px 20px;padding:0;font:400 12px/1.9 var(--body);color:var(--muted)}
+.workspace-top .small{font-size:12px;line-height:1.9;color:var(--muted)}
+@media(max-width:700px){
+ #liveBox.search-progress{grid-template-columns:60px minmax(0,1fr);gap:14px;padding:18px 16px;margin:14px 0 18px;min-height:0}
+ #liveBox .progress-orbit{width:60px;height:60px;padding:4px}
+ #liveBox .progress-orbit b{font-size:19px}
+ #liveBox .progress-orbit span{font-size:9px}
+ #liveBox .progress-copy h3{font-size:15px}
+ #liveBox .progress-copy p{font-size:12px;gap:4px 8px}
+ #liveBox .progress-time{margin-inline-start:0}
+ #liveBox .progress-copy>small{font-size:11px;line-height:1.9}
+ #liveBox .progress-milestones{font-size:10px;gap:6px;flex-wrap:wrap;justify-content:flex-start}
+ #liveBox .progress-milestones span{padding-inline-end:6px}
+ #liveBox .progress-details{grid-column:1/-1;width:100%;max-width:none;border-top:1px solid var(--line);padding-top:12px}
+ #liveBox .progress-details summary{display:inline-block;font-size:12px}
+ #liveBox.finished{grid-template-columns:60px minmax(0,1fr)}
+ .workspace-top{flex-direction:column;align-items:flex-start;gap:6px;margin-bottom:18px;font-size:12px}
+ .workspace-top #nextRun{font-size:11px;line-height:1.9}
+}
