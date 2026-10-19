@@ -754,6 +754,8 @@ def run_round(a, key):
         problem = notify.delivery_problem(run["notify"])
         if problem:
             run["warning"] = (run.get("warning", "") + "؛ " + problem).strip("؛ ")
+        if os.getenv("GITHUB_ACTIONS"):
+            print("::notice title=report-delivery::" + json.dumps({"pdf": bool(have_pdf), **run["notify"]}, ensure_ascii=False), flush=True)
     run["seconds"] = round(time.time() - t0)
     run["funnel"] = {p: {**{k: v for k, v in diag.get(p, {}).items() if k != "status"}, "http": diag.get(p, {}).get("status"),
                          **{k: v for k, v in opened_stats.get(p, {}).items() if k != "fields"}, **funnel.get(p, {})}
