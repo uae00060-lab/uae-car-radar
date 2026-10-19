@@ -1,13 +1,14 @@
 // Optional server deployment. GitHub Pages keeps using its existing encrypted-data login.
+import {pbkdf2} from 'node:crypto';
 const encoder = new TextEncoder();
 const decode = value => Uint8Array.from(atob(value), c => c.charCodeAt(0));
 const encode = bytes => btoa(String.fromCharCode(...new Uint8Array(bytes)));
 const digest = async value => encode(await crypto.subtle.digest('SHA-256', encoder.encode(value)));
 const json = (data, status=200, headers={}) => new Response(JSON.stringify(data), {status, headers:{'Content-Type':'application/json','Cache-Control':'no-store','X-Content-Type-Options':'nosniff',...headers}});
 const cookie = (value, age=86400) => `__Host-radar=${value}; Path=/; HttpOnly; Secure; SameSite=Strict; Max-Age=${age}`;
-export async function derive(password, salt, iterations, usage=['deriveBits']) {
-  const material=await crypto.subtle.importKey('raw',encoder.encode(password),'PBKDF2',false,usage);
-  return crypto.subtle.deriveBits({name:'PBKDF2',hash:'SHA-256',salt,iterations},material,256);
+export async function derive(password, salt, iterations) {
+  return new Promise((resolve,reject)=>pbkdf2(password,salt,iterations,32,'sha256',
+    (error,key)=>error ? reject(error) : resolve(new Uint8Array(key))));
 }
 export async function open(text, password) {
   const item=JSON.parse(text);
@@ -24,8 +25,8 @@ export async function seal(text,password) {
 }
 export async function verify(password, record) {
   const [iterations,salt,expected]=record.split(':');
-  if(Number(iterations)!==100000 || !salt || !expected) return false;
-  const actual=new Uint8Array(await derive(password,decode(salt),100000)), target=decode(expected);
+  if(Number(iterations)!==600000 || !salt || !expected) return false;
+  const actual=new Uint8Array(await derive(password,decode(salt),600000)), target=decode(expected);
   let difference=actual.length ^ target.length;
   for(let i=0;i<actual.length;i++) difference |= actual[i] ^ (target[i] || 0);
   return difference===0;

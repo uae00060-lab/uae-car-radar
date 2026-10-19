@@ -10,7 +10,7 @@ test('encrypted files retain Python-compatible envelope and never accept the wro
 });
 test('password verifier matches a local generated hash',async()=>{
  const salt=Buffer.from('0123456789abcdef');
- const record='100000:'+salt.toString('base64')+':'+pbkdf2Sync('owner-password',salt,100000,32,'sha256').toString('base64');
+ const record='600000:'+salt.toString('base64')+':'+pbkdf2Sync('owner-password',salt,600000,32,'sha256').toString('base64');
  assert.equal(await verify('owner-password',record),true);
  assert.equal(await verify('wrong',record),false);
 });

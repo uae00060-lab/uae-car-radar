@@ -2,3 +2,6 @@
 __pycache__/
 *.pyc
 data/*.tmp
+
+gateway/dist/
+gateway/.wrangler/

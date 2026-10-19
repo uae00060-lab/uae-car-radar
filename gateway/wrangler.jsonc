@@ -1,0 +1,7 @@
+{
+  "name": "car-radar-gateway",
+  "main": "worker.mjs",
+  "compatibility_date": "2026-10-19",
+  "compatibility_flags": ["nodejs_compat"],
+  "assets": { "directory": "./dist", "binding": "ASSETS", "run_worker_first": true }
+}
