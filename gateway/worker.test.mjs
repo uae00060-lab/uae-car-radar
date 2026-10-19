@@ -49,3 +49,22 @@ test('saves reuse the salt of opened data so the derived key is not recomputed',
  const second=JSON.parse(await seal('{"a":1}','salt-key'));
  assert.equal(second.salt,first.salt);assert.notEqual(second.iv,first.iv);
 });
+test('production key (RADAR_DATA_KEY) opens and saves without PBKDF2, and names files not yet re-keyed',async()=>{
+ const salt=Buffer.from('fedcba9876543210');
+ const fixed={RADAR_DATA_KEY:salt.toString('base64')+':'+pbkdf2Sync('data-pass',salt,250000,32,'sha256').toString('base64')};
+ const {dataKey}=await import('./worker.mjs');
+ // a file sealed by the engine for that salt (re-sealed here with the derived key for the test)
+ const derived=JSON.parse(await seal('{"requests":[],"marks":{}}',dataKey(fixed)));
+ assert.equal(derived.salt,salt.toString('base64'));
+ assert.equal(new TextDecoder().decode(await open(JSON.stringify(derived),dataKey(fixed))),'{"requests":[],"marks":{}}');
+ assert.equal(new TextDecoder().decode(await open(JSON.stringify(derived),'data-pass')),'{"requests":[],"marks":{}}');
+ const other=await seal('{}','another-pass');
+ const env={...fixed,GITHUB_TOKEN:'t',AUTH_EMAIL:'o@x.test',AUTH_PASSWORD:'p',DB:{prepare(){return {bind(){return {async first(){return {token:'t'};},async run(){return{};}};}};}}};
+ const original=globalThis.fetch;
+ globalThis.fetch=async()=>Response.json({sha:'s',encoding:'base64',content:Buffer.from(other).toString('base64')});
+ try {
+  const response=await worker.fetch(new Request('https://radar.test/api/file?path=data/engine.enc',{headers:{Cookie:'__Host-radar=abc'}}),env);
+  assert.equal(response.status,503);assert.equal((await response.json()).error,'Data key pending');
+ } finally { globalThis.fetch=original; }
+ assert.throws(()=>dataKey({RADAR_DATA_KEY:'short:abc'}));
+});

@@ -52,6 +52,22 @@ def decrypt_bytes(text, passphrase):
     return plain
 
 
+def shared_salt(passphrase):
+    salt = _salts.get(passphrase)
+    return base64.b64encode(salt).decode() if salt else None
+
+
+def rekey(path, passphrase):
+    """Re-encrypt a file sealed with another salt onto the shared one; True when it was rewritten."""
+    with open(path) as f:
+        text = f.read()
+    target = shared_salt(passphrase)
+    if not target or json.loads(text).get("salt") == target:
+        return False
+    write_file(path, decrypt_bytes(text, passphrase), passphrase)
+    return True
+
+
 def read_json(path, passphrase, default):
     if not os.path.exists(path):
         return default

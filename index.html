@@ -317,7 +317,7 @@ body { font-family:"Inter","Cairo",sans-serif; font-weight:500; text-rendering:o
 @media(prefers-reduced-motion:reduce){#heroRadar .radar-line,#heroRadar .orbit-two,#heroRadar .radar-ping,#heroRadar .radar-ping::after{animation:none!important}#heroRadar .radar-ping{opacity:.7}}
 </style>
 <link rel="stylesheet" href="assets/preferences.css?v=20261019-7">
-<script src="assets/preferences.js?v=20261019-7" defer></script>
+<script src="assets/preferences.js?v=20261019-8" defer></script>
 </head>
 <body>
 
@@ -488,7 +488,8 @@ body { font-family:"Inter","Cairo",sans-serif; font-weight:500; text-rendering:o
       </form>
       <div class="panel"><h2>الاتصال</h2>
         <dl class="kv" id="connInfo"></dl>
-        <div class="row"><button type="button" class="sm" id="btnTestNotify">إرسال إشعار تجريبي</button><button type="button" class="sm" id="btnDiag">فحص المنصات</button><button type="button" class="sm ghost" id="btnForget">نسيان هذا الجهاز</button></div>
+        <div class="row"><button type="button" class="sm" id="btnTestNotify">إرسال إشعار تجريبي</button><button type="button" class="sm" id="btnDiag">فحص المنصات</button><button type="button" class="sm ghost" id="btnForget">نسيان هذا الجهاز</button><button type="button" class="sm ghost" id="btnDataKey">إنشاء مفتاح الخادم</button></div>
+        <div id="dataKeyBox" hidden><p class="small">انسخ هذا المفتاح إلى Cloudflare: car-radar-gateway ← Settings ← Variables and Secrets ← Add ← النوع Secret والاسم RADAR_DATA_KEY. يفتح بياناتك مثل كلمة السر تمامًا: لا ترسله لأحد ولا تحفظه في ملف.</p><input id="dataKeyValue" readonly dir="ltr" style="width:100%;font-family:monospace"><button type="button" class="sm" id="dataKeyCopy">نسخ</button></div>
       </div>
       <div class="panel"><h2>الإشعارات</h2><dl class="kv" id="notifyInfo"></dl><button class="btn" id="btnRetryNotify">إعادة إرسال التقرير للقنوات التي لم تستلمه</button><p class="small">نجاح الإرسال يعني قبول الخدمة للرسالة، ولا يؤكد قراءتها أو وصول البريد إلى صندوق الوارد.</p>
         <div class="small">تُرسل الإشعارات عبر جميع القنوات المفعّلة: البريد وتيليجرام وواتساب. تُفعَّل القنوات بإضافة أسرارها في GitHub ← Settings ← Secrets and variables ← Actions. التفاصيل في README.</div></div>
@@ -609,13 +610,12 @@ body { font-family:"Inter","Cairo",sans-serif; font-weight:500; text-rendering:o
     let plain;
     try { plain = new Uint8Array(await crypto.subtle.decrypt({ name: "AES-GCM", iv: b64.dec(env.iv) }, key, b64.dec(env.ct))); }
     catch { throw new Error("BADPASS"); }
-    if (env.iter === 250000) sealSalt.set(pass, env.salt);
     return plain;
   }
-  // Saves reuse the data's salt with a fresh IV (as engine/store.py does), so the key derived to open it is reused.
-  const sealSalt = new Map();
+  // Saves keep user.enc's salt with a fresh IV: every file shares it (engine/store.py does the same),
+  // which lets the server hold one precomputed key (RADAR_DATA_KEY) for all of them.
   async function encrypt(bytes, pass) {
-    const salt = sealSalt.has(pass) ? b64.dec(sealSalt.get(pass)) : crypto.getRandomValues(new Uint8Array(16)), iv = crypto.getRandomValues(new Uint8Array(12)), iter = 250000;
+    const salt = S.userSalt ? b64.dec(S.userSalt) : crypto.getRandomValues(new Uint8Array(16)), iv = crypto.getRandomValues(new Uint8Array(12)), iter = 250000;
     const ct = new Uint8Array(await crypto.subtle.encrypt({ name: "AES-GCM", iv }, await deriveKey(pass, salt, iter), bytes));
     return JSON.stringify({ v: 1, kdf: "pbkdf2-sha256", iter, salt: b64.enc(salt), iv: b64.enc(iv), ct: b64.enc(ct) });
   }
@@ -626,6 +626,7 @@ body { font-family:"Inter","Cairo",sans-serif; font-weight:500; text-rendering:o
     let body = null;
     try { body = await response.clone().json(); } catch {}
     const e = new Error(response.status === 401 ? "انتهت الجلسة؛ سجّل الدخول من جديد."
+      : response.status === 503 && body?.error === "Data key pending" ? "بعض الملفات لم تُنقل بعد إلى مفتاح الخادم؛ تُنقل في جولة البحث القادمة (كل ساعة عند الدقيقة 17). أعد المحاولة بعدها."
       : response.status === 503 && body?.error === "Server setup is incomplete" ? "إعداد الخادم غير مكتمل: أحد الأسرار أو ربط قاعدة البيانات ناقص."
       : !body && (response.status === 503 || response.status === 500) ? "تجاوز الخادم المجاني حد المعالجة مؤقتًا أثناء فك التشفير؛ أعد المحاولة بعد دقيقة."
       : "تعذّر الاتصال بالخادم (" + response.status + (body?.stage ? " · " + body.stage : "") + (body?.type ? " · " + body.type : "") + ").");
@@ -703,7 +704,7 @@ body { font-family:"Inter","Cairo",sans-serif; font-weight:500; text-rendering:o
   async function loadAll(first) {
     const [eng, usr] = await Promise.all([readFile("data/engine.enc"), readFile("data/user.enc")]);
     S.E = eng.text ? JSON.parse(new TextDecoder().decode(eng.plain ? b64.dec(eng.text) : await decrypt(eng.text, S.pass))) : { listings: {}, runs: [], reports: [], market: {}, drops: [] };
-    if (usr.text) { S.U = JSON.parse(new TextDecoder().decode(usr.plain ? b64.dec(usr.text) : await decrypt(usr.text, S.pass))); S.userSha = usr.sha; }
+    if (usr.text) { S.U = JSON.parse(new TextDecoder().decode(usr.plain ? b64.dec(usr.text) : await decrypt(usr.text, S.pass))); S.userSha = usr.sha; if (!usr.plain) S.userSalt = JSON.parse(usr.text).salt; }
     else if (first) { S.U = null; }
     S.U = S.U || { requests: [], marks: {}, profile: {} };
     S.U.marks = S.U.marks || {}; S.U.requests = S.U.requests || []; S.U.profile = S.U.profile || {};
@@ -1160,6 +1161,15 @@ body { font-family:"Inter","Cairo",sans-serif; font-weight:500; text-rendering:o
     $("notifyInfo").innerHTML = Object.entries(ch).map(([k, v]) => `<dt>${v}</dt><dd>${last ? esc(last.notify[k] || "—") : "تظهر الحالة بعد أول جولة مجدولة"}</dd>`).join("");
   }
   $("meForm").addEventListener("submit", async (e) => { e.preventDefault(); S.U.profile = { name: $("mName").value.trim(), phone: $("mPhone").value.trim(), city: $("mCity").value.trim() }; if (await saveUser("profile")) $("mMsg").textContent = "حُفظت."; });
+  // Cloudflare caps PBKDF2 at 100,000 rounds, so the server cannot derive the data key itself. The browser
+  // derives it here, for user.enc's salt, and the owner stores it as a server secret.
+  $("btnDataKey").addEventListener("click", async () => {
+    if (S.gateway || !S.pass || !S.userSalt) return flash("افتح اللوحة من الرابط القديم (GitHub Pages) بكلمة سر البيانات لإنشاء المفتاح.", "warn");
+    const base = await crypto.subtle.importKey("raw", new TextEncoder().encode(S.pass), "PBKDF2", false, ["deriveBits"]);
+    const bits = new Uint8Array(await crypto.subtle.deriveBits({ name: "PBKDF2", salt: b64.dec(S.userSalt), iterations: 250000, hash: "SHA-256" }, base, 256));
+    $("dataKeyValue").value = S.userSalt + ":" + b64.enc(bits); $("dataKeyBox").hidden = false;
+  });
+  $("dataKeyCopy").addEventListener("click", async () => { try { await navigator.clipboard.writeText($("dataKeyValue").value); flash("نُسخ المفتاح.", "good"); } catch { $("dataKeyValue").select(); } });
   $("btnForget").addEventListener("click", async () => { if(S.gateway) await fetch("/api/logout",{method:"POST"}); store.set("pass", null); store.set("token", null); store.set("deviceCredentials", null); indexedDB.deleteDatabase("radar-device"); location.reload(); });
 
   // Fresh purchase opportunities are independent of lifecycle updates.

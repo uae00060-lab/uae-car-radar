@@ -13,9 +13,17 @@ const json = (data, status=200, headers={}) => new Response(JSON.stringify(data)
 const cookie = (value, age=86400) => `__Host-radar=${value}; Path=/; HttpOnly; Secure; SameSite=Strict; Max-Age=${age}`;
 const pbkdf2Bits=(password,salt,iterations)=>new Promise((resolve,reject)=>pbkdf2(password,salt,iterations,32,'sha256',
   (error,key)=>error ? reject(error) : resolve(new Uint8Array(key))));
-// A free-plan Worker gets about 10 ms of CPU per request and one 250,000-round PBKDF2 costs several times
-// that. Data keys are therefore derived once per isolate, and saves reuse the salt of the files the
-// engine writes (one salt per passphrase), so a warm isolate opens and saves without deriving again.
+// Cloudflare refuses PBKDF2 above 100,000 rounds (NotSupportedError, seen in production) and a free Worker
+// gets about 10 ms of CPU, so production uses RADAR_DATA_KEY = "<salt>:<key>": the 250,000-round key the
+// dashboard derives in the browser for that salt. Every file shares that salt, so no derivation runs here.
+// Without it (local tests), keys are derived from RADAR_KEY and cached per isolate.
+export function dataKey(env) {
+  const [salt,key]=String(env.RADAR_DATA_KEY || '').trim().split(':');
+  if(!salt || !key) return null;
+  const bytes=decode(key);
+  if(bytes.length!==32 || decode(salt).length!==16) throw Object.assign(new Error('RADAR_DATA_KEY must be salt:key'),{name:'KeyFormat'});
+  return {salt,key:bytes};
+}
 const keys=new Map(), salts=new Map();
 export async function derive(password, salt, iterations) {
   const id=await digest(password)+':'+iterations+':'+encode(salt);
@@ -25,22 +33,28 @@ export async function derive(password, salt, iterations) {
   }
   return keys.get(id);
 }
-export async function open(text, password) {
+async function bitsFor(secret, salt, iterations) {
+  if(typeof secret!=='object') return derive(secret,decode(salt),iterations);
+  // A file sealed with another salt is re-encrypted by the next engine round; say so instead of failing.
+  if(iterations!==250000 || salt!==secret.salt) throw Object.assign(new Error('file not yet on the shared key'),{name:'KeyPending'});
+  return secret.key;
+}
+export async function open(text, secret) {
   const item=JSON.parse(text);
-  const bits=await derive(password,decode(item.salt),item.iter);
+  const bits=await bitsFor(secret,item.salt,item.iter);
   const key=await crypto.subtle.importKey('raw',bits,'AES-GCM',false,['decrypt']);
   const plain=await crypto.subtle.decrypt({name:'AES-GCM',iv:decode(item.iv)},key,decode(item.ct));
-  if(item.iter===250000) salts.set(await digest(password),item.salt);
+  if(typeof secret!=='object' && item.iter===250000) salts.set(await digest(secret),item.salt);
   return plain;
 }
-export async function seal(text,password) {
+export async function seal(text,secret) {
   // Same key with a fresh random IV per file: AES-GCM stays safe, and the salt is still unique to this data.
-  const known=salts.get(await digest(password));
-  const salt=known ? decode(known) : crypto.getRandomValues(new Uint8Array(16)),iv=crypto.getRandomValues(new Uint8Array(12));
-  const bits=await derive(password,salt,250000);
+  const known=typeof secret==='object' ? secret.salt : salts.get(await digest(secret));
+  const salt=known || encode(crypto.getRandomValues(new Uint8Array(16))),iv=crypto.getRandomValues(new Uint8Array(12));
+  const bits=await bitsFor(secret,salt,250000);
   const key=await crypto.subtle.importKey('raw',bits,'AES-GCM',false,['encrypt']);
   const ct=await crypto.subtle.encrypt({name:'AES-GCM',iv},key,encoder.encode(text));
-  return JSON.stringify({v:1,kdf:'pbkdf2-sha256',iter:250000,salt:encode(salt),iv:encode(iv),ct:encode(ct)});
+  return JSON.stringify({v:1,kdf:'pbkdf2-sha256',iter:250000,salt,iv:encode(iv),ct:encode(ct)});
 }
 export async function verify(password, record) {
   const [iterations,salt,expected]=record.split(':');
@@ -64,7 +78,7 @@ export default {async fetch(request,env) {
     }
     return response;
   }
-  if(!env.DB || !env.GITHUB_TOKEN || !env.RADAR_KEY || !env.AUTH_EMAIL || !(env.AUTH_PASSWORD_HASH || env.AUTH_PASSWORD)) return json({error:'Server setup is incomplete'},503);
+  if(!env.DB || !env.GITHUB_TOKEN || !(env.RADAR_DATA_KEY || env.RADAR_KEY) || !env.AUTH_EMAIL || !(env.AUTH_PASSWORD_HASH || env.AUTH_PASSWORD)) return json({error:'Server setup is incomplete'},503);
   if(request.method!=='GET' && request.headers.get('Origin')!==url.origin) return json({error:'Origin rejected'},403);
   let stage='session';
   try {
@@ -112,7 +126,7 @@ export default {async fetch(request,env) {
       // The contents API omits files over 1 MB; those are read as raw bytes instead.
       const text=file.encoding==='base64' && file.content ? new TextDecoder().decode(decode(file.content.replace(/\s/g,'')))
         : await (await github(env,`/contents/${name}`,{headers:{'Accept':'application/vnd.github.raw'}})).text();
-      const bytes=await open(text,env.RADAR_KEY);
+      const bytes=await open(text,dataKey(env) || env.RADAR_KEY);
       stage='encode-file';
       return json({plain:true,base64:encode(bytes),sha:file.sha});
     }
@@ -120,7 +134,7 @@ export default {async fetch(request,env) {
       const body=await request.text();if(body.length>500000) return json({error:'Data too large'},413);
       const {user,sha}=JSON.parse(body);
       if(!user || !Array.isArray(user.requests) || !user.marks) return json({error:'Invalid data'},400);
-      const content=await seal(JSON.stringify(user),env.RADAR_KEY);
+      const content=await seal(JSON.stringify(user),dataKey(env) || env.RADAR_KEY);
       const response=await github(env,'/contents/data/user.enc',{method:'PUT',body:JSON.stringify({message:'dashboard: sync',content:encode(encoder.encode(content)),sha,branch:'main'})});
       const data=await response.json();return json({sha:data.content?.sha},response.status);
     }
@@ -136,7 +150,10 @@ export default {async fetch(request,env) {
       return json({ok:response.ok},response.status===204 ? 200 : response.status);
     }
     return json({error:'Not found'},404);
-  } catch(error) {console.error(JSON.stringify({code:'gateway_failure',stage,type:error?.name || 'Error',errorCode:String(error?.code || '').replace(/[^A-Za-z0-9_-]/g,'').slice(0,60)}));// Crypto error names/messages carry no key material and tell a wrong RADAR_KEY (OperationError)
+  } catch(error) {
+    if(error?.name==='KeyPending') return json({error:'Data key pending',stage},503);
+    if(error?.name==='KeyFormat') return json({error:'Server setup is incomplete',stage},503);
+    console.error(JSON.stringify({code:'gateway_failure',stage,type:error?.name || 'Error',errorCode:String(error?.code || '').replace(/[^A-Za-z0-9_-]/g,'').slice(0,60)}));// Crypto error names/messages carry no key material and tell a wrong RADAR_KEY (OperationError)
     // from a runtime limit such as a PBKDF2 iteration cap (NotSupportedError).
     return json({error:'Request failed',stage,type:error?.name || 'Error',detail:String(error?.message || '').replace(/[^\w .:,()-]/g,'').slice(0,140)},500); }
 }};

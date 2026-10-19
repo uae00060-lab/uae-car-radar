@@ -8,6 +8,10 @@ Activation needs a Cloudflare Worker plus a D1 DB binding initialized with schem
 
 Run `node --test gateway/worker.test.mjs`. Before activation, verify in the deployed Worker that legacy 250,000-iteration encrypted files can be opened within its runtime limits, log in/out from two devices, test session expiry, stale-save conflicts, and actual GitHub dispatch permissions. Do not redirect the existing URL before those checks pass. New saves use the same AES-GCM envelope with 250,000 PBKDF2 iterations; existing 250,000-iteration files remain supported by the reader. No password reset/recovery or additional users are enabled.
 
+## Production data key (required)
+
+Cloudflare rejects PBKDF2 above 100,000 rounds (`NotSupportedError`, confirmed in the production logs on 19 Oct 2026), and the data uses 250,000. So the Worker never derives the data key: it reads `RADAR_DATA_KEY` = `<salt>:<key>`, the 250,000-round key for `user.enc`'s salt. Create it on the GitHub Pages dashboard (Settings → إنشاء مفتاح الخادم, signed in with the data password) and store it as a Cloudflare secret. The engine, the dashboard and the Worker all write with that salt, and each engine round moves older files onto it, so one key opens everything. `RADAR_KEY` is then unused by the Worker. `AUTH_PASSWORD_HASH` (600,000 rounds) hits the same cap, so use `AUTH_PASSWORD`.
+
 ## Free-plan CPU budget
 
 A free Worker gets about 10 ms of CPU per request; one 250,000-round PBKDF2 costs several times that. The Worker keeps derived data keys per isolate, and the engine, the dashboard and the Worker now reuse the salt of the data they opened when they write (a fresh IV every time), so after the next search round all files share one key and a warm isolate derives it once. The first request on a cold isolate still derives one key; if Cloudflare reports `Exceeded CPU Time Limits`, the dashboard says so and asks to retry. Encryption strength is unchanged.

@@ -127,7 +127,7 @@
   document.addEventListener('keydown', event => { if (event.key === 'Escape' && !panel.hidden) { setPanel(false); toggle.focus(); } });
   document.addEventListener('click', event => { if (!event.target.closest('.display-controls')) { setPanel(false); setNotifications(false); } });
   apply();
-  fetch('assets/translations-en.json?v=20261019-5').then(response => { if (!response.ok) throw new Error('Translation unavailable'); return response.json(); }).then(data => {
+  fetch('assets/translations-en.json?v=20261019-6').then(response => { if (!response.ok) throw new Error('Translation unavailable'); return response.json(); }).then(data => {
     dictionary = data; translationCache.clear(); entries = Object.entries(data).sort((a, b) => b[0].length - a[0].length).map(([ar, en]) => [new RegExp('(?<![\\p{L}])' + ar.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + '(?![\\p{L}])', 'gu'), en]); apply();
   }).catch(() => { language = 'ar'; apply(); });
 })();

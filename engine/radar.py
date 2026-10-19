@@ -320,6 +320,8 @@ def state_of(checks, plat, known):
 # ---------------------------------------------------------------- the round
 
 def load_all(key):
+    # user.enc is opened first, so its salt becomes the one every file written in this run shares
+    # (the dashboard server holds the key for that salt; see gateway/README.md).
     user = store.read_json(USER_FILE, key, {})
     eng = store.read_json(ENGINE_FILE, key, {})
     for k, v in (("listings", {}), ("runs", []), ("reports", []), ("market", {}), ("skipped", {}), ("drops", [])):
@@ -917,6 +919,10 @@ def finish(eng, key):
     eng["skipped"] = {k: v for k, v in eng["skipped"].items() if v.get("at", "") > cutoff}
     eng["updated"] = now_uae().isoformat(timespec="seconds")
     store.write_json(ENGINE_FILE, eng, key)
+    for r in keep:  # older reports move onto the shared salt once, so the server can open them too
+        p = os.path.join(ROOT, r.get("file") or "")
+        if r.get("file") and os.path.exists(p):
+            store.rekey(p, key)
 
 
 def diagnose(a, key):

@@ -617,5 +617,11 @@
   "هاتف البائع غير منشور؛ التواصل من الإعلان": "Seller's phone not published; contact through the ad",
   "الممشى يحتاج تأكيدًا": "Mileage needs confirming",
   "انخفاض غير معتاد؛ تحقّق من السعر وحالة السيارة قبل أي دفع": "Unusually low; verify the price and the car's condition before any payment",
-  "لم يُنفذ بعد": "Not run yet"
+  "لم يُنفذ بعد": "Not run yet",
+  "إنشاء مفتاح الخادم": "Create server key",
+  "نسخ": "Copy",
+  "نُسخ المفتاح.": "Key copied.",
+  "انسخ هذا المفتاح إلى Cloudflare: car-radar-gateway ← Settings ← Variables and Secrets ← Add ← النوع Secret والاسم RADAR_DATA_KEY. يفتح بياناتك مثل كلمة السر تمامًا: لا ترسله لأحد ولا تحفظه في ملف.": "Copy this key into Cloudflare: car-radar-gateway → Settings → Variables and Secrets → Add → type Secret, name RADAR_DATA_KEY. It opens your data exactly like the password: never send it to anyone or save it in a file.",
+  "افتح اللوحة من الرابط القديم (GitHub Pages) بكلمة سر البيانات لإنشاء المفتاح.": "Open the dashboard from the original GitHub Pages link with the data password to create the key.",
+  "بعض الملفات لم تُنقل بعد إلى مفتاح الخادم؛ تُنقل في جولة البحث القادمة (كل ساعة عند الدقيقة 17). أعد المحاولة بعدها.": "Some files are not on the server key yet; the next search round moves them (hourly at minute 17). Try again after it."
 }
