@@ -566,7 +566,7 @@ def run_round(a, key):
             age = (now - dt.datetime.fromisoformat(l.get("last_checked") or l.get("first_seen"))).total_seconds() / 3600
         except (TypeError, ValueError):
             age = 1e9
-        if not l.get("price") or l.get("price_version", 0) < 3 or l.get("identity_version", 0) < 1 or str(l.get("price_source") or "").startswith("card"):
+        if not l.get("price") or (to_num(l.get("price_version")) or 0) < 3 or (to_num(l.get("identity_version")) or 0) < 1 or str(l.get("price_source") or "").startswith("card"):
             age += 1e8
         if age >= RECHECK_HOURS:
             due.append((age, l))

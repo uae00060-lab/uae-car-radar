@@ -117,6 +117,17 @@ class Engine(unittest.TestCase):
     def args(self, mode="manual"):
         return type("A", (), {"mode": mode, "request": "all", "run_id": ""})()
 
+    def test_legacy_null_versions_do_not_crash_a_new_round(self):
+        radar.run_round(self.args(), KEY)
+        eng = store.read_json(radar.ENGINE_FILE, KEY, {})
+        for listing in eng["listings"].values():
+            listing["price_version"] = None
+            listing["identity_version"] = None
+        store.write_json(radar.ENGINE_FILE, eng, KEY)
+        radar.run_round(self.args("scheduled"), KEY)
+        result = store.read_json(radar.ENGINE_FILE, KEY, {})
+        self.assertEqual(result["runs"][0]["status"], "done")
+
     def test_round(self):
         radar.run_round(self.args(), KEY)
         eng = store.read_json(radar.ENGINE_FILE, KEY, {})

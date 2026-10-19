@@ -367,12 +367,12 @@ body { font-family:"Inter","Cairo",sans-serif; font-weight:500; text-rendering:o
 <!-- ===== gate: password + GitHub token ===== -->
 <div class="wrap gate" id="gate">
   <form class="panel" id="gateForm" autocomplete="on">
-    <div><img src="assets/logo-mark.svg" class="gate-logo" width="76" height="76" alt="شعار رادار السيارات"><h1>رادار سيارات الإمارات</h1><div class="small">بياناتك محفوظة مشفّرة في مستودع GitHub. افتحها بكلمة السر نفسها المحفوظة في المستودع باسم RADAR_KEY.</div></div>
+    <div><img src="assets/logo-mark.svg" class="gate-logo" width="76" height="76" alt="شعار رادار السيارات"><h1>رادار سيارات الإمارات</h1><div class="small" id="gateHelp">بياناتك محفوظة مشفّرة في مستودع GitHub. افتحها بكلمة السر نفسها المحفوظة في المستودع باسم RADAR_KEY.</div></div>
     <label class="stack" id="gEmailWrap" hidden>البريد الإلكتروني<input id="gEmail" type="email" autocomplete="username"></label>
     <label class="stack">كلمة سر البيانات<input id="gPass" type="password" autocomplete="current-password" required minlength="8"></label>
     <label class="stack" id="gPass2Wrap" hidden>أعد كتابة كلمة السر<input id="gPass2" type="password" autocomplete="new-password" minlength="8"></label>
     <label class="stack">مفتاح GitHub (للتعديل وزر «ابحث الآن»)<input id="gToken" type="password" dir="ltr" autocomplete="off" placeholder="github_pat_…"></label>
-    <div class="small">بدون المفتاح تعمل اللوحة للقراءة فقط. طريقة إنشائه في تبويب «الإعدادات» بعد الدخول، أو في ملف README.</div>
+    <div class="small" id="gateTokenHelp">بدون المفتاح تعمل اللوحة للقراءة فقط. طريقة إنشائه في تبويب «الإعدادات» بعد الدخول، أو في ملف README.</div>
     <label class="cmp-toggle"><input type="checkbox" id="gRemember" checked> تذكّر هذا الجهاز</label>
     <div class="row"><button class="primary" type="submit" id="gGo">فتح اللوحة</button><span class="small" id="gMsg"></span></div>
   </form>
@@ -1126,7 +1126,7 @@ body { font-family:"Inter","Cairo",sans-serif; font-weight:500; text-rendering:o
     const p = S.U.profile || {};
     if (!$("meForm").contains(document.activeElement)) { $("mName").value = p.name || ""; $("mPhone").value = p.phone || ""; $("mCity").value = p.city || ""; }
     $("connInfo").innerHTML = `<dt>المستودع</dt><dd><a href="https://github.com/${esc(REPO.owner)}/${esc(REPO.repo)}" target="_blank" rel="noopener" dir="ltr">${esc(REPO.owner)}/${esc(REPO.repo)}</a></dd>
-      <dt>الصلاحية</dt><dd>${S.token ? "قراءة وتعديل وتشغيل البحث" : "قراءة فقط (أضف مفتاح GitHub للتعديل)"}</dd>
+      <dt>الصلاحية</dt><dd>${S.gateway ? "جلسة آمنة — المفاتيح محفوظة في الخادم" : S.token ? "قراءة وتعديل وتشغيل البحث" : "قراءة فقط (أضف مفتاح GitHub للتعديل)"}</dd>
       <dt>آخر تحديث</dt><dd class="num">${esc(when(S.E.updated))}</dd>`;
     const healthLabels={ok:"الاستخراج يعمل",limited:"وصول محدود",empty:"لا روابط مستخرجة",alert:"تحتاج فحصًا",recovered:"استعادت الاستخراج"};
     $("healthBox").innerHTML=Object.entries(S.E.platform_health || {}).map(([p,record])=>{const h=record.latest; if(!h)return ""; return `<article style="padding:12px 0;border-bottom:1px solid var(--line)"><div class="row"><b>${esc(PLATFORMS[p] || p)}</b><span class="pill ${h.alert ? "bad" : h.status === "ok" || h.recovered ? "good" : "warn"}">${esc(healthLabels[h.status] || h.status)}</span></div><p>${esc(h.reason)}</p><div>روابط: ${fmt(h.cards)} · صفحات مفتوحة: ${fmt(h.opened)} · مقروءة: ${fmt(h.read_ok)} · أسعار مؤكدة: ${fmt(h.priced)}</div><div>${esc((h.request_names || []).join("، "))} · ${esc(when(h.at))}</div></article>`;}).join("") || "تبدأ المقارنة من أول جولة بعد التحديث. المنصات التي لم تُفحص لا تُحتسب متعطلة.";
@@ -1403,6 +1403,9 @@ body { font-family:"Inter","Cairo",sans-serif; font-weight:500; text-rendering:o
       $("gEmailWrap").hidden=false;$("gEmail").required=true;
       $("gToken").closest("label").hidden=true;$("gRemember").closest("label").hidden=true;
       $("gPass").minLength=1;
+      $("gPass").closest("label").firstChild.textContent="كلمة المرور";
+      $("gateHelp").textContent="ادخل ببريدك وكلمة المرور من أي جهاز. مفاتيح التشغيل محفوظة على الخادم.";
+      $("gateTokenHelp").hidden=true;
       $("gate").querySelector("h1").textContent="تسجيل دخول رادار السيارات";
       const response=await fetch("/api/session",{cache:"no-store"});
       if(response.ok && (await response.json()).authenticated){S.token="server-session";await loadAll();enter();}
