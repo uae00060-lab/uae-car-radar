@@ -856,7 +856,8 @@ def diagnose(a, key):
             ok = [r for r in out[plat]["ad_reads"] if r["status"] == "ok"]
             summary[plat] = {"read": len(ok), **{k: sum(1 for r in ok if r["has"][k]) for k in ("desc", "spec", "flags", "vin")},
                              "specs": sorted({r["spec"] for r in ok if r["spec"]}),
-                             "flag_words": [w for r in ok for w in r["flag_words"]]}
+                             "flag_words": [w for r in ok for w in r["flag_words"]],
+                             "read_status": [r["status"] if r["status"] == "ok" else f"{r['status']}:{r['found']}:{r['debug'].get('status')}" for r in out[plat]["ad_reads"]]}
         # Arabic coverage: titles in Arabic per platform, and whether the model check recognises them.
         arabic = lambda t: bool(re.search(r"[\u0600-\u06ff]", t or ""))
         terms = model_terms(req)
