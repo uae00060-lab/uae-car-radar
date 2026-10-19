@@ -836,7 +836,8 @@ def diagnose(a, key):
             status, v = read_ad({**c, "id": f"{plat}-{c['ad_id']}"}, today, dbg)
             reads.append({"status": status, "debug": dbg, "url": c["url"], "found": sorted(v.get("_src", {}).items()) if status == "ok" else v.get("_why"),
                           "has": {k: bool(v.get(k)) for k in ("price", "year", "km", "date", "phone", "image", "color", "emirate", "desc", "spec", "flags", "vin")} if status == "ok" else None,
-                          "spec": v.get("spec") if status == "ok" else None})
+                          "spec": v.get("spec") if status == "ok" else None,
+                          "flag_words": [f"{f['kind']}:{f['word']}" for f in v.get("flags") or []] if status == "ok" else []})
         out[plat] = {**diag.get(plat, {}), "card_sources": sorted({c.get("src") for c in per.get(plat, [])}),
                      "cards_with_price": sum(1 for c in per.get(plat, []) if c.get("price")), "ad_reads": reads}
     out["_samples"] = len(samples)
@@ -854,7 +855,8 @@ def diagnose(a, key):
         for plat in PLATFORMS:
             ok = [r for r in out[plat]["ad_reads"] if r["status"] == "ok"]
             summary[plat] = {"read": len(ok), **{k: sum(1 for r in ok if r["has"][k]) for k in ("desc", "spec", "flags", "vin")},
-                             "specs": sorted({r["spec"] for r in ok if r["spec"]})}
+                             "specs": sorted({r["spec"] for r in ok if r["spec"]}),
+                             "flag_words": [w for r in ok for w in r["flag_words"]]}
         print("::notice title=diagnose-condition::" + json.dumps(summary, ensure_ascii=False), flush=True)
     out = {p: {k: v for k, v in d.items() if k in ("pages", "ok", "blocked", "cards", "via_search", "status", "cards_with_price")}
            for p, d in out.items() if p in PLATFORMS}
