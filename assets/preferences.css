@@ -20,3 +20,5 @@ html[data-theme=dark] :is(.note,.op-card .op-missing){background:var(--warn-soft
 html[data-theme=dark] .availability-badge.reserved{background:var(--warn-soft);color:var(--warn)}
 html[data-theme=dark] .availability-badge.uncertain{background:var(--accent-soft);color:var(--accent)}
 html[data-theme=dark] .toolbar :is(input,select){background:var(--surface);color:var(--fg);border-color:var(--line)}
+html[lang=en] .plate::before{content:"Year "}
+html[dir=ltr] .change-card.unread{border-right:1px solid var(--line);border-left:4px solid #1AB6A2}
