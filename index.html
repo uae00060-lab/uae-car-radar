@@ -316,16 +316,23 @@ body { font-family:"Inter","Cairo",sans-serif; font-weight:500; text-rendering:o
 @keyframes radarSweep{from{transform:rotate(0)}to{transform:rotate(360deg)}}@keyframes radarOrbit{to{transform:rotate(-360deg)}}@keyframes radarEcho{0%,12%{opacity:.3;box-shadow:0 0 0 3px #36D5C108}18%,27%{opacity:1;box-shadow:0 0 15px 4px #36D5C13D}50%,100%{opacity:.3;box-shadow:0 0 0 3px #36D5C108}}@keyframes radarRipple{0%,12%{transform:scale(.5);opacity:0}18%{opacity:.7}48%,100%{transform:scale(2.3);opacity:0}}
 @media(prefers-reduced-motion:reduce){#heroRadar .radar-line,#heroRadar .orbit-two,#heroRadar .radar-ping,#heroRadar .radar-ping::after{animation:none!important}#heroRadar .radar-ping{opacity:.7}}
 </style>
-<link rel="stylesheet" href="assets/preferences.css?v=20261019-4">
-<script src="assets/preferences.js?v=20261019-4" defer></script>
+<link rel="stylesheet" href="assets/preferences.css?v=20261019-5">
+<script src="assets/preferences.js?v=20261019-5" defer></script>
 </head>
 <body>
+
+
+<header id="hdr" hidden>
+  <div class="wrap">
+    <div class="hbar">
+      <a class="brand-lockup grow" href="./" aria-label="رادار سيارات الإمارات"><img src="assets/logo-mark.svg" width="56" height="56" alt="شعار رادار السيارات"><div><h1>رادار<span>سيارات الإمارات</span></h1><div class="brand-en" dir="ltr">CAR RADAR / UAE</div></div></a><div class="header-state"><span class="status-dot"></span><span id="headerState">لوحة الرصد</span></div>
 <aside class="display-controls" aria-label="اللغة والمظهر">
-  <button type="button" id="languageToggle" lang="en" aria-label="التبديل إلى الإنجليزية">English</button>
-  <span class="control-divider" aria-hidden="true"></span>
+  <button type="button" id="notificationsToggle" aria-label="الإشعارات" aria-expanded="false" aria-controls="notificationsPanel"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" aria-hidden="true"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9M10 21h4"/></svg><span id="notificationCount" hidden>0</span></button>
+<button type="button" id="languageToggle" lang="en" aria-label="التبديل إلى الإنجليزية">English</button>
+  
   <button type="button" id="themeToggle" aria-label="تفعيل الوضع الليلي">☾ ليلي</button>
-  <span class="control-divider" aria-hidden="true"></span>
-  <button type="button" id="appearanceToggle" aria-expanded="false" aria-controls="appearancePanel"><span class="control-icon" aria-hidden="true">◈</span><span id="appearanceLabel">الثيم</span><b id="currentSkin">رادار</b></button>
+  
+  <button type="button" id="appearanceToggle" aria-expanded="false" aria-controls="appearancePanel"><span class="control-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M12 3a9 9 0 1 0 0 18h1.2a2.2 2.2 0 0 0 1.6-3.7c-.7-.7-.2-1.9.8-1.9H17a4 4 0 0 0 4-4A8.5 8.5 0 0 0 12 3Z"/><circle cx="7.5" cy="10" r=".6"/><circle cx="11" cy="6.5" r=".6"/><circle cx="16" cy="8" r=".6"/></svg></span><span id="appearanceLabel">الثيم</span><b id="currentSkin">رادار</b></button>
   <section id="appearancePanel" class="appearance-panel" hidden aria-labelledby="appearanceTitle">
     <div class="appearance-heading"><h2 id="appearanceTitle">اختر طابعك</h2><button type="button" id="appearanceClose" aria-label="إغلاق إعدادات المظهر">×</button></div>
     <p id="appearanceHint">ثلاثة تصاميم كاملة. نهاري وليلي لكل تصميم.</p>
@@ -335,12 +342,7 @@ body { font-family:"Inter","Cairo",sans-serif; font-weight:500; text-rendering:o
 <button type="button" class="skin-choice" data-skin-choice="terminal" aria-pressed="false"><span class="skin-preview preview-terminal" aria-hidden="true"><i></i><i></i><i></i></span><span><b>terminal</b><small></small></span><span class="skin-check" aria-hidden="true">✓</span></button>
     </div>
   </section>
-</aside>
-
-<header id="hdr" hidden>
-  <div class="wrap">
-    <div class="hbar">
-      <a class="brand-lockup grow" href="./" aria-label="رادار سيارات الإمارات"><img src="assets/logo-mark.svg" width="56" height="56" alt="شعار رادار السيارات"><div><h1>رادار<span>سيارات الإمارات</span></h1><div class="brand-en" dir="ltr">CAR RADAR / UAE</div></div></a><div class="header-state"><span class="status-dot"></span><span id="headerState">لوحة الرصد</span></div>
+<section id="notificationsPanel" class="notifications-panel" hidden aria-labelledby="notificationsTitle"><div class="appearance-heading"><h2 id="notificationsTitle">الإشعارات</h2><button type="button" id="notificationsClose" aria-label="إغلاق الإشعارات">×</button></div><p id="notificationsHint">حالة المنصات وتنبيهات البحث</p><div id="problemBox" class="banner" hidden></div><div id="notificationsEmpty">لا توجد تنبيهات جديدة</div></section></aside>
       <div class="row header-actions">
         <button type="button" id="navToggle" class="nav-toggle" aria-label="فتح قائمة الأقسام" aria-expanded="false" aria-controls="mainNav">☰</button>
         <select id="runScope" aria-label="نطاق البحث"><option value="all">كل الطلبات</option></select>
@@ -379,7 +381,7 @@ body { font-family:"Inter","Cairo",sans-serif; font-weight:500; text-rendering:o
 <main class="wrap" id="app" hidden>
   <div id="liveBox" class="banner" hidden></div>
   <div id="flashBox" class="banner" hidden></div>
-  <div id="problemBox" class="banner bad" hidden role="alert"></div>
+
 
   <div class="workspace-top"><span>لوحة الرصد <span class="workspace-sep">/</span> سوق السيارات المستعملة</span><span id="nextRun" class="small"></span></div>
   <!-- ads -->
