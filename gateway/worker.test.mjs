@@ -29,3 +29,23 @@ test('owner login uses an HttpOnly session and rejects an incorrect password',as
  assert.equal(good.status,200);assert.match(good.headers.get('Set-Cookie'),/HttpOnly; Secure; SameSite=Strict/);
  assert.equal((await worker.fetch(request('incorrect'),env)).status,401);
 });
+test('signed-in reads return large files (engine data, PDFs) and files over the contents-API limit',async()=>{
+ const big='{"listings":"'+'x'.repeat(400000)+'"}', sealed=await seal(big,'test-key');
+ const env={GITHUB_TOKEN:'test',RADAR_KEY:'test-key',AUTH_EMAIL:'owner@example.test',AUTH_PASSWORD:'p',DB:{prepare(){return {bind(){return {async first(){return {token:'t'};},async run(){return{};}};}};}}};
+ const original=globalThis.fetch;
+ for(const raw of [false,true]) {
+  globalThis.fetch=async(url,options)=>options.headers.Accept==='application/vnd.github.raw' ? new Response(sealed)
+   : Response.json(raw ? {sha:'s',encoding:'none',content:''} : {sha:'s',encoding:'base64',content:Buffer.from(sealed).toString('base64')});
+  try {
+   const response=await worker.fetch(new Request('https://radar.test/api/file?path=data/engine.enc',{headers:{Cookie:'__Host-radar=abc'}}),env);
+   assert.equal(response.status,200);
+   assert.equal(Buffer.from((await response.json()).base64,'base64').toString(),big);
+  } finally { globalThis.fetch=original; }
+ }
+});
+test('saves reuse the salt of opened data so the derived key is not recomputed',async()=>{
+ const first=JSON.parse(await seal('{}','salt-key'));
+ await open(JSON.stringify(first),'salt-key');
+ const second=JSON.parse(await seal('{"a":1}','salt-key'));
+ assert.equal(second.salt,first.salt);assert.notEqual(second.iv,first.iv);
+});

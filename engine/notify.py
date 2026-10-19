@@ -156,6 +156,11 @@ def send_all(subject, full_text, short_text, pdf=None, pdf_name="report.pdf", ch
             if channels is None or name in channels}
 
 
+def configured():
+    """Channels whose secrets are present."""
+    return [name for name, required in REQUIRED.items() if all((env(k) or "").strip() for k in required)]
+
+
 def retry_channels(result):
     """Retry only configured channels that have not accepted this report."""
     return [name for name, required in REQUIRED.items()

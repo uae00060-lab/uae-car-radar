@@ -317,7 +317,7 @@ body { font-family:"Inter","Cairo",sans-serif; font-weight:500; text-rendering:o
 @media(prefers-reduced-motion:reduce){#heroRadar .radar-line,#heroRadar .orbit-two,#heroRadar .radar-ping,#heroRadar .radar-ping::after{animation:none!important}#heroRadar .radar-ping{opacity:.7}}
 </style>
 <link rel="stylesheet" href="assets/preferences.css?v=20261019-7">
-<script src="assets/preferences.js?v=20261019-5" defer></script>
+<script src="assets/preferences.js?v=20261019-7" defer></script>
 </head>
 <body>
 
@@ -606,13 +606,34 @@ body { font-family:"Inter","Cairo",sans-serif; font-weight:500; text-rendering:o
   async function decrypt(text, pass) {
     const env = JSON.parse(text);
     const key = await deriveKey(pass, b64.dec(env.salt), env.iter);
-    try { return new Uint8Array(await crypto.subtle.decrypt({ name: "AES-GCM", iv: b64.dec(env.iv) }, key, b64.dec(env.ct))); }
+    let plain;
+    try { plain = new Uint8Array(await crypto.subtle.decrypt({ name: "AES-GCM", iv: b64.dec(env.iv) }, key, b64.dec(env.ct))); }
     catch { throw new Error("BADPASS"); }
+    if (env.iter === 250000) sealSalt.set(pass, env.salt);
+    return plain;
   }
+  // Saves reuse the data's salt with a fresh IV (as engine/store.py does), so the key derived to open it is reused.
+  const sealSalt = new Map();
   async function encrypt(bytes, pass) {
-    const salt = crypto.getRandomValues(new Uint8Array(16)), iv = crypto.getRandomValues(new Uint8Array(12)), iter = 250000;
+    const salt = sealSalt.has(pass) ? b64.dec(sealSalt.get(pass)) : crypto.getRandomValues(new Uint8Array(16)), iv = crypto.getRandomValues(new Uint8Array(12)), iter = 250000;
     const ct = new Uint8Array(await crypto.subtle.encrypt({ name: "AES-GCM", iv }, await deriveKey(pass, salt, iter), bytes));
     return JSON.stringify({ v: 1, kdf: "pbkdf2-sha256", iter, salt: b64.enc(salt), iv: b64.enc(iv), ct: b64.enc(ct) });
+  }
+
+  // Gateway answers become readable messages. An expired session returns to the sign-in screen instead
+  // of failing every later request; Cloudflare's own CPU-limit page (not JSON) is named as such.
+  async function serverError(response) {
+    let body = null;
+    try { body = await response.clone().json(); } catch {}
+    const e = new Error(response.status === 401 ? "انتهت الجلسة؛ سجّل الدخول من جديد."
+      : response.status === 503 && body?.error === "Server setup is incomplete" ? "إعداد الخادم غير مكتمل: أحد الأسرار أو ربط قاعدة البيانات ناقص."
+      : !body && (response.status === 503 || response.status === 500) ? "تجاوز الخادم المجاني حد المعالجة مؤقتًا أثناء فك التشفير؛ أعد المحاولة بعد دقيقة."
+      : "تعذّر الاتصال بالخادم (" + response.status + (body?.stage ? " · " + body.stage : "") + ").");
+    e.status = response.status;
+    if (response.status === 401 && S.E) {
+      S.token = ""; $("gate").hidden = false; $("hdr").hidden = true; $("app").hidden = true; $("gMsg").textContent = e.message;
+    }
+    return e;
   }
 
   // ---------------------------------------------------------------- GitHub
@@ -620,7 +641,7 @@ body { font-family:"Inter","Cairo",sans-serif; font-weight:500; text-rendering:o
     if (S.gateway) {
       const dispatching = path === "/actions/workflows/radar.yml/dispatches";
       const response = await fetch(dispatching ? "/api/dispatch" : "/api/github?path="+encodeURIComponent(path), {...opt, headers:{"Content-Type":"application/json"},cache:"no-store"});
-      if (!response.ok) {const error=new Error("Server "+response.status);error.status=response.status;throw error;}
+      if (!response.ok) throw await serverError(response);
       return response;
     }
     const h = { Accept: "application/vnd.github+json", "X-GitHub-Api-Version": "2022-11-28", ...(opt.headers || {}) };
@@ -636,8 +657,10 @@ body { font-family:"Inter","Cairo",sans-serif; font-weight:500; text-rendering:o
   async function readFile(path) {
     if (S.gateway) {
       const response=await fetch("/api/file?path="+encodeURIComponent(path),{cache:"no-store"});
+      // The data files always exist on main: a 404 here is a token/repository problem, never "no data yet".
+      if(response.status===404 && path.startsWith("data/"))throw new Error("لم يصل الخادم إلى ملفات البيانات؛ تحقق من صلاحية مفتاح GitHub المحفوظ للمستودع.");
       if(response.status===404)return {text:null,sha:null};
-      if(!response.ok)throw new Error("Server "+response.status);
+      if(!response.ok)throw await serverError(response);
       const data=await response.json();return {text:data.base64,sha:data.sha,plain:true};
     }
     if (S.token) {
@@ -657,7 +680,7 @@ body { font-family:"Inter","Cairo",sans-serif; font-weight:500; text-rendering:o
       if (!S.token) { flash("التعديل يحتاج مفتاح GitHub. أضفه من الإعدادات.", "warn"); return false; }
       if(S.gateway) {
         const response=await fetch("/api/user",{method:"PUT",headers:{"Content-Type":"application/json"},body:JSON.stringify({user:S.U,sha:S.userSha})});
-        if(!response.ok){flash(response.status===409 || response.status===422 ? "تغيّرت البيانات على جهاز آخر؛ أعد التحميل قبل الحفظ." : "تعذّر الحفظ.","warn");return false;}
+        if(!response.ok){flash(response.status===409 || response.status===422 ? "تغيّرت البيانات على جهاز آخر؛ أعد التحميل قبل الحفظ." : "تعذّر الحفظ: "+(await serverError(response)).message,"warn");return false;}
         S.userSha=(await response.json()).sha;return true;
       }
       const body = await encrypt(new TextEncoder().encode(JSON.stringify(S.U)), S.pass);
@@ -693,7 +716,8 @@ body { font-family:"Inter","Cairo",sans-serif; font-weight:500; text-rendering:o
       $("gGo").disabled=true;
       try {
         const response=await fetch("/api/login",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({email:$("gEmail").value.trim(),password:$("gPass").value})});
-        if(!response.ok)throw new Error(response.status===429 ? "محاولات كثيرة؛ حاول لاحقًا." : "تعذّر الدخول؛ تحقق من البريد وكلمة المرور.");
+        if(!response.ok)throw new Error(response.status===429 ? "محاولات كثيرة؛ حاول لاحقًا." : response.status===401 ? "تعذّر الدخول؛ تحقق من البريد وكلمة المرور." : (await serverError(response)).message);
+        $("gMsg").textContent="تم الدخول؛ جارٍ فتح البيانات من الخادم…";
         S.token="server-session";await loadAll(true);$("gPass").value="";enter();
       } catch(error){$("gMsg").textContent=error.message;} finally {$("gGo").disabled=false;}
       return;
@@ -1154,7 +1178,8 @@ body { font-family:"Inter","Cairo",sans-serif; font-weight:500; text-rendering:o
     $("cOpportunities").textContent=unread.length;
     $("opEnabled").checked=S.U.opportunities_enabled !== false;
     const delivery=S.E.opportunities?.delivery, channelNames={email:"البريد",telegram:"تيليجرام",whatsapp:"واتساب"};
-    $("opDelivery").textContent=delivery ? "آخر محاولة توصيل خارجية: "+Object.entries(delivery).map(([k,v])=>(channelNames[k] || k)+": "+v).join(" · ") : "تنبيه الصفحة يعمل عند فتح اللوحة. الإشعارات الخارجية تستخدم القنوات المفعّلة في الإعدادات عند اكتشاف فرصة قوية.";
+    const owed=Object.entries(S.E.opportunities?.delivery_owed || {}).filter(([,n])=>n>0);
+    $("opDelivery").textContent=delivery ? "آخر محاولة توصيل خارجية"+(S.E.opportunities?.delivery_at ? " ("+when(S.E.opportunities.delivery_at)+")" : "")+": "+Object.entries(delivery).map(([k,v])=>(channelNames[k] || k)+": "+v).join(" · ")+(owed.length ? " — تُعاد المحاولة في الفحص القادم لـ: "+owed.map(([k,n])=>(channelNames[k] || k)+" ("+n+")").join("، ") : "")+". «أُرسل» تعني قبول الخدمة للرسالة." : "تنبيه الصفحة يعمل عند فتح اللوحة. الإشعارات الخارجية تستخدم القنوات المفعّلة في الإعدادات عند اكتشاف فرصة قوية.";
 
     $("opScan").disabled=!S.token || !!S.live || S.U.opportunities_enabled === false;
     $("opStatus").textContent=`فحص خفيف كل ساعة عند الدقيقة 17، إضافة إلى جولات البحث. قد تتأخر مهام GitHub؛ ليس رصدًا لحظيًا. إعلان منشور خلال آخر يومين، وتحقق لا يتجاوز 6 ساعات. نستبعد المباعة والمحجوزة والتعديلات التي رصدناها. لا نستنتج مهنة البائع من التعديل. آخر تقييم: ${S.E.opportunities?.updated ? when(S.E.opportunities.updated) : "لم يُنفذ بعد"}.`;
@@ -1408,7 +1433,8 @@ body { font-family:"Inter","Cairo",sans-serif; font-weight:500; text-rendering:o
       $("gateTokenHelp").hidden=true;
       $("gate").querySelector("h1").textContent="تسجيل دخول رادار السيارات";
       const response=await fetch("/api/session",{cache:"no-store"});
-      if(response.ok && (await response.json()).authenticated){S.token="server-session";await loadAll();enter();}
+      try { if(response.ok && (await response.json()).authenticated){S.token="server-session";await loadAll();enter();} }
+      catch(error){$("gMsg").textContent="تعذّر التحميل: "+error.message;}
       return;
     }
     let credentials;

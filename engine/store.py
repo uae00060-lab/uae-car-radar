@@ -15,6 +15,10 @@ from cryptography.hazmat.primitives.kdf.pbkdf2 import PBKDF2HMAC
 
 ITER = 250_000
 _keys = {}
+# New files reuse the salt of the last file opened with the same passphrase. Each file still gets a
+# fresh random IV, so AES-GCM stays safe, while the dashboard server (about 10 ms of CPU per request on
+# the free plan) derives one key per passphrase instead of one 250,000-round PBKDF2 per file.
+_salts = {}
 
 
 class BadPassphrase(Exception):
@@ -29,7 +33,8 @@ def _key(passphrase, salt, iters):
 
 
 def encrypt_bytes(data, passphrase):
-    salt, iv = os.urandom(16), os.urandom(12)
+    salt, iv = _salts.get(passphrase) or os.urandom(16), os.urandom(12)
+    _salts[passphrase] = salt
     ct = AESGCM(_key(passphrase, salt, ITER)).encrypt(iv, data, None)
     b = lambda x: base64.b64encode(x).decode()
     return json.dumps({"v": 1, "kdf": "pbkdf2-sha256", "iter": ITER, "salt": b(salt), "iv": b(iv), "ct": b(ct)})
@@ -39,9 +44,12 @@ def decrypt_bytes(text, passphrase):
     env = json.loads(text)
     d = base64.b64decode
     try:
-        return AESGCM(_key(passphrase, d(env["salt"]), int(env["iter"]))).decrypt(d(env["iv"]), d(env["ct"]), None)
+        plain = AESGCM(_key(passphrase, d(env["salt"]), int(env["iter"]))).decrypt(d(env["iv"]), d(env["ct"]), None)
     except Exception as e:  # cryptography raises InvalidTag for a wrong passphrase
         raise BadPassphrase("wrong passphrase or damaged file") from e
+    if int(env["iter"]) == ITER:
+        _salts.setdefault(passphrase, d(env["salt"]))
+    return plain
 
 
 def read_json(path, passphrase, default):

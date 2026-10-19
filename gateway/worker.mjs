@@ -2,22 +2,41 @@
 import {pbkdf2} from 'node:crypto';
 const encoder = new TextEncoder();
 const decode = value => Uint8Array.from(atob(value), c => c.charCodeAt(0));
-const encode = bytes => {const data=new Uint8Array(bytes);let text='';for(let offset=0;offset<data.length;offset+=8192)text+=String.fromCharCode(...data.subarray(offset,offset+8192));return btoa(text);};
+// Chunked: spreading a few hundred KB (engine.enc, a PDF) into one call overflows the stack.
+const encode = bytes => {
+  const view=new Uint8Array(bytes);let text='';
+  for(let i=0;i<view.length;i+=0x8000) text+=String.fromCharCode.apply(null,view.subarray(i,i+0x8000));
+  return btoa(text);
+};
 const digest = async value => encode(await crypto.subtle.digest('SHA-256', encoder.encode(value)));
 const json = (data, status=200, headers={}) => new Response(JSON.stringify(data), {status, headers:{'Content-Type':'application/json','Cache-Control':'no-store','X-Content-Type-Options':'nosniff',...headers}});
 const cookie = (value, age=86400) => `__Host-radar=${value}; Path=/; HttpOnly; Secure; SameSite=Strict; Max-Age=${age}`;
+const pbkdf2Bits=(password,salt,iterations)=>new Promise((resolve,reject)=>pbkdf2(password,salt,iterations,32,'sha256',
+  (error,key)=>error ? reject(error) : resolve(new Uint8Array(key))));
+// A free-plan Worker gets about 10 ms of CPU per request and one 250,000-round PBKDF2 costs several times
+// that. Data keys are therefore derived once per isolate, and saves reuse the salt of the files the
+// engine writes (one salt per passphrase), so a warm isolate opens and saves without deriving again.
+const keys=new Map(), salts=new Map();
 export async function derive(password, salt, iterations) {
-  return new Promise((resolve,reject)=>pbkdf2(password,salt,iterations,32,'sha256',
-    (error,key)=>error ? reject(error) : resolve(new Uint8Array(key))));
+  const id=await digest(password)+':'+iterations+':'+encode(salt);
+  if(!keys.has(id)) {
+    if(keys.size>=16) keys.delete(keys.keys().next().value);
+    keys.set(id,pbkdf2Bits(password,salt,iterations).catch(error=>{keys.delete(id);throw error;}));
+  }
+  return keys.get(id);
 }
 export async function open(text, password) {
   const item=JSON.parse(text);
   const bits=await derive(password,decode(item.salt),item.iter);
   const key=await crypto.subtle.importKey('raw',bits,'AES-GCM',false,['decrypt']);
-  return crypto.subtle.decrypt({name:'AES-GCM',iv:decode(item.iv)},key,decode(item.ct));
+  const plain=await crypto.subtle.decrypt({name:'AES-GCM',iv:decode(item.iv)},key,decode(item.ct));
+  if(item.iter===250000) salts.set(await digest(password),item.salt);
+  return plain;
 }
 export async function seal(text,password) {
-  const salt=crypto.getRandomValues(new Uint8Array(16)),iv=crypto.getRandomValues(new Uint8Array(12));
+  // Same key with a fresh random IV per file: AES-GCM stays safe, and the salt is still unique to this data.
+  const known=salts.get(await digest(password));
+  const salt=known ? decode(known) : crypto.getRandomValues(new Uint8Array(16)),iv=crypto.getRandomValues(new Uint8Array(12));
   const bits=await derive(password,salt,250000);
   const key=await crypto.subtle.importKey('raw',bits,'AES-GCM',false,['encrypt']);
   const ct=await crypto.subtle.encrypt({name:'AES-GCM',iv},key,encoder.encode(text));
@@ -26,13 +45,13 @@ export async function seal(text,password) {
 export async function verify(password, record) {
   const [iterations,salt,expected]=record.split(':');
   if(Number(iterations)!==600000 || !salt || !expected) return false;
-  const actual=new Uint8Array(await derive(password,decode(salt),600000)), target=decode(expected);
+  const actual=await pbkdf2Bits(password,decode(salt),600000), target=decode(expected);
   let difference=actual.length ^ target.length;
   for(let i=0;i<actual.length;i++) difference |= actual[i] ^ (target[i] || 0);
   return difference===0;
 }
 async function github(env,path,options={}) {
-  const result=await fetch(`https://api.github.com/repos/uae00060-lab/uae-car-radar${path}`,{...options,headers:{'Authorization':`Bearer ${env.GITHUB_TOKEN}`,'Accept':'application/vnd.github+json','User-Agent':'car-radar-gateway','X-GitHub-Api-Version':'2022-11-28','Content-Type':'application/json'}});
+  const result=await fetch(`https://api.github.com/repos/uae00060-lab/uae-car-radar${path}`,{...options,headers:{'Authorization':`Bearer ${env.GITHUB_TOKEN}`,'Accept':'application/vnd.github+json','User-Agent':'car-radar-gateway','X-GitHub-Api-Version':'2022-11-28','Content-Type':'application/json',...(options.headers || {})}});
   return result;
 }
 export default {async fetch(request,env) {
@@ -90,7 +109,10 @@ export default {async fetch(request,env) {
       if(!response.ok) return json({error:'File unavailable'},response.status);
       const file=await response.json();
       stage='decrypt-file';
-      const bytes=await open(new TextDecoder().decode(decode(file.content.replace(/\s/g,''))),env.RADAR_KEY);
+      // The contents API omits files over 1 MB; those are read as raw bytes instead.
+      const text=file.encoding==='base64' && file.content ? new TextDecoder().decode(decode(file.content.replace(/\s/g,'')))
+        : await (await github(env,`/contents/${name}`,{headers:{'Accept':'application/vnd.github.raw'}})).text();
+      const bytes=await open(text,env.RADAR_KEY);
       stage='encode-file';
       return json({plain:true,base64:encode(bytes),sha:file.sha});
     }
