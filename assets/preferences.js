@@ -7,14 +7,18 @@
   let language = read('radar-language') === 'en' ? 'en' : 'ar';
   let theme = read('radar-theme') === 'dark' ? 'dark' : 'light';
   let dictionary = {}, entries = [], pending = false;
-  const originals = new WeakMap(), attributes = new WeakMap();
+  const originals = new WeakMap(), attributes = new WeakMap(), translationCache = new Map();
   const excluded = element => element.closest('script,style,textarea,input,[contenteditable="true"],.display-controls');
   function translate(value) {
+    if (!/[\u0600-\u06ff]/.test(value)) return value;
+    if (translationCache.has(value)) return translationCache.get(value);
     const trimmed = value.trim();
     if (dictionary[trimmed]) return value.replace(trimmed, dictionary[trimmed]);
     // Only translate known UI phrases; unknown source text remains intact.
     let result = value;
     for (const [pattern, en] of entries) result = result.replace(pattern, () => en);
+    if (translationCache.size > 5000) translationCache.clear();
+    translationCache.set(value, result);
     return result;
   }
   function apply() {
@@ -63,6 +67,6 @@
   document.getElementById('themeToggle').addEventListener('click', () => { theme = theme === 'light' ? 'dark' : 'light'; save('radar-theme', theme); apply(); });
   apply();
   fetch('assets/translations-en.json').then(response => { if (!response.ok) throw new Error('Translation unavailable'); return response.json(); }).then(data => {
-    dictionary = data; entries = Object.entries(data).sort((a, b) => b[0].length - a[0].length).map(([ar, en]) => [new RegExp('(?<![\\p{L}])' + ar.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + '(?![\\p{L}])', 'gu'), en]); apply();
+    dictionary = data; translationCache.clear(); entries = Object.entries(data).sort((a, b) => b[0].length - a[0].length).map(([ar, en]) => [new RegExp('(?<![\\p{L}])' + ar.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + '(?![\\p{L}])', 'gu'), en]); apply();
   }).catch(() => { language = 'ar'; apply(); });
 })();
