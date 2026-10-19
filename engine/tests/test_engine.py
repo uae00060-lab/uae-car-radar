@@ -174,6 +174,39 @@ class Engine(unittest.TestCase):
         self.assertEqual(eng["runs"][0]["mode"],"opportunity")
         self.assertIn("opportunities",eng)
 
+    def test_mourjan_ad_text_when_ad_pages_are_refused(self):
+        user = store.read_json(radar.USER_FILE, KEY, {})
+        user["requests"][0]["platforms"] = ["mourjan"]
+        store.write_json(radar.USER_FILE, user, KEY)
+        results = ('<a href="/ae/abu-dhabi/toyota/for-sale/30475003/">5منذ 3 ساعاتللبيع تويوتا يارس 2021 خليجي، ماشي 60 ألف كيلو، '
+                   'المطلوب 28 ألف درهم، أبوظبي</a>'
+                   '<a href="/ae/dubai/toyota/for-sale/30475004/">4منذ ساعتينتويوتا يارس 2021 مصدومة من الامام، المطلوب 45 ألف</a>'
+                   '<a href="/ae/ajman/toyota/for-sale/30475005/">3منذ يومينتويوتا يارس 2022 نظيفة، اتصل للسعر</a>')
+        url = "https://www.mourjan.com/ae/toyota/for-sale/?mny=2020&mxy=2022&mxp=30000"
+
+        def get(u, referer=None, timeout=25, retries=1):
+            p = fetch.Page(u)
+            if u == url:
+                p.status, p.html = 200, results
+            elif "/for-sale/3047500" in u:
+                p.status = 403  # ad pages refuse the search server
+            else:
+                p.status = 404
+            return p
+        fetch.get = get
+        radar.run_round(self.args(), KEY)
+        listings = store.read_json(radar.ENGINE_FILE, KEY, {})["listings"]
+        ad = listings["mourjan-30475003"]
+        self.assertEqual((ad["price"], ad["mileage"], ad["year"], ad["state"]), (28000, 60000, 2021, "unverified"))
+        self.assertEqual((ad["price_source"], ad["spec"], ad["emirate"]), ("text:results", "gcc", "أبوظبي"))
+        self.assertEqual(ad["date_kind"], "posted")
+        self.assertIn("نص الإعلان", ad["note"])
+        self.assertEqual(ad["title"][:5], "للبيع")
+        self.assertNotIn("mourjan-30475004", listings)  # 45,000 is above the 30,000 limit
+        self.assertNotIn("mourjan-30475005", listings)  # no price in the text: never guessed
+        market = store.read_json(radar.ENGINE_FILE, KEY, {})["market"].get("r1", {})
+        self.assertNotIn("mourjan-30475003", market)    # text prices never feed the fair price
+
     def test_report_is_sent_once_per_slot_by_the_first_trigger(self):
         sent = []
         radar.notify.send_all = lambda *a, **k: sent.append(a[0]) or {"telegram": "أُرسل"}

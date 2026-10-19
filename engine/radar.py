@@ -27,6 +27,7 @@ from progress import Progress
 import lifecycle
 import health
 import opportunities
+import adtext  # noqa: E402
 import analytics  # noqa: E402
 import condition  # noqa: E402
 import extract  # noqa: E402
@@ -383,6 +384,9 @@ def condition_counts(listings):
             "shown": sum(1 for l in listings if not l.get("dup_of") and trusted_price(l) and l.get("state") in ("verified", "approx", "unverified"))}
 
 
+TEXT_NOTE = "صفحة الإعلان لا تُفتح من خادم البحث؛ البيانات من نص الإعلان في صفحة النتائج"
+
+
 def reassess_saved(listings, reqs, start, today):
     for listing in listings.values():
         if listing.get("state") == "sold":
@@ -396,6 +400,8 @@ def reassess_saved(listings, reqs, start, today):
                  "date_kind": listing.get("date_kind")}
             checks = assess(req, v, start, listing["platform"])
             state, note = state_of(checks, listing["platform"], True)
+            if str(listing.get("price_source") or "").startswith("text:") and state != "excluded":
+                state, note = "unverified", TEXT_NOTE  # never confirmed on the ad page itself
             listing.setdefault("by_request", {})[req["id"]] = {"state": state, "note": note, "checks": checks}
 
 
@@ -547,6 +553,11 @@ def run_round(a, key):
                  "seller_name": None, "seller_type": None, "specs": None, "transmission": None,
                  "image": item.get("image"), "date": None, "date_kind": None, "desc": None,
                  "spec": condition.spec_of(None, item.get("title")), "flags": condition.red_flags(item.get("title")), "_src": {}}
+            if item.get("text"):  # the seller's own words from the results page (Mourjan)
+                v.update(adtext.values(item, now))
+                text = v["desc"] or ""
+                v.update({"emirate": emirate_of(f"{text} {item['url']}"), "color": color_of(text),
+                          "spec": condition.spec_of(None, text), "flags": condition.red_flags(text)})
             fetched = False
         else:
             ps["read_ok"] += 1
@@ -565,7 +576,12 @@ def run_round(a, key):
             analytics.add_samples(eng["market"], req["id"], [{"id": item["id"], "price": v["price"], "year": v["year"], "km": v["km"], "spec": v.get("spec")}], today)
         v["_url"] = item["url"]
         checks = assess(req, v, start, plat)
-        if not fetched:
+        if not fetched and item.get("text"):
+            # Conditions are checked on the seller's text; a match still needs confirming on the ad.
+            st, note = state_of(checks, plat, bool(prev))
+            if st != "excluded":
+                st, note = "unverified", TEXT_NOTE
+        elif not fetched:
             st, note = "unverified", "تعذّر فتح صفحة الإعلان؛ البيانات من صفحة النتائج"
         else:
             st, note = state_of(checks, plat, bool(prev))

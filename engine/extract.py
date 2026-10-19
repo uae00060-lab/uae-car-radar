@@ -167,7 +167,9 @@ def results(html, base, plat):
         add(href, {"price": to_num(price[1] or price[2]) if price else None,
                    "km": to_num(km[1]) if km else None,
                    "year": to_num(year[1]) if year else None,
-                   "title": next((line.strip()[:160] for line in chunk.split("\n") if line.strip()), None)}, "link")
+                   "title": next((line.strip()[:160] for line in chunk.split("\n") if line.strip()), None),
+                   # Mourjan's ad pages refuse GitHub's servers; its results page carries the ad text itself.
+                   **({"text": chunk} if plat == "mourjan" else {})}, "link")
     # 3) ad paths quoted anywhere in scripts (client-rendered lists)
     for m in QUOTED_PATH.finditer(html):
         add(m[1].replace("\\/", "/"), {}, "script")

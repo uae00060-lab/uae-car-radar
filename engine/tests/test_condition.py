@@ -111,6 +111,32 @@ class ArabicNames(unittest.TestCase):
         self.assertFalse(has_terms("تويوتا كامري", terms("Toyota", "Corolla")))
 
 
+class AdText(unittest.TestCase):
+    def test_price_and_mileage_from_arabic_text(self):
+        from adtext import km_of, price_of
+        self.assertEqual(price_of("الممشى 215 كم، مطلوب 170 ألف نهائي"), 170000)
+        self.assertEqual(price_of("المطلوب 12000 درهم"), 12000)
+        self.assertEqual(price_of("السعر 85,000 درهم قابل للتفاوض"), 85000)
+        self.assertEqual(price_of("Price: 45k AED"), 45000)
+        self.assertEqual(price_of("دفعة أولى 20000 درهم والسعر 90 ألف"), 90000)
+        self.assertIsNone(price_of("قسط شهري 1500 درهم"))
+        self.assertIsNone(price_of("مكينة 4 سلندر 2.5 لتر موديل 2020"))
+        self.assertEqual(km_of("ماشي 40 ألف كيلو فقط"), 40000)
+        self.assertEqual(km_of("الممشى 215 كم"), 215)
+        self.assertEqual(km_of("ماشية 99000 ميل"), 159291)
+        self.assertEqual(km_of("120,000 km"), 120000)
+
+    def test_posting_age_and_title(self):
+        from adtext import clean_title, posted_of
+        now = dt.datetime(2026, 10, 19, 11, 0)
+        self.assertEqual(posted_of("5منذ 21 دقيقةللبيع", now), dt.date(2026, 10, 19))
+        self.assertEqual(posted_of("منذ 3 أيام", now), dt.date(2026, 10, 16))
+        self.assertEqual(posted_of("منذ يومين", now), dt.date(2026, 10, 17))
+        self.assertIsNone(posted_of("للبيع تويوتا", now))
+        self.assertEqual(clean_title("5منذ 21 دقيقةللبيع بيك اب"), "للبيع بيك اب")
+        self.assertEqual(clean_title("2020 Toyota Camry"), "2020 Toyota Camry")
+
+
 class VinDecode(unittest.TestCase):
     VIN = "JTMHV05J604123456"
 
