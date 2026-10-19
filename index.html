@@ -317,7 +317,7 @@ body { font-family:"Inter","Cairo",sans-serif; font-weight:500; text-rendering:o
 @media(prefers-reduced-motion:reduce){#heroRadar .radar-line,#heroRadar .orbit-two,#heroRadar .radar-ping,#heroRadar .radar-ping::after{animation:none!important}#heroRadar .radar-ping{opacity:.7}}
 </style>
 <link rel="stylesheet" href="assets/preferences.css?v=20261019-7">
-<script src="assets/preferences.js?v=20261019-5" defer></script>
+<script src="assets/preferences.js?v=20261019-8" defer></script>
 </head>
 <body>
 
@@ -367,12 +367,11 @@ body { font-family:"Inter","Cairo",sans-serif; font-weight:500; text-rendering:o
 <!-- ===== gate: password + GitHub token ===== -->
 <div class="wrap gate" id="gate">
   <form class="panel" id="gateForm" autocomplete="on">
-    <div><img src="assets/logo-mark.svg" class="gate-logo" width="76" height="76" alt="شعار رادار السيارات"><h1>رادار سيارات الإمارات</h1><div class="small" id="gateHelp">بياناتك محفوظة مشفّرة في مستودع GitHub. افتحها بكلمة السر نفسها المحفوظة في المستودع باسم RADAR_KEY.</div></div>
-    <label class="stack" id="gEmailWrap" hidden>البريد الإلكتروني<input id="gEmail" type="email" autocomplete="username"></label>
+    <div><img src="assets/logo-mark.svg" class="gate-logo" width="76" height="76" alt="شعار رادار السيارات"><h1>رادار سيارات الإمارات</h1><div class="small">بياناتك محفوظة مشفّرة في مستودع GitHub. افتحها بكلمة السر نفسها المحفوظة في المستودع باسم RADAR_KEY.</div></div>
     <label class="stack">كلمة سر البيانات<input id="gPass" type="password" autocomplete="current-password" required minlength="8"></label>
     <label class="stack" id="gPass2Wrap" hidden>أعد كتابة كلمة السر<input id="gPass2" type="password" autocomplete="new-password" minlength="8"></label>
     <label class="stack">مفتاح GitHub (للتعديل وزر «ابحث الآن»)<input id="gToken" type="password" dir="ltr" autocomplete="off" placeholder="github_pat_…"></label>
-    <div class="small" id="gateTokenHelp">بدون المفتاح تعمل اللوحة للقراءة فقط. طريقة إنشائه في تبويب «الإعدادات» بعد الدخول، أو في ملف README.</div>
+    <div class="small">بدون المفتاح تعمل اللوحة للقراءة فقط. طريقة إنشائه في تبويب «الإعدادات» بعد الدخول، أو في ملف README.</div>
     <label class="cmp-toggle"><input type="checkbox" id="gRemember" checked> تذكّر هذا الجهاز</label>
     <div class="row"><button class="primary" type="submit" id="gGo">فتح اللوحة</button><span class="small" id="gMsg"></span></div>
   </form>
@@ -617,12 +616,6 @@ body { font-family:"Inter","Cairo",sans-serif; font-weight:500; text-rendering:o
 
   // ---------------------------------------------------------------- GitHub
   async function gh(path, opt = {}) {
-    if (S.gateway) {
-      const dispatching = path === "/actions/workflows/radar.yml/dispatches";
-      const response = await fetch(dispatching ? "/api/dispatch" : "/api/github?path="+encodeURIComponent(path), {...opt, headers:{"Content-Type":"application/json"},cache:"no-store"});
-      if (!response.ok) {const error=new Error("Server "+response.status);error.status=response.status;throw error;}
-      return response;
-    }
     const h = { Accept: "application/vnd.github+json", "X-GitHub-Api-Version": "2022-11-28", ...(opt.headers || {}) };
     if (S.token) h.Authorization = "Bearer " + S.token;
     const r = await fetch(API() + path, { ...opt, headers: h, cache: "no-store" });
@@ -634,12 +627,6 @@ body { font-family:"Inter","Cairo",sans-serif; font-weight:500; text-rendering:o
   }
   // Read a repository file: through the API with a token (always fresh), else from the site itself.
   async function readFile(path) {
-    if (S.gateway) {
-      const response=await fetch("/api/file?path="+encodeURIComponent(path),{cache:"no-store"});
-      if(response.status===404)return {text:null,sha:null};
-      if(!response.ok)throw new Error("Server "+response.status);
-      const data=await response.json();return {text:data.base64,sha:data.sha,plain:true};
-    }
     if (S.token) {
       const meta = await gh(`/contents/${path}?ref=main&t=${Date.now()}`);
       if (meta.status === 404) return { text: null, sha: null };
@@ -655,11 +642,6 @@ body { font-family:"Inter","Cairo",sans-serif; font-weight:500; text-rendering:o
   function saveUser(msg) {
     saveChain = saveChain.then(async () => {
       if (!S.token) { flash("التعديل يحتاج مفتاح GitHub. أضفه من الإعدادات.", "warn"); return false; }
-      if(S.gateway) {
-        const response=await fetch("/api/user",{method:"PUT",headers:{"Content-Type":"application/json"},body:JSON.stringify({user:S.U,sha:S.userSha})});
-        if(!response.ok){flash(response.status===409 || response.status===422 ? "تغيّرت البيانات على جهاز آخر؛ أعد التحميل قبل الحفظ." : "تعذّر الحفظ.","warn");return false;}
-        S.userSha=(await response.json()).sha;return true;
-      }
       const body = await encrypt(new TextEncoder().encode(JSON.stringify(S.U)), S.pass);
       for (let attempt = 0; attempt < 3; attempt++) {
         try {
@@ -679,8 +661,8 @@ body { font-family:"Inter","Cairo",sans-serif; font-weight:500; text-rendering:o
   // ---------------------------------------------------------------- loading
   async function loadAll(first) {
     const [eng, usr] = await Promise.all([readFile("data/engine.enc"), readFile("data/user.enc")]);
-    S.E = eng.text ? JSON.parse(new TextDecoder().decode(eng.plain ? b64.dec(eng.text) : await decrypt(eng.text, S.pass))) : { listings: {}, runs: [], reports: [], market: {}, drops: [] };
-    if (usr.text) { S.U = JSON.parse(new TextDecoder().decode(usr.plain ? b64.dec(usr.text) : await decrypt(usr.text, S.pass))); S.userSha = usr.sha; }
+    S.E = eng.text ? JSON.parse(new TextDecoder().decode(await decrypt(eng.text, S.pass))) : { listings: {}, runs: [], reports: [], market: {}, drops: [] };
+    if (usr.text) { S.U = JSON.parse(new TextDecoder().decode(await decrypt(usr.text, S.pass))); S.userSha = usr.sha; }
     else if (first) { S.U = null; }
     S.U = S.U || { requests: [], marks: {}, profile: {} };
     S.U.marks = S.U.marks || {}; S.U.requests = S.U.requests || []; S.U.profile = S.U.profile || {};
@@ -689,15 +671,6 @@ body { font-family:"Inter","Cairo",sans-serif; font-weight:500; text-rendering:o
 
   $("gateForm").addEventListener("submit", async (e) => {
     e.preventDefault();
-    if(S.gateway) {
-      $("gGo").disabled=true;
-      try {
-        const response=await fetch("/api/login",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({email:$("gEmail").value.trim(),password:$("gPass").value})});
-        if(!response.ok)throw new Error(response.status===429 ? "محاولات كثيرة؛ حاول لاحقًا." : "تعذّر الدخول؛ تحقق من البريد وكلمة المرور.");
-        S.token="server-session";await loadAll(true);$("gPass").value="";enter();
-      } catch(error){$("gMsg").textContent=error.message;} finally {$("gGo").disabled=false;}
-      return;
-    }
     const pass = $("gPass").value, token = $("gToken").value.trim();
     if (!$("gPass2Wrap").hidden && $("gPass2").value !== pass) return ($("gMsg").textContent = "كلمتا السر غير متطابقتين.");
     $("gGo").disabled = true; $("gMsg").textContent = "جارٍ فتح البيانات…";
@@ -1088,7 +1061,7 @@ body { font-family:"Inter","Cairo",sans-serif; font-weight:500; text-rendering:o
     try {
       const f = await readFile(r.file);
       if (!f.text) throw new Error("الملف غير موجود");
-      const bytes = f.plain ? b64.dec(f.text) : await decrypt(f.text, S.pass);
+      const bytes = await decrypt(f.text, S.pass);
       if (lastUrl) URL.revokeObjectURL(lastUrl);
       lastUrl = URL.createObjectURL(new Blob([bytes], { type: "application/pdf" }));
       $("vDl").href = lastUrl; $("vDl").download = `car-report-${(r.at || "").slice(0, 16).replace(/[:T]/g, "-")}.pdf`;
@@ -1126,7 +1099,7 @@ body { font-family:"Inter","Cairo",sans-serif; font-weight:500; text-rendering:o
     const p = S.U.profile || {};
     if (!$("meForm").contains(document.activeElement)) { $("mName").value = p.name || ""; $("mPhone").value = p.phone || ""; $("mCity").value = p.city || ""; }
     $("connInfo").innerHTML = `<dt>المستودع</dt><dd><a href="https://github.com/${esc(REPO.owner)}/${esc(REPO.repo)}" target="_blank" rel="noopener" dir="ltr">${esc(REPO.owner)}/${esc(REPO.repo)}</a></dd>
-      <dt>الصلاحية</dt><dd>${S.gateway ? "جلسة آمنة — المفاتيح محفوظة في الخادم" : S.token ? "قراءة وتعديل وتشغيل البحث" : "قراءة فقط (أضف مفتاح GitHub للتعديل)"}</dd>
+      <dt>الصلاحية</dt><dd>${S.token ? "قراءة وتعديل وتشغيل البحث" : "قراءة فقط (أضف مفتاح GitHub للتعديل)"}</dd>
       <dt>آخر تحديث</dt><dd class="num">${esc(when(S.E.updated))}</dd>`;
     const healthLabels={ok:"الاستخراج يعمل",limited:"وصول محدود",empty:"لا روابط مستخرجة",alert:"تحتاج فحصًا",recovered:"استعادت الاستخراج"};
     $("healthBox").innerHTML=Object.entries(S.E.platform_health || {}).map(([p,record])=>{const h=record.latest; if(!h)return ""; return `<article style="padding:12px 0;border-bottom:1px solid var(--line)"><div class="row"><b>${esc(PLATFORMS[p] || p)}</b><span class="pill ${h.alert ? "bad" : h.status === "ok" || h.recovered ? "good" : "warn"}">${esc(healthLabels[h.status] || h.status)}</span></div><p>${esc(h.reason)}</p><div>روابط: ${fmt(h.cards)} · صفحات مفتوحة: ${fmt(h.opened)} · مقروءة: ${fmt(h.read_ok)} · أسعار مؤكدة: ${fmt(h.priced)}</div><div>${esc((h.request_names || []).join("، "))} · ${esc(when(h.at))}</div></article>`;}).join("") || "تبدأ المقارنة من أول جولة بعد التحديث. المنصات التي لم تُفحص لا تُحتسب متعطلة.";
@@ -1136,7 +1109,7 @@ body { font-family:"Inter","Cairo",sans-serif; font-weight:500; text-rendering:o
     $("notifyInfo").innerHTML = Object.entries(ch).map(([k, v]) => `<dt>${v}</dt><dd>${last ? esc(last.notify[k] || "—") : "تظهر الحالة بعد أول جولة مجدولة"}</dd>`).join("");
   }
   $("meForm").addEventListener("submit", async (e) => { e.preventDefault(); S.U.profile = { name: $("mName").value.trim(), phone: $("mPhone").value.trim(), city: $("mCity").value.trim() }; if (await saveUser("profile")) $("mMsg").textContent = "حُفظت."; });
-  $("btnForget").addEventListener("click", async () => { if(S.gateway) await fetch("/api/logout",{method:"POST"}); store.set("pass", null); store.set("token", null); store.set("deviceCredentials", null); indexedDB.deleteDatabase("radar-device"); location.reload(); });
+  $("btnForget").addEventListener("click", () => { store.set("pass", null); store.set("token", null); store.set("deviceCredentials", null); indexedDB.deleteDatabase("radar-device"); location.reload(); });
 
   // Fresh purchase opportunities are independent of lifecycle updates.
   function opportunityRows() {
@@ -1154,7 +1127,8 @@ body { font-family:"Inter","Cairo",sans-serif; font-weight:500; text-rendering:o
     $("cOpportunities").textContent=unread.length;
     $("opEnabled").checked=S.U.opportunities_enabled !== false;
     const delivery=S.E.opportunities?.delivery, channelNames={email:"البريد",telegram:"تيليجرام",whatsapp:"واتساب"};
-    $("opDelivery").textContent=delivery ? "آخر محاولة توصيل خارجية: "+Object.entries(delivery).map(([k,v])=>(channelNames[k] || k)+": "+v).join(" · ") : "تنبيه الصفحة يعمل عند فتح اللوحة. الإشعارات الخارجية تستخدم القنوات المفعّلة في الإعدادات عند اكتشاف فرصة قوية.";
+    const owed=Object.entries(S.E.opportunities?.delivery_owed || {}).filter(([,n])=>n>0);
+    $("opDelivery").textContent=delivery ? "آخر محاولة توصيل خارجية"+(S.E.opportunities?.delivery_at ? " ("+when(S.E.opportunities.delivery_at)+")" : "")+": "+Object.entries(delivery).map(([k,v])=>(channelNames[k] || k)+": "+v).join(" · ")+(owed.length ? " — تُعاد المحاولة في الفحص القادم لـ: "+owed.map(([k,n])=>(channelNames[k] || k)+" ("+n+")").join("، ") : "")+". «أُرسل» تعني قبول الخدمة للرسالة." : "تنبيه الصفحة يعمل عند فتح اللوحة. الإشعارات الخارجية تستخدم القنوات المفعّلة في الإعدادات عند اكتشاف فرصة قوية.";
 
     $("opScan").disabled=!S.token || !!S.live || S.U.opportunities_enabled === false;
     $("opStatus").textContent=`فحص خفيف كل ساعة عند الدقيقة 17، إضافة إلى جولات البحث. قد تتأخر مهام GitHub؛ ليس رصدًا لحظيًا. إعلان منشور خلال آخر يومين، وتحقق لا يتجاوز 6 ساعات. نستبعد المباعة والمحجوزة والتعديلات التي رصدناها. لا نستنتج مهنة البائع من التعديل. آخر تقييم: ${S.E.opportunities?.updated ? when(S.E.opportunities.updated) : "لم يُنفذ بعد"}.`;
@@ -1281,7 +1255,7 @@ body { font-family:"Inter","Cairo",sans-serif; font-weight:500; text-rendering:o
         const steps = (jobs.jobs?.[0]?.steps || []).filter((s) => STEP_AR[s.name] && s.conclusion !== "skipped");
         const secs = Math.round((Date.now() - Date.parse(run.created_at)) / 1000);
         let progress = null;
-        if (S.live.run_id && !S.gateway) {
+        if (S.live.run_id) {
           try {
             const response = await gh("/contents/data/search-progress.json?ref=radar-live");
             if (response.ok) {
@@ -1398,19 +1372,6 @@ body { font-family:"Inter","Cairo",sans-serif; font-weight:500; text-rendering:o
 
   // ---------------------------------------------------------------- boot
   (async () => {
-    S.gateway=window.RADAR_GATEWAY === true;
-    if(S.gateway) {
-      $("gEmailWrap").hidden=false;$("gEmail").required=true;
-      $("gToken").closest("label").hidden=true;$("gRemember").closest("label").hidden=true;
-      $("gPass").minLength=1;
-      $("gPass").closest("label").firstChild.textContent="كلمة المرور";
-      $("gateHelp").textContent="ادخل ببريدك وكلمة المرور من أي جهاز. مفاتيح التشغيل محفوظة على الخادم.";
-      $("gateTokenHelp").hidden=true;
-      $("gate").querySelector("h1").textContent="تسجيل دخول رادار السيارات";
-      const response=await fetch("/api/session",{cache:"no-store"});
-      if(response.ok && (await response.json()).authenticated){S.token="server-session";await loadAll();enter();}
-      return;
-    }
     let credentials;
     try { credentials = await readDevice(); } catch { $("gMsg").textContent = "تعذّر فتح بيانات الجهاز المحفوظة؛ أدخل بيانات الدخول."; return; }
     if (!credentials?.pass) return;

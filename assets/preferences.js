@@ -12,6 +12,14 @@
   try { dismissed = new Set(JSON.parse(read('radar-dismissed-notices') || '[]')); } catch { dismissed = new Set(); }
   const originals = new WeakMap(), attributes = new WeakMap(), translationCache = new Map();
   const excluded = element => element.closest('script,style,textarea,input,[contenteditable="true"],.notice-dismiss') || (element.closest('.display-controls') && !element.closest('#problemBox'));
+  const templates = [
+    [/أقل من تقدير الإعلانات المشابهة بنحو (\d+)٪/g, 'About $1% below the estimate from similar listings'],
+    [/المقارنة من (\d+) إعلانًا، وليست تقييم فحص للسيارة/g, 'Compared with $1 listings; not an inspection of the car'],
+    [/نشر حديث: ([\d-]+)/g, 'Recently posted: $1'],
+    [/فحص خفيف كل ساعة عند الدقيقة 17، إضافة إلى جولات البحث\. قد تتأخر مهام GitHub؛ ليس رصدًا لحظيًا\. إعلان منشور خلال آخر يومين، وتحقق لا يتجاوز 6 ساعات\. نستبعد المباعة والمحجوزة والتعديلات التي رصدناها\. لا نستنتج مهنة البائع من التعديل\. آخر تقييم: /g,
+      'A light check every hour at minute 17, in addition to search rounds. GitHub tasks may be delayed; this is not real-time monitoring. Ads posted in the last two days, checked within 6 hours. Sold, reserved and edited ads we detected are excluded. We never infer the seller\'s profession from an edit. Last evaluation: '],
+    [/الإعلان يذكر: /g, 'The ad states: ']
+  ];
   function translate(value) {
     if (!/[\u0600-\u06ff]/.test(value)) return value;
     if (translationCache.has(value)) return translationCache.get(value);
@@ -19,6 +27,9 @@
     if (dictionary[trimmed]) return value.replace(trimmed, dictionary[trimmed]);
     // Only translate known UI phrases; unknown source text remains intact.
     let result = value;
+    // Sentences built with numbers or dates (engine reasons, status lines) are translated whole first,
+    // so word-by-word replacement never leaves a half-Arabic sentence.
+    for (const [pattern, en] of templates) result = result.replace(pattern, en);
     for (const [pattern, en] of entries) result = result.replace(pattern, () => en);
     if (translationCache.size > 5000) translationCache.clear();
     translationCache.set(value, result);
@@ -116,7 +127,7 @@
   document.addEventListener('keydown', event => { if (event.key === 'Escape' && !panel.hidden) { setPanel(false); toggle.focus(); } });
   document.addEventListener('click', event => { if (!event.target.closest('.display-controls')) { setPanel(false); setNotifications(false); } });
   apply();
-  fetch('assets/translations-en.json?v=20261019-3').then(response => { if (!response.ok) throw new Error('Translation unavailable'); return response.json(); }).then(data => {
+  fetch('assets/translations-en.json?v=20261019-6').then(response => { if (!response.ok) throw new Error('Translation unavailable'); return response.json(); }).then(data => {
     dictionary = data; translationCache.clear(); entries = Object.entries(data).sort((a, b) => b[0].length - a[0].length).map(([ar, en]) => [new RegExp('(?<![\\p{L}])' + ar.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + '(?![\\p{L}])', 'gu'), en]); apply();
   }).catch(() => { language = 'ar'; apply(); });
 })();

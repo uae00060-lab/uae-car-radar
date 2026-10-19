@@ -24,7 +24,7 @@ class Opportunities(unittest.TestCase):
   self.u['requests'][0]['model']='';self.assertEqual(self.rows(),[])
   self.u['requests'][0]['model']='Yaris';self.e['market']['r'].pop('1');self.assertEqual(self.rows(),[])
  def test_one_alert_and_no_external_manual_delivery(self):
-  with patch('notify.send_all',return_value={'email':'أُرسل'}) as send:
+  with patch('notify.configured',return_value=['email']),patch('notify.send_all',return_value={'email':'أُرسل'}) as send:
    self.assertEqual(len(opportunities.update(self.e,self.u,NOW)),1);send.assert_not_called()
    opportunities.update(self.e,self.u,NOW,notify=True);self.assertEqual(send.call_count,1)
    opportunities.update(self.e,self.u,NOW,notify=True);self.assertEqual(send.call_count,1)
@@ -42,3 +42,26 @@ class Opportunities(unittest.TestCase):
   for sample in self.e['market']['r'].values():sample['price']=27000
   self.assertEqual(self.rows()[0]['tier'],'call')
   self.assertEqual(self.rows()[0]['request_id'],'r2')
+
+ def test_failed_channel_retried_alone_until_accepted(self):
+  outcomes=[{'telegram':'أُرسل','email':'فشل (TimeoutError)'},{'email':'أُرسل'}]
+  with patch('notify.configured',return_value=['telegram','email']),patch('notify.send_all',side_effect=outcomes) as send:
+   opportunities.update(self.e,self.u,NOW,notify=True)
+   self.assertEqual(sorted(send.call_args.kwargs['channels']),['email','telegram'])
+   box=self.e['opportunities'];self.assertEqual(box['delivery_owed'],{'telegram':0,'email':1})
+   self.assertFalse(box['events'][0].get('notified'))
+   opportunities.update(self.e,self.u,NOW,notify=True)
+   self.assertEqual(send.call_args.kwargs['channels'],['email'])
+   self.assertEqual(box['delivery'],{'telegram':'أُرسل','email':'أُرسل'})
+   self.assertTrue(box['events'][0]['notified']);self.assertEqual(box['delivery_owed'],{'telegram':0,'email':0})
+   opportunities.update(self.e,self.u,NOW,notify=True);self.assertEqual(send.call_count,2)
+
+ def test_events_already_notified_before_per_channel_tracking_are_not_resent(self):
+  opportunities.update(self.e,self.u,NOW);self.e['opportunities']['events'][0]['notified']=NOW.isoformat()
+  with patch('notify.configured',return_value=['telegram','email']),patch('notify.send_all') as send:
+   opportunities.update(self.e,self.u,NOW,notify=True);send.assert_not_called()
+
+ def test_no_configured_channel_is_reported_not_marked_sent(self):
+  with patch('notify.configured',return_value=[]),patch('notify.send_all') as send:
+   opportunities.update(self.e,self.u,NOW,notify=True);send.assert_not_called()
+  box=self.e['opportunities'];self.assertEqual(set(box['delivery'].values()),{'غير مفعّل'});self.assertFalse(box['events'][0].get('notified'))

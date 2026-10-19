@@ -72,18 +72,38 @@ def update(engine,user,now,notify=False):
             events.insert(0,event);known.add(row['key']);fresh.append(event)
     box.update(items=rows,updated=now.isoformat(timespec='seconds'),events=events[:300])
     # Never send expired or subsequently disqualified events, even if delivery failed before.
+    # Delivery is tracked per channel: a channel that failed is retried on the next run while the
+    # event is still active, without resending to channels that already accepted it.
     active={r['key'] for r in rows if r['tier']=='call'}
-    pending=[e for e in events if e['key'] in active and not e.get('notified')]
-    if notify and pending:
+    if notify:
         import notify as channels
         from common import PLATFORMS
-        lines=['فرص شراء حديثة تستحق التواصل — بيانات الإعلان تحتاج فحصًا قبل الشراء']
-        for e in pending[:5]:
-            l=engine['listings'][e['listing_id']]
-            lines.append(f"{l.get('title','سيارة')} — {e['price']:,} درهم · أقل بنحو {round(e['discount']*100)}٪ · {PLATFORMS.get(l['platform'],{}).get('name',l['platform'])}\n{l['url']}")
-        text='\n\n'.join(lines)
-        result=channels.send_all('فرص سيارات حديثة',text,text)
-        box['delivery']=result
-        if any(v==channels.SENT for v in result.values()):
-            for e in pending[:5]: e['notified']=now.isoformat(timespec='seconds')
+        stamp=now.isoformat(timespec='seconds')
+        live=channels.configured()
+        def owed(e,ch):
+            return e['key'] in active and not e.get('notified') and ch not in e.get('sent',{})
+        groups={}
+        for ch in live:
+            batch=tuple(e['id'] for e in events if owed(e,ch))[:5]
+            if batch: groups.setdefault(batch,[]).append(ch)
+        if not live and any(e['key'] in active and not e.get('notified') for e in events):
+            box['delivery']={ch:channels.OFF for ch in channels.REQUIRED}
+            box['delivery_at']=stamp
+        by_id={e['id']:e for e in events}
+        for batch,names in groups.items():
+            lines=['فرص شراء حديثة تستحق التواصل — بيانات الإعلان تحتاج فحصًا قبل الشراء']
+            for eid in batch:
+                e=by_id[eid];l=engine['listings'][e['listing_id']]
+                lines.append(f"{l.get('title','سيارة')} — {e['price']:,} درهم · أقل بنحو {round(e['discount']*100)}٪ · {PLATFORMS.get(l['platform'],{}).get('name',l['platform'])}\n{l['url']}")
+            text='\n\n'.join(lines)
+            result=channels.send_all('فرص سيارات حديثة',text,text,channels=names)
+            box.setdefault('delivery',{}).update(result)
+            box['delivery_at']=stamp
+            for ch,outcome in result.items():
+                if outcome==channels.SENT:
+                    for eid in batch: by_id[eid].setdefault('sent',{})[ch]=stamp
+        for e in events:
+            if e['key'] in active and not e.get('notified') and live and all(ch in e.get('sent',{}) for ch in live):
+                e['notified']=stamp
+        box['delivery_owed']={ch:sum(1 for e in events if owed(e,ch)) for ch in live}
     return fresh

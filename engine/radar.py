@@ -725,6 +725,8 @@ def run_round(a, key):
                   "urgency": {"score": score, "level": level, "why": why}})
 
     opportunities.update(eng, user, now, notify=a.mode == "opportunity")
+    if a.mode == "opportunity":
+        finish(eng, key)  # per-channel delivery is on disk even if a later step fails; the save step still commits it
     progress.update("save", len(order), len(order), force=True)
     # 5) report
     live = lambda l: not l.get("dup_of") and trusted_price(l) and l.get("price_version") == 3 and l.get("price_currency") == "AED" and l.get("availability", "available") == "available" and l.get("state") in ("verified", "approx", "unverified") and (marks.get(l["id"]) or {}).get("status") not in ("dismissed", "purchased")

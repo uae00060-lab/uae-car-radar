@@ -594,5 +594,18 @@
   "تتم متابعتها ✓": "Following ✓",
   "إعادة إرسال التقرير": "Retry report delivery",
   "التغطية محدودة؛ تعذّر فحص بعض المنصات، وهذا لا يعني غياب السيارات. غيّر التصفية أو أعد الفحص.": "Coverage is limited: some platforms could not be checked. This does not mean no cars are available. Change filters or check again.",
-  "لا توجد نتائج ضمن التصفية الحالية؛ غيّر التصفية أو اضغط «ابحث الآن».": "No results under these filters. Change filters or select Search now."
+  "لا توجد نتائج ضمن التصفية الحالية؛ غيّر التصفية أو اضغط «ابحث الآن».": "No results under these filters. Change filters or select Search now.",
+  "آخر محاولة توصيل خارجية": "Last external delivery attempt",
+  "تُعاد المحاولة في الفحص القادم لـ:": "Retried on the next check for:",
+  "«أُرسل» تعني قبول الخدمة للرسالة.": "“Sent” means the service accepted the message.",
+  "أُرسل": "Sent",
+  "غير مفعّل": "Not enabled",
+  "فشل": "Failed",
+  "كلمة المرور": "Password",
+  "الشاصي غير منشور؛ اطلب مطابقته بالملكية": "VIN not published; ask to match it with the registration card",
+  "هاتف البائع غير منشور؛ التواصل من الإعلان": "Seller's phone not published; contact through the ad",
+  "الممشى يحتاج تأكيدًا": "Mileage needs confirming",
+  "انخفاض غير معتاد؛ تحقّق من السعر وحالة السيارة قبل أي دفع": "Unusually low; verify the price and the car's condition before any payment",
+  "لم يُنفذ بعد": "Not run yet",
+  "نسخ": "Copy"
 }
