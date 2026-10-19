@@ -59,6 +59,20 @@ AR_NAMES = {
     "سوناتا": "sonata", "توسان": "tucson", "بيكانتو": "picanto", "ريو": "rio", "سيراتو": "cerato",
     "سبورتاج": "sportage", "لانسر": "lancer", "اتراج": "attrage", "أتراج": "attrage", "سويفت": "swift",
     "دزاير": "dzire", "سيليريو": "celerio",
+    # Common spellings in UAE Arabic ads (normalised with ar_norm before comparison).
+    "لاند كروزر": "land-cruiser", "لاندكروز": "land-cruiser", "لاند كروز": "land-cruiser", "شاص": "land-cruiser",
+    "هايلكس": "hilux", "هيلوكس": "hilux", "فورتشنر": "fortuner", "فورتونر": "fortuner", "راف فور": "rav4", "راف 4": "rav4",
+    "هايلاندر": "highlander", "افالون": "avalon", "سيكويا": "sequoia", "تندرا": "tundra", "هايس": "hiace", "اف جي": "fj-cruiser",
+    "اكس تريل": "x-trail", "اكستريل": "x-trail", "باثفايندر": "pathfinder", "كيكس": "kicks", "ارمادا": "armada", "ماكسيما": "maxima",
+    "مورانو": "murano", "نافارا": "navara", "جي تي ار": "gt-r", "سي ار في": "cr-v", "بايلوت": "pilot", "اوديسي": "odyssey",
+    "سنتافي": "santa-fe", "سانتافي": "santa-fe", "سانتا في": "santa-fe", "كريتا": "creta", "باليسيد": "palisade", "ازيرا": "azera",
+    "سورينتو": "sorento", "تيلورايد": "telluride", "كارنفال": "carnival", "سيلتوس": "seltos", "اوبتيما": "optima", "كادينزا": "cadenza",
+    "باجيرو": "pajero", "باجيرو سبورت": "pajero-sport", "اوتلاندر": "outlander", "تاهو": "tahoe", "سوبربان": "suburban",
+    "سلفرادو": "silverado", "كمارو": "camaro", "ماليبو": "malibu", "كابتيفا": "captiva", "يوكن": "yukon", "سييرا": "sierra",
+    "اكسبلورر": "explorer", "اكسبديشن": "expedition", "موستنج": "mustang", "رينجر": "ranger", "اف 150": "f-150", "برونكو": "bronco",
+    "رانج روفر": "range-rover", "رنج روفر": "range-rover", "ديفندر": "defender", "ديسكفري": "discovery", "رانجلر": "wrangler",
+    "جراند شيروكي": "grand-cherokee", "شيروكي": "cherokee", "تشارجر": "charger", "تشالنجر": "challenger", "دورانجو": "durango",
+    "جيمني": "jimny", "فيتارا": "vitara", "ارتيجا": "ertiga", "سيلتوس": "seltos",
 }
 with open(os.path.join(os.path.dirname(__file__), "mourjan_catalog.json"), encoding="utf-8") as _catalog:
     MOURJAN_BRANDS = {b["slug"]: b for b in json.load(_catalog)["brands"]}
@@ -282,9 +296,16 @@ def model_terms(req):
     return out
 
 
+def ar_norm(text):
+    """One spelling for Arabic letters that ads write either way: أإآ→ا، ى→ي، ة→ه، no diacritics or tatweel."""
+    text = re.sub(r"[\u064b-\u0652\u0640]", "", str(text or ""))
+    return text.translate(str.maketrans("أإآىة", "ااايه"))
+
+
 def has_terms(text, terms):
-    t = re.sub(r"[^a-z0-9؀-ۿ]+", " ", (text or "").lower())
-    return all(any(re.search(r"(^|\s)" + re.escape(a) + r"(\s|$)", t) for a in alts if a) for alts in terms)
+    t = re.sub(r"[^a-z0-9؀-ۿ]+", " ", ar_norm(text).lower())
+    # "اليارس", "واللاندكروزر": an Arabic name may carry ال or و+ال in front.
+    return all(any(re.search(r"(^|\s)(?:و?ال)?" + re.escape(ar_norm(a)) + r"(\s|$)", t) for a in alts if a) for alts in terms)
 
 
 

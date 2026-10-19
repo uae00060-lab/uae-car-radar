@@ -99,6 +99,18 @@ class DescriptionFromAdPage(unittest.TestCase):
         self.assertEqual(found["description"], ("Clean car, no accidents", "meta:description"))
 
 
+class ArabicNames(unittest.TestCase):
+    def test_spelling_variants_match(self):
+        from common import has_terms, model_terms
+        terms = lambda make, model: model_terms({"make": make, "model": model})
+        self.assertTrue(has_terms("تويوتا لاندكروزر 2020", terms("Toyota", "Land Cruiser")))
+        self.assertTrue(has_terms("تويوتا لاند كروزر GXR", terms("Toyota", "Land Cruiser")))
+        self.assertTrue(has_terms("هيونداي سنتافي 2019", terms("Hyundai", "Santa Fe")))
+        self.assertTrue(has_terms("للبيع تويوتا اليارس", terms("Toyota", "Yaris")))
+        self.assertTrue(has_terms("نيسان باترول", terms("Nissan", "Patrol")))
+        self.assertFalse(has_terms("تويوتا كامري", terms("Toyota", "Corolla")))
+
+
 class VinDecode(unittest.TestCase):
     VIN = "JTMHV05J604123456"
 
