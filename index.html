@@ -628,7 +628,7 @@ body { font-family:"Inter","Cairo",sans-serif; font-weight:500; text-rendering:o
     const e = new Error(response.status === 401 ? "انتهت الجلسة؛ سجّل الدخول من جديد."
       : response.status === 503 && body?.error === "Server setup is incomplete" ? "إعداد الخادم غير مكتمل: أحد الأسرار أو ربط قاعدة البيانات ناقص."
       : !body && (response.status === 503 || response.status === 500) ? "تجاوز الخادم المجاني حد المعالجة مؤقتًا أثناء فك التشفير؛ أعد المحاولة بعد دقيقة."
-      : "تعذّر الاتصال بالخادم (" + response.status + (body?.stage ? " · " + body.stage : "") + ").");
+      : "تعذّر الاتصال بالخادم (" + response.status + (body?.stage ? " · " + body.stage : "") + (body?.type ? " · " + body.type : "") + ").");
     e.status = response.status;
     if (response.status === 401 && S.E) {
       S.token = ""; $("gate").hidden = false; $("hdr").hidden = true; $("app").hidden = true; $("gMsg").textContent = e.message;

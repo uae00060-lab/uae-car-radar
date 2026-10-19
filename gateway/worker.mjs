@@ -136,5 +136,7 @@ export default {async fetch(request,env) {
       return json({ok:response.ok},response.status===204 ? 200 : response.status);
     }
     return json({error:'Not found'},404);
-  } catch(error) {console.error(JSON.stringify({code:'gateway_failure',stage,type:error?.name || 'Error',errorCode:String(error?.code || '').replace(/[^A-Za-z0-9_-]/g,'').slice(0,60)}));return json({error:'Request failed',stage},500); }
+  } catch(error) {console.error(JSON.stringify({code:'gateway_failure',stage,type:error?.name || 'Error',errorCode:String(error?.code || '').replace(/[^A-Za-z0-9_-]/g,'').slice(0,60)}));// Crypto error names/messages carry no key material and tell a wrong RADAR_KEY (OperationError)
+    // from a runtime limit such as a PBKDF2 iteration cap (NotSupportedError).
+    return json({error:'Request failed',stage,type:error?.name || 'Error',detail:String(error?.message || '').replace(/[^\w .:,()-]/g,'').slice(0,140)},500); }
 }};
