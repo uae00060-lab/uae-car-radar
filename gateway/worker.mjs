@@ -45,7 +45,7 @@ export default {async fetch(request,env) {
     }
     return response;
   }
-  if(!env.DB || !env.GITHUB_TOKEN || !env.RADAR_KEY || !env.AUTH_EMAIL || !env.AUTH_PASSWORD_HASH) return json({error:'Server setup is incomplete'},503);
+  if(!env.DB || !env.GITHUB_TOKEN || !env.RADAR_KEY || !env.AUTH_EMAIL || !(env.AUTH_PASSWORD_HASH || env.AUTH_PASSWORD)) return json({error:'Server setup is incomplete'},503);
   if(request.method!=='GET' && request.headers.get('Origin')!==url.origin) return json({error:'Origin rejected'},403);
   try {
     const raw=request.headers.get('Cookie')?.match(/(?:^|;\s*)__Host-radar=([A-Za-z0-9-]+)/)?.[1];
@@ -60,7 +60,15 @@ export default {async fetch(request,env) {
       if(attempt.count>8) return json({error:'Try again later'},429);
       const body=await request.text(); if(body.length>4096) return json({error:'Invalid login'},400);
       const {email,password}=JSON.parse(body);
-      const valid=typeof password==='string' && password.length<=256 && await verify(password,env.AUTH_PASSWORD_HASH);
+      let valid=false;
+      if(typeof password==='string' && password.length<=256) {
+        if(env.AUTH_PASSWORD_HASH) valid=await verify(password,env.AUTH_PASSWORD_HASH);
+        else {
+          // Single-owner password is a runtime secret, never a database field or client value.
+          const a=decode(await digest(password)),b=decode(await digest(env.AUTH_PASSWORD));
+          let mismatch=0;for(let i=0;i<a.length;i++)mismatch |= a[i]^b[i];valid=mismatch===0;
+        }
+      }
       if(!valid || String(email).trim().toLowerCase()!==env.AUTH_EMAIL.trim().toLowerCase()) return json({error:'Invalid login'},401);
       const token=crypto.randomUUID()+'-'+crypto.randomUUID();
       await env.DB.prepare('DELETE FROM sessions WHERE expires<?').bind(Date.now()).run();

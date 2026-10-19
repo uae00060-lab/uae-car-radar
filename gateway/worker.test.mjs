@@ -22,3 +22,10 @@ test('unauthenticated users cannot read data or dispatch work',async()=>{
  assert.equal((await worker.fetch(new Request('https://radar.test/api/file?path=data/user.enc'),env)).status,401);
  assert.equal((await worker.fetch(new Request('https://radar.test/api/dispatch',{method:'POST',headers:{Origin:'https://evil.test'}}),env)).status,403);
 });
+test('owner login uses an HttpOnly session and rejects an incorrect password',async()=>{
+ const env={GITHUB_TOKEN:'test',RADAR_KEY:'test',AUTH_EMAIL:'owner@example.test',AUTH_PASSWORD:'a-long-owner-password',DB:{prepare(sql){return {bind(){return {async run(){return{};},async first(){return sql.startsWith('SELECT count') ? {count:1} : null;}};}}}}};
+ const request=password=>new Request('https://radar.test/api/login',{method:'POST',headers:{Origin:'https://radar.test','Content-Type':'application/json'},body:JSON.stringify({email:'owner@example.test',password})});
+ const good=await worker.fetch(request('a-long-owner-password'),env);
+ assert.equal(good.status,200);assert.match(good.headers.get('Set-Cookie'),/HttpOnly; Secure; SameSite=Strict/);
+ assert.equal((await worker.fetch(request('incorrect'),env)).status,401);
+});
