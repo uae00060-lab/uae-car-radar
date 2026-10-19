@@ -38,7 +38,7 @@ async function github(env,path,options={}) {
 export default {async fetch(request,env) {
   const url=new URL(request.url), path=url.pathname;
   if(!path.startsWith('/api/')) {
-    const response=await env.ASSETS.fetch(request);
+    const response=env.ASSETS ? await env.ASSETS.fetch(request) : await fetch(new URL(path.replace(/^\//,''), 'https://uae00060-lab.github.io/uae-car-radar/'), {headers:{'Accept':request.headers.get('Accept') || '*/*'}});
     if(response.headers.get('Content-Type')?.includes('text/html')) {
       const html=(await response.text()).replace('<head>','<head><script>window.RADAR_GATEWAY=true</script>');
       return new Response(html,{status:response.status,headers:{'Content-Type':'text/html; charset=utf-8','Cache-Control':'no-store','X-Content-Type-Options':'nosniff'}});
