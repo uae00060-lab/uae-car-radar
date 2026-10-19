@@ -829,13 +829,14 @@ def diagnose(a, key):
         per.setdefault(c["platform"], []).append(c)
     out = {}
     for plat in PLATFORMS:
-        sample = per.get(plat, [])[:2]
+        sample = per.get(plat, [])[:4]
         reads = []
         for c in sample:
             dbg = {}
             status, v = read_ad({**c, "id": f"{plat}-{c['ad_id']}"}, today, dbg)
             reads.append({"status": status, "debug": dbg, "url": c["url"], "found": sorted(v.get("_src", {}).items()) if status == "ok" else v.get("_why"),
-                          "has": {k: bool(v.get(k)) for k in ("price", "year", "km", "date", "phone", "image", "color", "emirate")} if status == "ok" else None})
+                          "has": {k: bool(v.get(k)) for k in ("price", "year", "km", "date", "phone", "image", "color", "emirate", "desc", "spec", "flags", "vin")} if status == "ok" else None,
+                          "spec": v.get("spec") if status == "ok" else None})
         out[plat] = {**diag.get(plat, {}), "card_sources": sorted({c.get("src") for c in per.get(plat, [])}),
                      "cards_with_price": sum(1 for c in per.get(plat, []) if c.get("price")), "ad_reads": reads}
     out["_samples"] = len(samples)
@@ -848,6 +849,13 @@ def diagnose(a, key):
     bp = fetch.get(search_urls("dubizzle", req)[0])
     out["_dubizzle_page"] = {"status": bp.status, "blocked": bp.blocked, "bytes": len(bp.html),
                              "head": re.sub(r"\s+", " ", extract.text_of(bp.html))[:300]}
+    if os.getenv("GITHUB_ACTIONS"):  # counts only: what the condition checks can read on each platform
+        summary = {}
+        for plat in PLATFORMS:
+            ok = [r for r in out[plat]["ad_reads"] if r["status"] == "ok"]
+            summary[plat] = {"read": len(ok), **{k: sum(1 for r in ok if r["has"][k]) for k in ("desc", "spec", "flags", "vin")},
+                             "specs": sorted({r["spec"] for r in ok if r["spec"]})}
+        print("::notice title=diagnose-condition::" + json.dumps(summary, ensure_ascii=False), flush=True)
     out = {p: {k: v for k, v in d.items() if k in ("pages", "ok", "blocked", "cards", "via_search", "status", "cards_with_price")}
            for p, d in out.items() if p in PLATFORMS}
     log("diagnose", platforms=len(out))
