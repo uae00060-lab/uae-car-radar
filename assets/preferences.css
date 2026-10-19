@@ -1,0 +1,22 @@
+.display-controls{display:flex;justify-content:flex-end;gap:8px;max-width:1360px;margin:auto;padding:8px 28px;background:var(--bg);position:relative;z-index:6}
+.display-controls button{font-size:12px;min-height:34px;min-width:82px;border-radius:20px;border:1px solid var(--line);background:var(--surface);color:var(--fg)}
+html[lang=en]{--body:Inter,system-ui,sans-serif;--display:Inter,system-ui,sans-serif}
+html[dir=ltr] .brand-en{text-align:left}
+html[data-theme=dark]{color-scheme:dark;--bg:#0B1220;--surface:#131F32;--sunk:#1D2D44;--line:#2A3C54;--line-strong:#405773;--fg:#E8EFFA;--muted:#A6B7CF;--accent:#58D9C5;--accent-fg:#062C34;--accent-soft:#133B3B;--good:#79DCAB;--good-soft:#163D31;--warn:#F5CF76;--warn-soft:#3D321D;--bad:#FFABA4;--bad-soft:#42262C;--shadow:0 8px 30px #0003}
+html[data-theme=dark] body{background:var(--bg);color:var(--fg)}
+html[data-theme=dark] :is(.panel,.metric,.card,.change-card,.request-card,.deal-card,.modal,.dialog,.progress-panel,.report-card,.req-card,.ad-card){background:var(--surface);color:var(--fg);border-color:var(--line)}
+html[data-theme=dark] :is(input,select,textarea,dialog){background:var(--surface);color:var(--fg);border-color:var(--line)}
+html[data-theme=dark] :is(.section-heading h2,.metric b,.progress-copy h3,.progress-time,.progress-milestones .current,.review-summary b,.change-lines strong,.price,.card h3,.panel h2,.panel h3){color:var(--fg)}
+html[data-theme=dark] :is(.review-summary,.availability-badge,.availability-sold,.availability-unavailable,.filter-bar,.toolbar,.compare-table th){background:var(--sunk);color:var(--muted);border-color:var(--line)}
+html[data-theme=dark] :is(.sub,.small,.metric small,.review-summary p,.progress-copy p,.progress-details,.workspace-top,.eyebrow.light){color:var(--muted)}
+html[data-theme=dark] :is(.modal-backdrop,.overlay){background:#000b}
+html[data-theme=dark] .display-controls button:hover{border-color:var(--accent)}
+@media(max-width:700px){.display-controls{padding:7px 16px}.display-controls button{min-height:36px}}
+html[data-theme=dark] :is(.cover,.ad,.op-card,.op-empty,.search-progress,.progress-orbit>div,.op-window){background:var(--surface);color:var(--fg);border-color:var(--line)}
+html[data-theme=dark] :is(.facts dd,.op-price,.report-card .kp b,.progress-orbit b,.op-card h3){color:var(--fg)}
+html[data-theme=dark] :is(.report-card .kp,.report-type,.plate,.progress-track,.floating-tools){background:var(--sunk);color:var(--fg);border-color:var(--line)}
+html[data-theme=dark] :is(.op-card ul,.floating-tools button){color:var(--muted)}
+html[data-theme=dark] :is(.note,.op-card .op-missing){background:var(--warn-soft);color:var(--warn)}
+html[data-theme=dark] .availability-badge.reserved{background:var(--warn-soft);color:var(--warn)}
+html[data-theme=dark] .availability-badge.uncertain{background:var(--accent-soft);color:var(--accent)}
+html[data-theme=dark] .toolbar :is(input,select){background:var(--surface);color:var(--fg);border-color:var(--line)}
