@@ -144,3 +144,5 @@ body{padding-bottom:0}main{padding-bottom:64px!important}
  #hdr nav.tabs{grid-row:auto}
  #hdr.nav-open nav.tabs{top:calc(100% + 7px)}
 }
+
+#hdr .appearance-panel,#hdr .notifications-panel{right:auto;left:auto;inset-inline-end:0}
