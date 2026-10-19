@@ -377,7 +377,10 @@ def condition_counts(listings):
     return {"ads": len(listings), "with_description": sum(1 for l in listings if l.get("desc")), "specs": specs,
             "flagged": sum(1 for l in listings if l.get("flags")),
             "vin": sum(1 for l in listings if l.get("vin")), "vin_decoded": sum(1 for l in listings if l.get("vin_info")),
-            "vin_disagrees": sum(1 for l in listings if l.get("vin_check"))}
+            "vin_disagrees": sum(1 for l in listings if l.get("vin_check")),
+            "arabic_titles": sum(1 for l in listings if re.search(r"[\u0600-\u06ff]", l.get("title") or "")),
+            "by_platform": {p: sum(1 for l in listings if l.get("platform") == p) for p in sorted({l.get("platform") for l in listings})},
+            "shown": sum(1 for l in listings if not l.get("dup_of") and trusted_price(l) and l.get("state") in ("verified", "approx", "unverified"))}
 
 
 def load_presence(key):
