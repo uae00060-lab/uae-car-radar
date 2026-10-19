@@ -128,7 +128,7 @@ def card_ok(req, c):
         return False
     if req.get("mileage_max") and km and km > float(req["mileage_max"]):
         return False
-    text = " ".join(str(c.get(k) or "") for k in ("title", "url")).replace("-", " ").replace("/", " ")
+    text = " ".join(str(c.get(k) or "") for k in ("title", "text", "url")).replace("-", " ").replace("/", " ")
     return has_terms(text, model_terms(req))
 
 
@@ -914,6 +914,17 @@ def diagnose(a, key):
             got = extract.results(page.html, url.split("/", 3)[0] + "//" + url.split("/")[2], label.split("_")[0]) if page.ok else []
             summary["_" + label] = {"status": page.status, "cards": len(got), "arabic": sum(1 for c in got if arabic(c.get("title"))),
                                     "new_ids": len({c["ad_id"] for c in got} - {c["ad_id"] for c in per.get(label.split("_")[0], [])})}
+        brand_url = search_urls("mourjan", req)[0]
+        brand_page = fetch.get(brand_url)
+        refined = extract.mourjan_model_url(brand_page.html, brand_url, req["model"]) if brand_page.ok else None
+        options = re.findall(r'data-value="(\d+)"', brand_page.html)
+        summary["_mourjan_refine"] = {"brand_status": brand_page.status, "has_model_list": 'id="_cm"' in brand_page.html,
+                                      "options": len(options), "refined": bool(refined)}
+        if refined:
+            page = fetch.get(refined)
+            got = extract.results(page.html, "https://www.mourjan.com", "mourjan") if page.ok else []
+            summary["_mourjan_refine"].update(status=page.status, cards=len(got),
+                                              model_ok=sum(1 for c in got if has_terms(f"{c.get('text') or c.get('title') or ''} {c['url']}", terms)))
         # A sample Toyota chassis number, not from any ad: is the free decoder reachable from here?
         summary["_vpic"] = vindecode.decode("JTMHV05J604123456")
         print("::notice title=diagnose-condition::" + json.dumps(summary, ensure_ascii=False), flush=True)
