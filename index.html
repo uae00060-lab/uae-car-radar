@@ -316,11 +316,26 @@ body { font-family:"Inter","Cairo",sans-serif; font-weight:500; text-rendering:o
 @keyframes radarSweep{from{transform:rotate(0)}to{transform:rotate(360deg)}}@keyframes radarOrbit{to{transform:rotate(-360deg)}}@keyframes radarEcho{0%,12%{opacity:.3;box-shadow:0 0 0 3px #36D5C108}18%,27%{opacity:1;box-shadow:0 0 15px 4px #36D5C13D}50%,100%{opacity:.3;box-shadow:0 0 0 3px #36D5C108}}@keyframes radarRipple{0%,12%{transform:scale(.5);opacity:0}18%{opacity:.7}48%,100%{transform:scale(2.3);opacity:0}}
 @media(prefers-reduced-motion:reduce){#heroRadar .radar-line,#heroRadar .orbit-two,#heroRadar .radar-ping,#heroRadar .radar-ping::after{animation:none!important}#heroRadar .radar-ping{opacity:.7}}
 </style>
-<link rel="stylesheet" href="assets/preferences.css?v=20261019-2">
-<script src="assets/preferences.js?v=20261019-2" defer></script>
+<link rel="stylesheet" href="assets/preferences.css?v=20261019-4">
+<script src="assets/preferences.js?v=20261019-4" defer></script>
 </head>
 <body>
-<div class="display-controls" aria-label="Display preferences"><button type="button" id="languageToggle" lang="en" aria-label="Switch to English">English</button><button type="button" id="themeToggle" aria-label="الوضع الليلي">☾ ليلي</button></div>
+<aside class="display-controls" aria-label="اللغة والمظهر">
+  <button type="button" id="languageToggle" lang="en" aria-label="التبديل إلى الإنجليزية">English</button>
+  <span class="control-divider" aria-hidden="true"></span>
+  <button type="button" id="themeToggle" aria-label="تفعيل الوضع الليلي">☾ ليلي</button>
+  <span class="control-divider" aria-hidden="true"></span>
+  <button type="button" id="appearanceToggle" aria-expanded="false" aria-controls="appearancePanel"><span class="control-icon" aria-hidden="true">◈</span><span id="appearanceLabel">الثيم</span><b id="currentSkin">رادار</b></button>
+  <section id="appearancePanel" class="appearance-panel" hidden aria-labelledby="appearanceTitle">
+    <div class="appearance-heading"><h2 id="appearanceTitle">اختر طابعك</h2><button type="button" id="appearanceClose" aria-label="إغلاق إعدادات المظهر">×</button></div>
+    <p id="appearanceHint">ثلاثة تصاميم كاملة. نهاري وليلي لكل تصميم.</p>
+    <div class="skin-options">
+      <button type="button" class="skin-choice" data-skin-choice="radar" aria-pressed="true"><span class="skin-preview preview-radar" aria-hidden="true"><i></i><i></i><i></i></span><span><b>radar</b><small></small></span><span class="skin-check" aria-hidden="true">✓</span></button>
+<button type="button" class="skin-choice" data-skin-choice="studio" aria-pressed="false"><span class="skin-preview preview-studio" aria-hidden="true"><i></i><i></i><i></i></span><span><b>studio</b><small></small></span><span class="skin-check" aria-hidden="true">✓</span></button>
+<button type="button" class="skin-choice" data-skin-choice="terminal" aria-pressed="false"><span class="skin-preview preview-terminal" aria-hidden="true"><i></i><i></i><i></i></span><span><b>terminal</b><small></small></span><span class="skin-check" aria-hidden="true">✓</span></button>
+    </div>
+  </section>
+</aside>
 
 <header id="hdr" hidden>
   <div class="wrap">
