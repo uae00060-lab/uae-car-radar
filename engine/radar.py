@@ -773,6 +773,8 @@ def run_round(a, key):
         platforms={p: {k: v for k, v in d.items() if k != "fields"} for p, d in run["platforms"].items()},
         notify=run.get("notify"), condition=condition_counts(in_round))
     if os.getenv("GITHUB_ACTIONS"):  # counts only, readable in the run's summary
+        print("::notice title=funnel::" + json.dumps({p: {k: v for k, v in f.items() if k in ("cards", "known", "skipped_recently", "card_rejected", "planned", "missing_price", "states")}
+                                                      for p, f in funnel.items()}, ensure_ascii=False), flush=True)
         print("::notice title=condition::" + json.dumps(condition_counts(in_round), ensure_ascii=False), flush=True)
 
 
