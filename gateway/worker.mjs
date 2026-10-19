@@ -2,7 +2,7 @@
 import {pbkdf2} from 'node:crypto';
 const encoder = new TextEncoder();
 const decode = value => Uint8Array.from(atob(value), c => c.charCodeAt(0));
-const encode = bytes => btoa(String.fromCharCode(...new Uint8Array(bytes)));
+const encode = bytes => {const data=new Uint8Array(bytes);let text='';for(let offset=0;offset<data.length;offset+=8192)text+=String.fromCharCode(...data.subarray(offset,offset+8192));return btoa(text);};
 const digest = async value => encode(await crypto.subtle.digest('SHA-256', encoder.encode(value)));
 const json = (data, status=200, headers={}) => new Response(JSON.stringify(data), {status, headers:{'Content-Type':'application/json','Cache-Control':'no-store','X-Content-Type-Options':'nosniff',...headers}});
 const cookie = (value, age=86400) => `__Host-radar=${value}; Path=/; HttpOnly; Secure; SameSite=Strict; Max-Age=${age}`;
@@ -47,6 +47,7 @@ export default {async fetch(request,env) {
   }
   if(!env.DB || !env.GITHUB_TOKEN || !env.RADAR_KEY || !env.AUTH_EMAIL || !(env.AUTH_PASSWORD_HASH || env.AUTH_PASSWORD)) return json({error:'Server setup is incomplete'},503);
   if(request.method!=='GET' && request.headers.get('Origin')!==url.origin) return json({error:'Origin rejected'},403);
+  let stage='session';
   try {
     const raw=request.headers.get('Cookie')?.match(/(?:^|;\s*)__Host-radar=([A-Za-z0-9-]+)/)?.[1];
     const session=raw && await env.DB.prepare('SELECT token FROM sessions WHERE token=? AND expires>?').bind(await digest(raw),Date.now()).first();
@@ -84,10 +85,13 @@ export default {async fetch(request,env) {
     if(path==='/api/file' && request.method==='GET') {
       const name=url.searchParams.get('path');
       if(!/^(data\/(engine|user)\.enc|reports\/[A-Za-z0-9_-]+\.pdf\.enc)$/.test(name || '')) return json({error:'Invalid file'},400);
+      stage='github-read';
       const response=await github(env,`/contents/${name}`,{headers:{}});
       if(!response.ok) return json({error:'File unavailable'},response.status);
       const file=await response.json();
+      stage='decrypt-file';
       const bytes=await open(new TextDecoder().decode(decode(file.content.replace(/\s/g,''))),env.RADAR_KEY);
+      stage='encode-file';
       return json({plain:true,base64:encode(bytes),sha:file.sha});
     }
     if(path==='/api/user' && request.method==='PUT') {
@@ -110,5 +114,5 @@ export default {async fetch(request,env) {
       return json({ok:response.ok},response.status===204 ? 200 : response.status);
     }
     return json({error:'Not found'},404);
-  } catch { return json({error:'Request failed'},500); }
+  } catch(error) {console.error(JSON.stringify({code:'gateway_failure',stage,type:error?.name || 'Error',errorCode:String(error?.code || '').replace(/[^A-Za-z0-9_-]/g,'').slice(0,60)}));return json({error:'Request failed',stage},500); }
 }};
