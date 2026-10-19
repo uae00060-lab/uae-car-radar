@@ -857,6 +857,8 @@ def diagnose(a, key):
             summary[plat] = {"read": len(ok), **{k: sum(1 for r in ok if r["has"][k]) for k in ("desc", "spec", "flags", "vin")},
                              "specs": sorted({r["spec"] for r in ok if r["spec"]}),
                              "flag_words": [w for r in ok for w in r["flag_words"]]}
+        # A sample Toyota chassis number, not from any ad: is the free decoder reachable from here?
+        summary["_vpic"] = vindecode.decode("JTMHV05J604123456")
         print("::notice title=diagnose-condition::" + json.dumps(summary, ensure_ascii=False), flush=True)
     out = {p: {k: v for k, v in d.items() if k in ("pages", "ok", "blocked", "cards", "via_search", "status", "cards_with_price")}
            for p, d in out.items() if p in PLATFORMS}
