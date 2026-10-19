@@ -857,6 +857,21 @@ def diagnose(a, key):
             summary[plat] = {"read": len(ok), **{k: sum(1 for r in ok if r["has"][k]) for k in ("desc", "spec", "flags", "vin")},
                              "specs": sorted({r["spec"] for r in ok if r["spec"]}),
                              "flag_words": [w for r in ok for w in r["flag_words"]]}
+        # Arabic coverage: titles in Arabic per platform, and whether the model check recognises them.
+        arabic = lambda t: bool(re.search(r"[\u0600-\u06ff]", t or ""))
+        terms = model_terms(req)
+        for plat in PLATFORMS:
+            cs = per.get(plat, [])
+            ar = [c for c in cs if arabic(c.get("title"))]
+            summary[plat]["cards"] = {"all": len(cs), "arabic": len(ar),
+                                      "model_ok": sum(1 for c in cs if has_terms(f"{c.get('title') or ''} {c['url'].replace('-', ' ')}", terms)),
+                                      "arabic_model_ok": sum(1 for c in ar if has_terms(f"{c.get('title') or ''} {c['url'].replace('-', ' ')}", terms))}
+        for label, url in (("opensooq_ar", search_urls("opensooq", req)[0].replace("/en/", "/ar/")),
+                           ("mourjan_en", search_urls("mourjan", req)[0].replace("/ae/", "/ae/en/", 1))):
+            page = fetch.get(url)
+            got = extract.results(page.html, url.split("/", 3)[0] + "//" + url.split("/")[2], label.split("_")[0]) if page.ok else []
+            summary["_" + label] = {"status": page.status, "cards": len(got), "arabic": sum(1 for c in got if arabic(c.get("title"))),
+                                    "new_ids": len({c["ad_id"] for c in got} - {c["ad_id"] for c in per.get(label.split("_")[0], [])})}
         # A sample Toyota chassis number, not from any ad: is the free decoder reachable from here?
         summary["_vpic"] = vindecode.decode("JTMHV05J604123456")
         print("::notice title=diagnose-condition::" + json.dumps(summary, ensure_ascii=False), flush=True)
