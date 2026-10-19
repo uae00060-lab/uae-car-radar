@@ -461,6 +461,7 @@ def retry_deliveries(eng, key, latest=False):
 def resend(a, key):
     _, eng = load_all(key)
     retry_deliveries(eng, key, latest=True)
+    log("delivery_retry", pending=len(eng.get("delivery_queue", {})), channels=(eng.get("runs") or [{}])[0].get("notify", {}))
     finish(eng, key)
 
 

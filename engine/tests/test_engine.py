@@ -77,6 +77,9 @@ def fake_get(url, referer=None, timeout=25, retries=1):
 
 class Engine(unittest.TestCase):
     def setUp(self):
+        # Offline notification stubs must not inherit the runner's real delivery credentials.
+        credentials = patch.dict(os.environ, {name: "" for names in radar.notify.REQUIRED.values() for name in names})
+        credentials.start(); self.addCleanup(credentials.stop)
         self.original_pages = dict(PAGES)
         for obj, attr in ((radar, "ROOT"), (radar, "USER_FILE"), (radar, "ENGINE_FILE"), (radar, "REPORTS_DIR"), (radar, "WORK"), (fetch, "get"), (fetch, "search_links"), (radar.notify, "send_all")):
             original = getattr(obj, attr)
