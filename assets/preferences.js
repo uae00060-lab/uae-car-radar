@@ -66,7 +66,7 @@
   document.getElementById('languageToggle').addEventListener('click', () => { language = language === 'ar' ? 'en' : 'ar'; save('radar-language', language); apply(); });
   document.getElementById('themeToggle').addEventListener('click', () => { theme = theme === 'light' ? 'dark' : 'light'; save('radar-theme', theme); apply(); });
   apply();
-  fetch('assets/translations-en.json').then(response => { if (!response.ok) throw new Error('Translation unavailable'); return response.json(); }).then(data => {
+  fetch('assets/translations-en.json?v=20261019-2').then(response => { if (!response.ok) throw new Error('Translation unavailable'); return response.json(); }).then(data => {
     dictionary = data; translationCache.clear(); entries = Object.entries(data).sort((a, b) => b[0].length - a[0].length).map(([ar, en]) => [new RegExp('(?<![\\p{L}])' + ar.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + '(?![\\p{L}])', 'gu'), en]); apply();
   }).catch(() => { language = 'ar'; apply(); });
 })();
