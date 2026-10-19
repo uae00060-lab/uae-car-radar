@@ -88,6 +88,10 @@ class Engine(unittest.TestCase):
             return True
         self.pdf_patch = patch.object(radar.report, "to_pdf", side_effect=fake_pdf)
         self.pdf_patch.start(); self.addCleanup(self.pdf_patch.stop)
+        # Each round owes a fresh report slot unless a test says otherwise, whatever the clock says.
+        self.slots = iter(range(10**6))
+        slot_patch = patch.object(radar, "due_slot", side_effect=lambda now: f"test-{next(self.slots)}")
+        slot_patch.start(); self.addCleanup(slot_patch.stop)
         self.tmp = tempfile.mkdtemp()
         radar.ROOT = self.tmp
         radar.USER_FILE = os.path.join(self.tmp, "data", "user.enc")
@@ -161,13 +165,41 @@ class Engine(unittest.TestCase):
 
     def test_hourly_opportunity_scan_never_creates_pdf(self):
         args=self.args();args.mode="opportunity"
-        with patch.object(radar.report,"to_pdf") as pdf, patch.object(radar.notify,"send_all") as send:
+        with patch.object(radar.report,"to_pdf") as pdf, patch.object(radar.notify,"send_all") as send, \
+                patch.object(radar, "due_slot", return_value=None):
             radar.run_round(args,KEY)
             pdf.assert_not_called();send.assert_not_called()
         eng=store.read_json(radar.ENGINE_FILE,KEY,{})
         self.assertEqual(eng["reports"],[])
         self.assertEqual(eng["runs"][0]["mode"],"opportunity")
         self.assertIn("opportunities",eng)
+
+    def test_report_is_sent_once_per_slot_by_the_first_trigger(self):
+        sent = []
+        radar.notify.send_all = lambda *a, **k: sent.append(a[0]) or {"telegram": "أُرسل"}
+        with patch.object(radar, "due_slot", return_value="2026-10-19-am"):
+            radar.run_round(self.args("scheduled"), KEY)   # 10:04 trigger sends the morning report
+            radar.run_round(self.args("scheduled"), KEY)   # 10:34 trigger: already sent, nothing to do
+            radar.run_round(self.args("opportunity"), KEY)  # hourly scan stays an opportunity scan
+        self.assertEqual(len(sent), 1)
+        eng = store.read_json(radar.ENGINE_FILE, KEY, {})
+        self.assertEqual([r["mode"] for r in eng["runs"]], ["opportunity", "scheduled"])
+        self.assertIn("2026-10-19-am", eng["report_slots"])
+
+    def test_missed_report_is_caught_up_by_the_hourly_scan(self):
+        sent = []
+        radar.notify.send_all = lambda *a, **k: sent.append(a[0]) or {"telegram": "أُرسل"}
+        with patch.object(radar, "due_slot", return_value="2026-10-19-am"):
+            radar.run_round(self.args("opportunity"), KEY)
+        self.assertEqual(len(sent), 1)
+        eng = store.read_json(radar.ENGINE_FILE, KEY, {})
+        self.assertEqual(eng["runs"][0]["mode"], "scheduled")
+        self.assertTrue(eng["reports"])
+
+    def test_no_report_is_owed_before_ten(self):
+        with patch.object(radar, "due_slot", return_value=None):
+            radar.run_round(self.args("scheduled"), KEY)
+        self.assertFalse(os.path.exists(radar.ENGINE_FILE) and store.read_json(radar.ENGINE_FILE, KEY, {}).get("runs"))
 
     def test_watch_alerts_followed_only(self):
         radar.run_round(self.args(), KEY)
@@ -461,6 +493,15 @@ class Parts(unittest.TestCase):
     def test_crypto_roundtrip(self):
         t = store.encrypt_bytes(b'{"a":1}', "k")
         self.assertEqual(store.decrypt_bytes(t, "k"), b'{"a":1}')
+
+
+class ReportSlots(unittest.TestCase):
+    def test_due_slot_by_uae_clock(self):
+        at = lambda h: dt.datetime(2026, 10, 19, h, 5)
+        self.assertIsNone(radar.due_slot(at(9)))
+        self.assertEqual(radar.due_slot(at(10)), "2026-10-19-am")
+        self.assertEqual(radar.due_slot(at(19)), "2026-10-19-am")
+        self.assertEqual(radar.due_slot(at(20)), "2026-10-19-pm")
 
 
 if __name__ == "__main__":

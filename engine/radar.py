@@ -406,6 +406,15 @@ def reassess_saved(listings, reqs, start, today):
             listing.setdefault("by_request", {})[req["id"]] = {"state": state, "note": note, "checks": checks}
 
 
+def due_slot(now):
+    """The twice-daily report this moment owes: '<date>-am' from 10:00, '<date>-pm' from 20:00 UAE."""
+    if now.hour >= 20:
+        return f"{now:%Y-%m-%d}-pm"
+    if now.hour >= 10:
+        return f"{now:%Y-%m-%d}-am"
+    return None
+
+
 def run_round(a, key):
     t0 = time.time()
     now = now_uae()
@@ -413,6 +422,20 @@ def run_round(a, key):
     start = window_start(today)
     user, eng = load_all(key)
     marks = marks_of(user)
+    # GitHub delays or drops scheduled runs, so the report has several triggers a day: the first one
+    # after 10:00 (or 20:00) that is still owed sends it, including an hourly opportunity trigger.
+    slot = due_slot(now)
+    slot_owed = bool(slot) and slot not in (eng.get("report_slots") or {})
+    if os.getenv("GITHUB_ACTIONS"):
+        reqs_all = user.get("requests") or []
+        print("::notice title=requests::" + json.dumps({"mode": a.mode, "slot": slot, "owed": slot_owed,
+              "active": sum(1 for r in reqs_all if r.get("active", True)),
+              "scheduled": sum(1 for r in reqs_all if r.get("active", True) and r.get("scheduled"))}), flush=True)
+    if a.mode == "scheduled" and not slot_owed and not a.run_id:
+        log("scheduled_skipped", why="report already sent for " + str(slot) if slot else "before 10:00")
+        return
+    if a.mode == "opportunity" and slot_owed:
+        a.mode = "scheduled"
     if a.mode == "opportunity" and user.get("opportunities_enabled") is False:
         return
     run_id = a.run_id or (("s" if a.mode == "scheduled" else "o" if a.mode == "opportunity" else "m") + now.strftime("%Y%m%d%H%M"))
@@ -670,6 +693,11 @@ def run_round(a, key):
         groups.append((req, ver, cand))
     if a.mode == "scheduled":
         eng.setdefault("sched_done", {}).update({r["id"]: stamp for r in reqs})
+        if slot:
+            slots = eng.setdefault("report_slots", {})
+            slots[slot] = stamp
+            for old_slot in sorted(slots)[:-10]:
+                del slots[old_slot]
     blocked = [PLATFORMS[p]["name"] for p, d in diag.items() if d["pages"] and not d["ok"] and not d["via_search"]]
     run = {"id": run_id, "at": stamp, "mode": a.mode, "status": "done", "requests": [r["id"] for r in reqs],
            "request_names": [r.get("name") for r in reqs], "found": sum(d["cards"] for d in diag.values()),

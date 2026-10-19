@@ -2,7 +2,11 @@ name: radar
 
 on:
   schedule:
-    - cron: "0 6,16 * * *"        # 10:00 and 20:00 UAE time: full rounds with report and notifications
+    # 10:00 and 20:00 UAE: full rounds with report. GitHub delays or skips scheduled runs, so each
+    # report has three triggers; the engine sends it once, on the first one that runs.
+    - cron: "4 6,16 * * *"
+    - cron: "34 6,16 * * *"
+    - cron: "4 7,17 * * *"
     - cron: "17 * * * *"         # hourly fresh opportunities only; no PDF
     - cron: "0 4 * * 1"          # Monday 08:00 UAE: weekly saved-ad review, no PDF
   workflow_dispatch:
@@ -60,7 +64,11 @@ jobs:
         run: |
           clean() { printf '%s' "$1" | tr -cd 'A-Za-z0-9_-'; }
           if [ "$EVENT" = "schedule" ]; then
-            if [ "$SCHEDULE" = "0 6,16 * * *" ]; then args="run --mode scheduled"; elif [ "$SCHEDULE" = "17 * * * *" ]; then args="run --mode opportunity"; else args="watch --weekly"; fi
+            case "$SCHEDULE" in
+              "17 * * * *") args="run --mode opportunity" ;;
+              "0 4 * * 1") args="watch --weekly" ;;
+              *) args="run --mode scheduled" ;;
+            esac
           else
             case "$CMD" in
               run)
