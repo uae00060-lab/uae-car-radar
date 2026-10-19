@@ -19,6 +19,8 @@
   }
   function apply() {
     observer.disconnect();
+    // Preserve implicit option values before translating their visible labels.
+    document.querySelectorAll('option:not([value])').forEach(option => option.setAttribute('value', option.textContent));
     root.lang = language; root.dir = language === 'en' ? 'ltr' : 'rtl'; root.dataset.theme = theme;
     const walker = document.createTreeWalker(document.body, NodeFilter.SHOW_TEXT);
     let node;
