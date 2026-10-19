@@ -829,7 +829,7 @@ def diagnose(a, key):
         per.setdefault(c["platform"], []).append(c)
     out = {}
     for plat in PLATFORMS:
-        sample = per.get(plat, [])[:4]
+        sample = sorted(per.get(plat, []), key=lambda c: not re.search(r"[\u0600-\u06ff]", c.get("title") or ""))[:4]
         reads = []
         for c in sample:
             dbg = {}
@@ -837,6 +837,8 @@ def diagnose(a, key):
             reads.append({"status": status, "debug": dbg, "url": c["url"], "found": sorted(v.get("_src", {}).items()) if status == "ok" else v.get("_why"),
                           "has": {k: bool(v.get(k)) for k in ("price", "year", "km", "date", "phone", "image", "color", "emirate", "desc", "spec", "flags", "vin")} if status == "ok" else None,
                           "spec": v.get("spec") if status == "ok" else None,
+                          "title_lang": ("ar" if re.search(r"[\u0600-\u06ff]", c.get("title") or "") else "en") + ">" +
+                                        (("ar" if re.search(r"[\u0600-\u06ff]", v.get("title") or "") else "en") if status == "ok" else "-"),
                           "flag_words": [f"{f['kind']}:{f['word']}" for f in v.get("flags") or []] if status == "ok" else []})
         out[plat] = {**diag.get(plat, {}), "card_sources": sorted({c.get("src") for c in per.get(plat, [])}),
                      "cards_with_price": sum(1 for c in per.get(plat, []) if c.get("price")), "ad_reads": reads}
@@ -857,6 +859,7 @@ def diagnose(a, key):
             summary[plat] = {"read": len(ok), **{k: sum(1 for r in ok if r["has"][k]) for k in ("desc", "spec", "flags", "vin")},
                              "specs": sorted({r["spec"] for r in ok if r["spec"]}),
                              "flag_words": [w for r in ok for w in r["flag_words"]],
+                             "title_lang": [r["title_lang"] for r in out[plat]["ad_reads"]],
                              "read_status": [r["status"] if r["status"] == "ok" else f"{r['status']}:{r['found']}:{r['debug'].get('status')}" for r in out[plat]["ad_reads"]]}
         # Arabic coverage: titles in Arabic per platform, and whether the model check recognises them.
         arabic = lambda t: bool(re.search(r"[\u0600-\u06ff]", t or ""))
