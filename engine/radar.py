@@ -383,16 +383,6 @@ def condition_counts(listings):
             "shown": sum(1 for l in listings if not l.get("dup_of") and trusted_price(l) and l.get("state") in ("verified", "approx", "unverified"))}
 
 
-def load_presence(key):
-    """Only a fresh, authenticated activity record can suppress a scheduled search."""
-    try:
-        payload = store.read_json(os.path.join(WORK, "activity.enc"), key, {})
-        age = (now_uae() - dt.datetime.fromisoformat(payload["at"])).total_seconds()
-        return 0 <= age < 180
-    except (OSError, ValueError, KeyError, TypeError, store.BadPassphrase):
-        return False
-
-
 def reassess_saved(listings, reqs, start, today):
     for listing in listings.values():
         if listing.get("state") == "sold":
@@ -446,9 +436,6 @@ def run_round(a, key):
     if a.request and a.request != "all":
         reqs = [r for r in reqs if r.get("id") == a.request]
     if a.mode == "scheduled":
-        if load_presence(key):
-            log("scheduled_skipped", why="dashboard active")
-            return
         reqs = [r for r in reqs if r.get("scheduled")]
     if a.mode == "opportunity":
         reqs = [r for r in reqs if r.get("make") and r.get("model")]

@@ -1298,24 +1298,6 @@ body { font-family:"Inter","Cairo",sans-serif; font-weight:500; text-rendering:o
       scrollPrevious=y;
     });
   },{passive:true});
-  let activityBusy=false;
-  async function heartbeat() {
-    if (!S.E || !S.token || document.visibilityState !== "visible" || activityBusy) return;
-    activityBusy=true;
-    try {
-      const branch="radar-live", path="/contents/data/activity.enc";
-      const ref=await gh("/git/ref/heads/"+branch);
-      if (!ref.ok) {
-        const main=await (await gh("/git/ref/heads/main")).json();
-        try { await gh("/git/refs",{method:"POST",body:JSON.stringify({ref:"refs/heads/"+branch,sha:main.object.sha})}); } catch(e) { if(e.status !== 422) throw e; }
-      }
-      const existing=await gh(path+"?ref="+branch), file=existing.ok ? await existing.json() : {};
-      const sealed=await encrypt(new TextEncoder().encode(JSON.stringify({at:new Date().toISOString()})),S.pass);
-      await gh(path,{method:"PUT",body:JSON.stringify({message:"radar: activity [skip ci]",branch,sha:file.sha,content:btoa(sealed)})});
-    } catch {} finally { activityBusy=false; }
-  }
-  setInterval(heartbeat,120000);
-  document.addEventListener("visibilitychange",()=>{if(document.visibilityState === "visible") heartbeat();});
   // ---------------------------------------------------------------- problems
   // Every failure stays visible until a later round succeeds: the round's own record (engine
   // errors, blocked platforms, reports not delivered), or a GitHub task that failed before the

@@ -295,20 +295,6 @@ class Engine(unittest.TestCase):
         self.assertTrue(updated["last_weekly_review"])
         self.assertEqual(len(updated["reports"]),0)
 
-    def test_encrypted_activity_suppresses_only_scheduled_search(self):
-        store.write_json(os.path.join(radar.WORK,"activity.enc"),{"at":now_uae().isoformat()},KEY)
-        radar.run_round(self.args("scheduled"),KEY)
-        self.assertFalse(os.path.exists(radar.ENGINE_FILE))
-        radar.run_round(self.args(),KEY)
-        self.assertTrue(os.path.exists(radar.ENGINE_FILE))
-
-    def test_expired_or_wrong_key_activity_does_not_suppress(self):
-        path=os.path.join(radar.WORK,"activity.enc")
-        store.write_json(path,{"at":(now_uae()-dt.timedelta(seconds=181)).isoformat()},KEY)
-        self.assertFalse(radar.load_presence(KEY))
-        store.write_json(path,{"at":now_uae().isoformat()},"different-key")
-        self.assertFalse(radar.load_presence(KEY))
-
     def test_quality_warning_is_in_pdf_input(self):
         rendered=[]
         with patch.dict(os.environ,{"RADAR_TESTS":"failure"}), patch.object(radar.report,"to_pdf",side_effect=lambda html,*args: rendered.append(html) or False):
