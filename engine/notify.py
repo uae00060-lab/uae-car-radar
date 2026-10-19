@@ -144,14 +144,23 @@ def _with_retry(send):
     return result
 
 
-def send_all(subject, full_text, short_text, pdf=None, pdf_name="report.pdf"):
+def send_all(subject, full_text, short_text, pdf=None, pdf_name="report.pdf", channels=None):
     """Every configured channel gets the report: Telegram and email the full text and the PDF,
     WhatsApp the short text with the dashboard link (CallMeBot accepts short messages only)."""
-    return {
-        "telegram": _with_retry(lambda: telegram(full_text, pdf, pdf_name)),
-        "whatsapp": _with_retry(lambda: whatsapp(short_text)),
-        "email": _with_retry(lambda: email(subject, full_text, pdf, pdf_name)),
+    senders = {
+        "telegram": lambda: telegram(full_text, pdf, pdf_name),
+        "whatsapp": lambda: whatsapp(short_text),
+        "email": lambda: email(subject, full_text, pdf, pdf_name),
     }
+    return {name: _with_retry(send) for name, send in senders.items()
+            if channels is None or name in channels}
+
+
+def retry_channels(result):
+    """Retry only configured channels that have not accepted this report."""
+    return [name for name, required in REQUIRED.items()
+            if result.get(name) != SENT and all((env(k) or "").strip() for k in required)]
+
 
 
 def delivery_problem(result):

@@ -587,5 +587,12 @@
   "نفس السيارة على": "Same car on",
   "بسعر": "priced at",
   "وفّرت": "Saved",
-  "درهم عن المعروض": "AED below asking price"
+  "درهم عن المعروض": "AED below asking price",
+  "إعادة إرسال التقرير للقنوات التي لم تستلمه": "Retry undelivered report channels",
+  "نجاح الإرسال يعني قبول الخدمة للرسالة، ولا يؤكد قراءتها أو وصول البريد إلى صندوق الوارد.": "Sent means the service accepted the message; it does not confirm reading or inbox delivery.",
+  "متابعة السيارة": "Follow car",
+  "تتم متابعتها ✓": "Following ✓",
+  "إعادة إرسال التقرير": "Retry report delivery",
+  "التغطية محدودة؛ تعذّر فحص بعض المنصات، وهذا لا يعني غياب السيارات. غيّر التصفية أو أعد الفحص.": "Coverage is limited: some platforms could not be checked. This does not mean no cars are available. Change filters or check again.",
+  "لا توجد نتائج ضمن التصفية الحالية؛ غيّر التصفية أو اضغط «ابحث الآن».": "No results under these filters. Change filters or select Search now."
 }

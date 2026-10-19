@@ -458,7 +458,7 @@ body { font-family:"Inter","Cairo",sans-serif; font-weight:500; text-rendering:o
 
   <!-- reports -->
   <section class="tab" id="tab-reports" hidden>
-    <div class="small">البحث اليدوي يحدّث النتائج فقط، دون إنشاء تقرير. التقارير المجدولة تصلك عند غيابك في 10 صباحًا و8 مساءً للطلبات التي فعّلت جدولتها. «فتح التقرير» يعرضه هنا، و«تنزيل PDF» يحفظه، و«مشاركة الملخص» يجهز نصًا للواتساب. التقارير القديمة تبقى كما أُنشئت؛ التقارير القديمة محفوظة في الأرشيف.</div>
+    <div class="small">البحث اليدوي يحدّث النتائج فقط، دون إنشاء تقرير. التقارير المجدولة تُرسل حتى أثناء فتح اللوحة في 10 صباحًا و8 مساءً للطلبات التي فعّلت جدولتها. «فتح التقرير» يعرضه هنا، و«تنزيل PDF» يحفظه، و«مشاركة الملخص» يجهز نصًا للواتساب. التقارير القديمة تبقى كما أُنشئت؛ التقارير القديمة محفوظة في الأرشيف.</div>
     <div class="list" id="repList"></div>
   </section>
 
@@ -489,7 +489,7 @@ body { font-family:"Inter","Cairo",sans-serif; font-weight:500; text-rendering:o
         <dl class="kv" id="connInfo"></dl>
         <div class="row"><button type="button" class="sm" id="btnTestNotify">إرسال إشعار تجريبي</button><button type="button" class="sm" id="btnDiag">فحص المنصات</button><button type="button" class="sm ghost" id="btnForget">نسيان هذا الجهاز</button></div>
       </div>
-      <div class="panel"><h2>الإشعارات</h2><dl class="kv" id="notifyInfo"></dl>
+      <div class="panel"><h2>الإشعارات</h2><dl class="kv" id="notifyInfo"></dl><button class="btn" id="btnRetryNotify">إعادة إرسال التقرير للقنوات التي لم تستلمه</button><p class="small">نجاح الإرسال يعني قبول الخدمة للرسالة، ولا يؤكد قراءتها أو وصول البريد إلى صندوق الوارد.</p>
         <div class="small">تُرسل الإشعارات عبر جميع القنوات المفعّلة: البريد وتيليجرام وواتساب. تُفعَّل القنوات بإضافة أسرارها في GitHub ← Settings ← Secrets and variables ← Actions. التفاصيل في README.</div></div>
       <div class="panel"><h2>المواعيد</h2>
         <dl class="kv">
@@ -858,10 +858,17 @@ body { font-family:"Inter","Cairo",sans-serif; font-weight:500; text-rendering:o
         .map(([k, v]) => `<button type="button" data-plat="${k}" aria-pressed="${S.plat === k}"><b>${base.filter((l) => l.platform === k).length}</b><span>${v}</span></button>`).join("");
     $("cAds").textContent = L().filter(live).length;
     $("windowNote").textContent = `الفترة: من ${dmy(windowStart())} حتى اليوم. «مقابل السوق» يقارن السعر بالمتوقع لنفس الطراز والسنة والممشى من إعلانات رصدها الرادار خلال 60 يومًا.`;
+    const platformRows = Object.entries(last?.platforms || {});
+    const reached = platformRows.filter(([, d]) => d.ok || d.read_ok).map(([p]) => PLATFORMS[p] || p);
+    const limited = platformRows.filter(([, d]) => !d.ok && !d.read_ok).map(([p]) => PLATFORMS[p] || p);
+    const current = uaeNow(), next = new Date(current);
+    next.setUTCHours(current.getUTCHours() < 10 ? 10 : current.getUTCHours() < 20 ? 20 : 34, 4, 0, 0);
+    $("windowNote").textContent += ` · موعد التقرير القادم المستهدف: ${next.toLocaleString("ar-AE", {timeZone:"UTC",hour:"2-digit",minute:"2-digit",day:"numeric",month:"numeric"})} بتوقيت الإمارات (قد يتأخر GitHub).`;
+    if (platformRows.length) $("windowNote").textContent += ` · وصول مباشر: ${reached.join("، ") || "لم يتأكد"}. تعذّر الوصول المباشر: ${limited.join("، ") || "لا يوجد"}.`;
     const lastMissing = last?.missing_price || 0;
     if (lastMissing) $("windowNote").textContent += ` · استُبعد ${lastMissing} إعلانًا لعدم تأكيد السعر.`;
     const rows = visibleAds();
-    if (!rows.length) { $("adsGrid").innerHTML = `<div class="empty"><b>لا توجد إعلانات هنا</b>${S.U.requests.length ? "غيّر التصفية، أو اضغط «ابحث الآن»." : "أضف أول طلب بحث من تبويب «طلبات البحث»."}</div>`; return; }
+    if (!rows.length) { $("adsGrid").innerHTML = `<div class="empty"><b>لا توجد إعلانات هنا</b>${S.U.requests.length ? (limited.length ? "التغطية محدودة؛ تعذّر فحص بعض المنصات، وهذا لا يعني غياب السيارات. غيّر التصفية أو أعد الفحص." : "لا توجد نتائج ضمن التصفية الحالية؛ غيّر التصفية أو اضغط «ابحث الآن».") : "أضف أول طلب بحث من تبويب «طلبات البحث»."}</div>`; return; }
     $("adsGrid").innerHTML = rows.map((l) => `<article data-car-id="${esc(l.id)}" class="ad availability-${availabilityOf(l)}${S.pick.includes(l.id) ? " picked" : ""}">${photo(l)}<div class="bd">
       <div><a class="title" href="${esc(l.url)}" target="_blank" rel="noopener">${esc(carName(l))}</a><div class="var">${esc(l.title || "")}</div></div>
       <div class="priceline"><span class="price">${l.price ? fmt(l.price) + " <small>درهم</small>" : ""}</span>${l.price_prev && l.price_prev !== l.price ? `<span class="price-prev num">${fmt(l.price_prev)}</span>` : ""}${l.year ? `<span class="plate">${l.year}</span>` : ""}</div>
@@ -1098,6 +1105,7 @@ body { font-family:"Inter","Cairo",sans-serif; font-weight:500; text-rendering:o
     $("healthBox").innerHTML=Object.entries(S.E.platform_health || {}).map(([p,record])=>{const h=record.latest; if(!h)return ""; return `<article style="padding:12px 0;border-bottom:1px solid var(--line)"><div class="row"><b>${esc(PLATFORMS[p] || p)}</b><span class="pill ${h.alert ? "bad" : h.status === "ok" || h.recovered ? "good" : "warn"}">${esc(healthLabels[h.status] || h.status)}</span></div><p>${esc(h.reason)}</p><div>روابط: ${fmt(h.cards)} · صفحات مفتوحة: ${fmt(h.opened)} · مقروءة: ${fmt(h.read_ok)} · أسعار مؤكدة: ${fmt(h.priced)}</div><div>${esc((h.request_names || []).join("، "))} · ${esc(when(h.at))}</div></article>`;}).join("") || "تبدأ المقارنة من أول جولة بعد التحديث. المنصات التي لم تُفحص لا تُحتسب متعطلة.";
     const last = (S.E.runs || []).find((r) => r.notify);
     const ch = { telegram: "تيليجرام", whatsapp: "واتساب", email: "البريد الإلكتروني" };
+    $("btnRetryNotify").disabled = !S.token || !!S.live;
     $("notifyInfo").innerHTML = Object.entries(ch).map(([k, v]) => `<dt>${v}</dt><dd>${last ? esc(last.notify[k] || "—") : "تظهر الحالة بعد أول جولة مجدولة"}</dd>`).join("");
   }
   $("meForm").addEventListener("submit", async (e) => { e.preventDefault(); S.U.profile = { name: $("mName").value.trim(), phone: $("mPhone").value.trim(), city: $("mCity").value.trim() }; if (await saveUser("profile")) $("mMsg").textContent = "حُفظت."; });
@@ -1123,7 +1131,7 @@ body { font-family:"Inter","Cairo",sans-serif; font-weight:500; text-rendering:o
 
     $("opScan").disabled=!S.token || !!S.live || S.U.opportunities_enabled === false;
     $("opStatus").textContent=`فحص خفيف كل ساعة عند الدقيقة 17، إضافة إلى جولات البحث. قد تتأخر مهام GitHub؛ ليس رصدًا لحظيًا. إعلان منشور خلال آخر يومين، وتحقق لا يتجاوز 6 ساعات. نستبعد المباعة والمحجوزة والتعديلات التي رصدناها. لا نستنتج مهنة البائع من التعديل. آخر تقييم: ${S.E.opportunities?.updated ? when(S.E.opportunities.updated) : "لم يُنفذ بعد"}.`;
-    $("opGrid").innerHTML=rows.length ? rows.map(o=>{const l=S.E.listings[o.listing_id];return `<article class="op-card ${o.tier}"><div class="row"><span class="pill ${o.tier === "call" ? "good" : "warn"}">${labels[o.tier]}</span><span class="small">${esc(PLATFORMS[l.platform] || l.platform)}</span></div><h3>${esc(l.title || carName(l))}</h3><div class="op-price">${fmt(o.price)} <small>درهم</small></div><div class="small">تقدير المقارنة ${fmt(o.expected)} درهم · فرق ${fmt(o.expected-o.price)} درهم</div><ul>${o.reasons.map(r=>`<li>${esc(r)}</li>`).join("")}</ul>${o.missing.length ? `<div class="op-missing">${o.missing.map(esc).join("<br>")}</div>` : ""}<div class="op-stamp">${esc(o.request_name || "")} · آخر تحقق ${esc(when(o.checked_at))}</div><div class="op-actions"><a class="btn primary sm" href="${esc(l.url)}" target="_blank" rel="noopener">افتح الإعلان ↗</a>${o.tier === "call" && l.phone ? `<a class="btn sm" href="tel:${esc(l.phone)}">اتصل بالبائع</a>` : ""}</div></article>`}).join("") : `<div class="op-empty" style="grid-column:1/-1"><b>${S.U.opportunities_enabled === false ? "رصد الفرص متوقف" : "لا توجد فرصة تستوفي المعايير حاليًا"}</b><p>لن نملأ القائمة بإعلانات قديمة أو أسعار غير مؤكدة. يحتاج التقييم طلبًا بماركة وطراز محددين وثمانية إعلانات مقارنة على الأقل.</p></div>`;
+    $("opGrid").innerHTML=rows.length ? rows.map(o=>{const l=S.E.listings[o.listing_id];return `<article class="op-card ${o.tier}"><div class="row"><span class="pill ${o.tier === "call" ? "good" : "warn"}">${labels[o.tier]}</span><span class="small">${esc(PLATFORMS[l.platform] || l.platform)}</span></div><h3>${esc(l.title || carName(l))}</h3><div class="op-price">${fmt(o.price)} <small>درهم</small></div><div class="small">تقدير المقارنة ${fmt(o.expected)} درهم · فرق ${fmt(o.expected-o.price)} درهم</div><ul>${o.reasons.map(r=>`<li>${esc(r)}</li>`).join("")}</ul>${o.missing.length ? `<div class="op-missing">${o.missing.map(esc).join("<br>")}</div>` : ""}<div class="op-stamp">${esc(o.request_name || "")} · آخر تحقق ${esc(when(o.checked_at))}</div><div class="op-actions"><button class="btn sm" data-follow="${esc(l.id)}">${mark(l.id).favorite ? "تتم متابعتها ✓" : "متابعة السيارة"}</button><a class="btn primary sm" href="${esc(l.url)}" target="_blank" rel="noopener">افتح الإعلان ↗</a>${o.tier === "call" && l.phone ? `<a class="btn sm" href="tel:${esc(l.phone)}">اتصل بالبائع</a>` : ""}</div></article>`}).join("") : `<div class="op-empty" style="grid-column:1/-1"><b>${S.U.opportunities_enabled === false ? "رصد الفرص متوقف" : "لا توجد فرصة تستوفي المعايير حاليًا"}</b><p>لن نملأ القائمة بإعلانات قديمة أو أسعار غير مؤكدة. يحتاج التقييم طلبًا بماركة وطراز محددين وثمانية إعلانات مقارنة على الأقل.</p></div>`;
     const fresh=unread.filter(e=>!store.get("opShown:"+e.id));
     const busy=["INPUT","SELECT","TEXTAREA"].includes(document.activeElement?.tagName) || document.querySelector("dialog[open]");
     if(fresh.length && !busy && document.visibilityState === "visible") {
@@ -1175,6 +1183,7 @@ body { font-family:"Inter","Cairo",sans-serif; font-weight:500; text-rendering:o
     else if (d.toggle) { const r = S.U.requests.find((x) => x.id === d.toggle); r.active = r.active === false; renderAll(); saveUser("toggle"); }
     else if (d.del) { if (d.armed) { S.U.requests = S.U.requests.filter((x) => x.id !== d.del); renderAll(); saveUser("delete request"); } else { d.armed = "1"; t.textContent = "اضغط للتأكيد"; setTimeout(() => { delete t.dataset.armed; t.textContent = "حذف"; }, 4000); } }
     else if (d.showcar) { const l=(S.E.listings || {})[d.showcar]; if (l) { $("fText").value=""; $("fReq").value=""; $("fState").value=["sold","unavailable"].includes(availabilityOf(l)) ? "unavailable" : availabilityOf(l)==="reserved" ? "reserved" : "all"; S.plat=null; showTab("ads"); renderAds(); const card=document.querySelector(`[data-car-id="${CSS.escape(l.id)}"]`); if (card) { card.scrollIntoView({behavior:"smooth",block:"center"}); card.classList.add("focus-card"); setTimeout(()=>card.classList.remove("focus-card"),4000); } } }
+    else if (d.follow) setMark(d.follow, {favorite:true,status:mark(d.follow).status || "following",status_at:new Date().toISOString()}, "follow opportunity");
     else if (d.runreq) runSearch(d.runreq);
     else if (d.view) { const r = (S.E.reports || []).find((x) => x.id === d.view); if (r) viewReport(r); }
   });
@@ -1226,6 +1235,7 @@ body { font-family:"Inter","Cairo",sans-serif; font-weight:500; text-rendering:o
     dispatch({ cmd: "run", mode: "manual", request: scope || "all", run_id: id }, "بحث يدوي");
   }
   $("searchNow").addEventListener("click", () => runSearch($("runScope").value));
+  $("btnRetryNotify").addEventListener("click", () => dispatch({cmd:"retry-notify",mode:"manual",request:"all",run_id:""}, "إعادة إرسال التقرير"));
   $("btnTestNotify").addEventListener("click", () => dispatch({ cmd: "notify-test", mode: "manual", request: "all", run_id: "" }, "إشعار تجريبي"));
   $("btnDiag").addEventListener("click", () => dispatch({ cmd: "diagnose", mode: "manual", request: "all", run_id: "" }, "فحص المنصات"));
   function resumeLiveRun() { try { const l = JSON.parse(store.get("live") || "null"); if (l && Date.now() - l.since < 40 * 60e3) { S.live = l; pollLive(); } } catch {} }

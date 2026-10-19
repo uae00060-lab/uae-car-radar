@@ -414,12 +414,63 @@ def due_slot(now):
     return None
 
 
+def retry_deliveries(eng, key, latest=False):
+    """Keep payloads encrypted; never resend a report to a successful channel."""
+    queue = eng.setdefault("delivery_queue", {})
+    if latest and not queue:
+        old = next((r for r in eng.get("reports", []) if r.get("summary")), None)
+        if old:
+            run = next((r for r in eng.get("runs", []) if r.get("id") == old["id"]), {})
+            queue[old["id"]] = {"subject": "رادار السيارات — إعادة إرسال التقرير",
+                "text": old["summary"], "short": old["summary"], "file": old.get("file"),
+                "result": run.get("notify") or {}}
+    ids = list(queue)[:10]
+    for rid in ids:
+        item = queue[rid]
+        channels = notify.retry_channels(item.get("result", {}))
+        if not channels:
+            continue
+        pdf = None
+        try:
+            relative = item.get("file") or ""
+            if relative.startswith("reports/") and ".." not in relative:
+                source = os.path.join(ROOT, relative)
+                if os.path.exists(source):
+                    os.makedirs(WORK, exist_ok=True)
+                    pdf = os.path.join(WORK, "delivery.pdf")
+                    with open(source) as f:
+                        blob = store.decrypt_bytes(f.read(), key)
+                    with open(pdf, "wb") as f:
+                        f.write(blob)
+            result = notify.send_all(item["subject"], item["text"], item["short"], pdf,
+                                     channels=channels)
+            item.setdefault("result", {}).update(result)
+            item["attempted_at"] = now_uae().isoformat(timespec="seconds")
+            for run in eng.get("runs", []):
+                if run.get("id") == rid:
+                    run["notify"] = dict(item["result"])
+                    run["delivery_at"] = item["attempted_at"]
+            if not notify.retry_channels(item["result"]):
+                del queue[rid]
+            finish(eng, key)
+        finally:
+            if pdf and os.path.exists(pdf):
+                os.remove(pdf)
+
+
+def resend(a, key):
+    _, eng = load_all(key)
+    retry_deliveries(eng, key, latest=True)
+    finish(eng, key)
+
+
 def run_round(a, key):
     t0 = time.time()
     now = now_uae()
     today, stamp = now.date(), now.isoformat(timespec="seconds")
     start = window_start(today)
     user, eng = load_all(key)
+    retry_deliveries(eng, key)
     marks = marks_of(user)
     # GitHub delays or drops scheduled runs, so the report has several triggers a day: the first one
     # after 10:00 (or 20:00) that is still owed sends it, including an hourly opportunity trigger.
@@ -755,8 +806,17 @@ def run_round(a, key):
     # 6) notify: scheduled rounds only (manual searches show in the dashboard)
     if a.mode == "scheduled" and reqs:
         subject = f"رادار السيارات — {'ملخص الصباح' if morning else 'تقرير المساء'} {now:%d/%m/%Y}"
+        payload = {"subject": subject, "text": full_text, "short": short_text,
+                   "file": f"reports/{run_id}.pdf.enc" if have_pdf else None, "result": {}}
+        eng.setdefault("delivery_queue", {})[run_id] = payload
+        # Persist before network delivery, so an interrupted job can retry later.
+        finish(eng, key)
         run["notify"] = notify.send_all(subject, full_text, short_text, pdf_plain if have_pdf else None,
                                         f"car-report-{now:%Y-%m-%d-%H%M}.pdf")
+        payload["result"] = dict(run["notify"])
+        payload["attempted_at"] = stamp
+        if not notify.retry_channels(run["notify"]):
+            eng["delivery_queue"].pop(run_id, None)
         problem = notify.delivery_problem(run["notify"])
         if problem:
             run["warning"] = (run.get("warning", "") + "؛ " + problem).strip("؛ ")
@@ -955,7 +1015,7 @@ def record_crash(a, key, error):
 
 def main():
     ap = argparse.ArgumentParser()
-    ap.add_argument("cmd", choices=["run", "watch", "diagnose"])
+    ap.add_argument("cmd", choices=["run", "watch", "diagnose", "retry-notify"])
     ap.add_argument("--weekly", action="store_true", help="review saved searches weekly")
     ap.add_argument("--mode", choices=["scheduled", "manual", "opportunity"], default="scheduled")
     ap.add_argument("--request", default="all")
@@ -970,12 +1030,14 @@ def main():
         log("error", why="RADAR_KEY secret is missing")
         sys.exit(2)
     try:
-        {"watch": watch, "diagnose": diagnose}.get(a.cmd, run_round)(a, key)
+        {"watch": watch, "diagnose": diagnose, "retry-notify": resend}.get(a.cmd, run_round)(a, key)
     except store.BadPassphrase:
         log("error", why="RADAR_KEY does not match the dashboard password")
         sys.exit(3)
     except Exception as e:  # noqa: BLE001 - record any crash so the dashboard can show it
-        log("error", why=type(e).__name__)
+        import traceback
+        frame = traceback.extract_tb(e.__traceback__)[-1]
+        log("error", why=type(e).__name__, file=os.path.basename(frame.filename), line=frame.lineno)
         record_crash(a, key, e)
         sys.exit(1)
 

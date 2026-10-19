@@ -14,7 +14,7 @@ on:
       cmd:
         description: "run = search, watch = price check of followed cars, diagnose = platform check, notify-test = test message"
         type: choice
-        options: [run, watch, review, diagnose, notify-test]
+        options: [run, watch, review, diagnose, notify-test, retry-notify]
         default: run
       mode:
         type: choice
